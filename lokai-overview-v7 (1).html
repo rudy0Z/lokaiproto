@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LokAI — Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; font-optical-sizing: auto }
+
+:root {
+  --bg:           #FFFFFF;
+  --bg-2:         #EDEDED;
+  --bg-dark:      #090D1C;
+  --bg-dark-2:    #101628;
+  --ink:          #080808;
+  --ink-2:        #2E2E2E;
+  --ink-3:        #626262;
+  --ink-4:        #A6A6A6;
+  --accent:       #1840B8;
+  --accent-soft:  #EDF1FF;
+  --accent-dark:  #112E90;
+  --saffron:      #E87820;
+  --saffron-soft: #FFF4E8;
+  --green:        #1B7A3C;
+  --green-soft:   #E6F5EB;
+  --red:          #D42E1F;
+  --red-soft:     #FFF0EE;
+  --border:       #DEDEDE;
+  --border-dark:  #181F38;
+
+  /* Dark-surface text — all verified WCAG AA on #090D1C */
+  --dk-text-primary:   #C8D0E8; /* ~12:1 contrast */
+  --dk-text-secondary: #9BA5CC; /* ~8.3:1 contrast */
+  --dk-text-tertiary:  #7A85B0; /* ~5.6:1 contrast */
+  --dk-label:          #6878A8; /* ~4.6:1 contrast — passes AA small text */
+
+  --display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --body:    'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* BACK NAV */
+.pf-back {
+  position: fixed; top: 22px; left: 28px; z-index: 100;
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-4); text-decoration: none;
+  transition: color .18s;
+}
+.pf-back:hover { color: var(--ink) }
+.pf-back svg { width: 13px; height: 13px }
+
+/* PROGRESS */
+#progress {
+  position: fixed; top: 0; left: 0;
+  height: 3px; width: 0%;
+  background: var(--saffron); z-index: 200;
+  transition: width .08s linear;
+}
+
+/* PANEL SYSTEM */
+.panel { padding: 80px 64px; border-bottom: 1px solid var(--border) }
+.panel-inner { max-width: 1100px; margin: 0 auto }
+.panel--alt  { background: var(--bg-2) }
+.panel--dark { background: var(--bg-dark); border-bottom: 1px solid var(--border-dark) }
+.panel:last-child { border-bottom: none }
+
+/* LABELS — single size: 10px */
+.sec-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--ink-4); display: flex; align-items: center; gap: 12px;
+  margin-bottom: 36px;
+}
+.sec-label::before {
+  content: ''; display: block; width: 24px; height: 2px;
+  background: var(--saffron); flex-shrink: 0;
+}
+.panel--dark .sec-label { color: var(--dk-label) }
+.panel--dark .sec-label::before { background: var(--saffron) }
+.panel--alt .sec-label::before { background: var(--ink-4) }
+
+/* HEADINGS */
+.sec-h {
+  font-family: var(--display);
+  font-size: clamp(24px, 3vw, 38px);
+  font-weight: 700; line-height: 1.1; letter-spacing: -.025em;
+  color: var(--ink); margin-bottom: 8px;
+}
+.sec-h em { font-style: normal; color: var(--ink-3); font-weight: 400 }
+.sec-sub {
+  font-size: 14px; color: var(--ink-3);
+  line-height: 1.75; max-width: 580px; margin-bottom: 36px;
+}
+
+/* HERO */
+.hero {
+  background: var(--bg-dark); padding: 0;
+  border-bottom: none; overflow: hidden; position: relative;
+}
+.hero::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 55% 60% at 85% 15%, rgba(24,64,184,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 15% 85%, rgba(232,120,32,.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 1100px; margin: 0 auto;
+  padding: 100px 64px 72px;
+}
+.hero-eyebrow {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--saffron); margin-bottom: 32px;
+  display: flex; align-items: center; gap: 16px;
+}
+.hero-eyebrow span { color: var(--dk-label) }
+.hero-eyebrow span + span::before { content: '·'; margin-right: 16px; color: var(--dk-label) }
+.hero-h1 {
+  font-family: var(--display);
+  font-size: clamp(40px, 5.5vw, 72px);
+  font-weight: 800; line-height: 1.0; letter-spacing: -.035em;
+  color: #E8ECF5; max-width: 17ch; margin-bottom: 28px;
+}
+.hero-h1 em { font-style: normal; color: var(--saffron); font-weight: 800 }
+.hero-lead {
+  font-size: 16px; line-height: 1.75;
+  color: var(--dk-text-secondary);
+  max-width: 600px; margin-bottom: 56px;
+}
+.hero-meta {
+  display: flex; gap: 0;
+  border-top: 1px solid var(--border-dark); padding-top: 28px;
+}
+.hero-meta-item {
+  padding-right: 28px; margin-right: 28px;
+  border-right: 1px solid var(--border-dark);
+}
+.hero-meta-item:last-child { border-right: none }
+.hm-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dk-label); margin-bottom: 4px;
+}
+.hm-value { font-size: 13px; font-weight: 500; color: var(--dk-text-secondary) }
+
+/* AT A GLANCE — two column */
+.scan-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: start;
+}
+.scan-facts { display: flex; flex-direction: column; gap: 24px }
+.sf-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-4); margin-bottom: 7px;
+}
+.sf-text { font-size: 14px; color: var(--ink-2); line-height: 1.7 }
+.sf-text strong { color: var(--ink); font-weight: 700 }
+.sd-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-4); margin-bottom: 14px;
+}
+.sd-list { list-style: none }
+.sd-item {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--ink-2); line-height: 1.55;
+}
+.sd-item:last-child { border-bottom: none }
+.sd-marker { color: var(--saffron); flex-shrink: 0; font-size: 12px; font-weight: 700 }
+.sd-decision-title { font-weight: 700; color: var(--ink); display: block; margin-bottom: 2px }
+
+/* STATS */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 8px;
+}
+.stat-card { padding: 24px 20px; border-right: 1px solid var(--border) }
+.stat-card:last-child { border-right: none }
+.stat-num {
+  font-family: var(--display); font-size: 38px; font-weight: 800;
+  line-height: 1; margin-bottom: 6px; letter-spacing: -.03em; color: var(--ink);
+}
+.stat-label { font-size: 12px; color: var(--ink-3); line-height: 1.5 }
+
+/* FEATURES */
+.features-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 28px;
+}
+.feat-card { padding: 20px 22px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border) }
+.feat-card:nth-child(2n) { border-right: none }
+.feat-card:nth-child(n+3) { border-bottom: none }
+.feat-card.feat-wide { grid-column: 1 / -1; border-right: none; border-bottom: none }
+.feat-card.feat-accent { background: var(--accent-soft) }
+.feat-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px }
+.feat-desc { font-size: 12px; color: var(--ink-3); line-height: 1.65 }
+
+/* DESKTOP SCREENSHOT */
+.desktop-screen-wrap {
+  margin-top: 32px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.desktop-screen-bar {
+  background: var(--bg-2); border-bottom: 1px solid var(--border);
+  padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+}
+.desktop-screen-dots { display: flex; gap: 5px }
+.desktop-screen-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border) }
+.desktop-screen-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4);
+}
+.desktop-screen-body { position: relative; background: var(--bg-2); min-height: 240px; display: flex; align-items: center; justify-content: center }
+.desktop-screen-body img { width: 100%; display: block }
+.desktop-img-ph {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px; padding: 20px;
+}
+.desktop-img-ph-label { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4) }
+.desktop-img-ph-name { font-family: var(--display); font-size: 14px; color: var(--ink-3) }
+.desktop-img-ph-path { font-size: 12px; color: var(--ink-4); font-family: monospace }
+
+/* SCOPE GRID */
+.scope-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 28px;
+}
+.scope-col { border-right: 1px solid var(--border) }
+.scope-col:last-child { border-right: none }
+.scope-head {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.scope-head.yes { color: var(--green); background: var(--green-soft) }
+.scope-head.no  { color: var(--red);   background: var(--red-soft) }
+.scope-item {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-size: 12px; color: var(--ink-2); line-height: 1.5;
+}
+.scope-item:last-child { border-bottom: none }
+
+/* SCREEN STRIP — dark panel, 3-up */
+.screen-panel {
+  padding: 0; background: var(--bg-dark);
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+}
+.screen-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  max-width: 1100px; margin: 0 auto;
+}
+.screen-item { border-right: 1px solid var(--border-dark) }
+.screen-item:last-child { border-right: none }
+.screen-visual {
+  padding: 36px 28px 24px;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 220px;
+}
+.phone {
+  width: 120px;
+  border: 1.5px solid #202844; border-radius: 20px;
+  background: #111626; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+.phone-notch {
+  height: 14px; background: #090D1C;
+  display: flex; align-items: center; justify-content: center;
+}
+.phone-notch::after {
+  content: ''; width: 28px; height: 4px;
+  background: #1C2440; border-radius: 2px;
+}
+.phone-screen {
+  min-height: 180px; background: #141A30;
+  position: relative; overflow: hidden;
+}
+.phone-screen img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; position: absolute; inset: 0;
+}
+.phone-screen-info {
+  padding: 12px 10px; min-height: 180px;
+  display: flex; flex-direction: column;
+  gap: 4px; align-items: center; justify-content: center; text-align: center;
+}
+.phone-screen-num {
+  font-family: var(--body); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; color: var(--saffron); margin-bottom: 4px;
+}
+.phone-screen-name {
+  font-family: var(--body); font-size: 10px; color: var(--dk-text-tertiary); line-height: 1.3;
+}
+.screen-cap { padding: 14px 20px 22px; border-top: 1px solid var(--border-dark) }
+.screen-cap-num {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dk-label); display: block; margin-bottom: 5px;
+}
+.screen-cap-text { font-size: 12px; color: var(--dk-text-secondary); line-height: 1.6 }
+
+/* PIVOT BLOCK */
+.pivot-block {
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 20px;
+}
+.pivot-row {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+.pivot-row:last-child { border-bottom: none }
+.pivot-marker {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-4); padding: 14px 16px;
+  border-right: 1px solid var(--border);
+  min-width: 96px; flex-shrink: 0;
+  display: flex; align-items: center;
+  background: var(--bg-2);
+}
+.pivot-text { padding: 14px 18px; font-size: 13px; color: var(--ink-2); line-height: 1.65 }
+.pivot-row.after .pivot-marker { color: var(--saffron); background: var(--saffron-soft) }
+.pivot-row.after .pivot-text { color: var(--ink); font-weight: 500 }
+
+/* DECISION CARDS */
+.decisions {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; margin-top: 8px;
+}
+.dc {
+  border-bottom: 1px solid var(--border);
+  padding: 22px 24px;
+  display: grid; grid-template-columns: 28px 1fr;
+  gap: 16px; align-items: start;
+  transition: background .15s;
+}
+.dc:last-child { border-bottom: none }
+.dc:hover { background: var(--bg-2) }
+.dc-num {
+  font-family: var(--body); font-size: 10px; font-weight: 700;
+  color: var(--saffron); letter-spacing: .06em; padding-top: 2px;
+}
+.dc-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px; line-height: 1.4 }
+.dc-toggle {
+  display: flex; gap: 8px; margin-bottom: 8px;
+  flex-wrap: wrap; align-items: baseline;
+}
+.dc-rejected { font-size: 12px; color: var(--ink-4); text-decoration: line-through; line-height: 1.5 }
+.dc-chosen { font-size: 12px; color: var(--green); font-weight: 600; line-height: 1.5 }
+.dc-sep { color: var(--border); font-size: 12px; align-self: center; flex-shrink: 0 }
+.dc-why-hl {
+  margin-top: 8px; padding: 10px 14px;
+  background: var(--accent-soft); border-left: 2px solid var(--accent);
+  font-size: 12px; color: var(--accent); line-height: 1.65;
+}
+
+/* SCREEN AFTER DECISION */
+.dc-screen {
+  margin-top: 16px; border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; background: var(--bg-2);
+  display: flex; gap: 12px; padding: 14px; align-items: flex-start;
+}
+.dc-screen-phone {
+  flex-shrink: 0; width: 80px;
+  border: 1.5px solid #C8C8C8; border-radius: 14px;
+  background: #1A1A2E; overflow: hidden;
+}
+.dc-screen-phone-notch {
+  height: 10px; background: #090D1C;
+  display: flex; align-items: center; justify-content: center;
+}
+.dc-screen-phone-notch::after {
+  content: ''; width: 18px; height: 3px;
+  background: #1C2440; border-radius: 2px;
+}
+.dc-screen-phone-body {
+  min-height: 130px; background: #141A30;
+  position: relative; overflow: hidden;
+}
+.dc-screen-phone-body img {
+  width: 100%; height: 100%; object-fit: cover;
+  position: absolute; inset: 0; display: block;
+}
+.dc-screen-phone-info {
+  min-height: 130px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  text-align: center; padding: 8px;
+}
+.dc-screen-phone-num { font-family: var(--body); font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--saffron) }
+.dc-screen-phone-name { font-family: var(--body); font-size: 10px; color: var(--dk-text-tertiary); line-height: 1.3 }
+.dc-screen-caption { flex: 1 }
+.dc-screen-caption-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 5px;
+}
+.dc-screen-caption-text { font-size: 12px; color: var(--ink-2); line-height: 1.65 }
+
+/* AC DEMO (inside decision 01) */
+.assessment-card {
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 14px;
+}
+.ac-header {
+  background: linear-gradient(135deg, var(--bg-dark) 0%, var(--accent) 100%);
+  padding: 16px 20px;
+}
+.ac-header-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 4px;
+}
+.ac-header-title {
+  font-family: var(--display); font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3;
+}
+.ac-zones { display: grid; grid-template-columns: repeat(3, 1fr) }
+.ac-zone { padding: 14px 16px; border-right: 1px solid var(--border) }
+.ac-zone:last-child { border-right: none }
+.ac-zone-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 6px;
+}
+.ac-zone-body { font-size: 12px; color: var(--ink-2); line-height: 1.6 }
+.ac-zone-body strong { color: var(--ink); font-weight: 700 }
+.ac-footer {
+  padding: 10px 16px; background: var(--accent-soft);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.citation-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent); border-radius: 4px; padding: 3px 9px;
+  font-family: var(--body); font-size: 10px; font-weight: 600; color: #fff;
+}
+.citation-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.5) }
+.ac-footer-note { font-size: 11px; color: var(--accent); font-weight: 600 }
+
+/* COMPACT EDGE STATES (inside decisions panel) */
+.edge-states-compact {
+  margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px;
+}
+.edge-states-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--ink-4);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+}
+.edge-states-label::before {
+  content: ''; display: block; width: 16px; height: 2px;
+  background: var(--border); flex-shrink: 0;
+}
+.edge-row {
+  display: grid; grid-template-columns: 160px 1fr;
+  border-bottom: 1px solid var(--border); padding: 10px 0;
+  font-size: 12px;
+}
+.edge-row:last-child { border-bottom: none }
+.edge-state-name { color: var(--ink); font-weight: 600; padding-right: 16px }
+.edge-state-desc { color: var(--ink-3); line-height: 1.55 }
+.edge-state-desc strong { color: var(--ink-2); font-weight: 600 }
+
+/* WHY NOT section */
+.why-not-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 20px;
+}
+.why-not-card { padding: 20px 22px; border-right: 1px solid var(--border) }
+.why-not-card:last-child { border-right: none }
+.why-not-num {
+  font-family: var(--body); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; color: var(--saffron); margin-bottom: 8px;
+}
+.why-not-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; line-height: 1.4 }
+.why-not-body { font-size: 12px; color: var(--ink-3); line-height: 1.65 }
+
+/* SARVAM UPDATE */
+.update-card {
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 20px;
+}
+.update-card-header {
+  background: var(--saffron-soft); border-bottom: 1px solid var(--border);
+  padding: 10px 18px; display: flex; align-items: center; gap: 10px;
+}
+.update-tag {
+  font-family: var(--body); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--saffron); background: rgba(232,120,32,.12);
+  border: 1px solid rgba(232,120,32,.2);
+  border-radius: 4px; padding: 2px 8px;
+}
+.update-card-title { font-size: 13px; font-weight: 700; color: var(--ink-2) }
+.update-card-body { padding: 18px 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px }
+.update-block-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 6px;
+}
+.update-block-text { font-size: 13px; color: var(--ink-2); line-height: 1.7 }
+.prototype-link {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+  font-size: 12px; font-weight: 700; color: var(--accent); text-decoration: none;
+  border: 1px solid var(--accent); border-radius: 5px; padding: 5px 12px;
+  opacity: .5; cursor: not-allowed;
+}
+.prototype-link-note { font-size: 11px; color: var(--ink-4); margin-top: 4px }
+
+/* ONE FLOW */
+.flow-strip {
+  display: flex; align-items: center; gap: 0;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 20px;
+}
+.flow-step {
+  flex: 1; padding: 16px 14px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.flow-step:last-child { border-right: none }
+.flow-step-num {
+  font-family: var(--body); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; color: var(--saffron);
+}
+.flow-step-name { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.3 }
+.flow-step-desc { font-size: 11px; color: var(--ink-4); line-height: 1.4; margin-top: 2px }
+.flow-arrow {
+  flex-shrink: 0; color: var(--ink-4); font-size: 12px;
+  display: flex; align-items: center; padding: 0 2px;
+}
+
+/* METRICS */
+.metrics-list {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  margin-top: 8px;
+}
+.metric-row {
+  display: grid; grid-template-columns: 180px 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.metric-row:last-child { border-bottom: none }
+.metric-name { padding: 16px 18px; background: var(--bg-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center }
+.metric-title { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; letter-spacing: -.01em }
+.metric-type { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--saffron) }
+.metric-desc { padding: 16px 18px; font-size: 12px; color: var(--ink-2); line-height: 1.65; display: flex; align-items: center }
+
+/* REFLECTION */
+.ref-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px }
+.ref-card { border: 1px solid var(--border); border-radius: 8px; overflow: hidden }
+.ref-head { padding: 8px 14px; font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; border-bottom: 1px solid var(--border) }
+.ref-head.warn { color: var(--red); background: var(--red-soft) }
+.ref-head.open { color: var(--saffron); background: var(--saffron-soft) }
+.ref-body { padding: 14px; font-size: 13px; color: var(--ink-2); line-height: 1.7 }
+
+.pullquote {
+  font-family: var(--display);
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 700;
+  color: var(--ink-3); line-height: 1.4; letter-spacing: -.015em;
+  border-left: 3px solid var(--saffron);
+  padding-left: 24px; margin-top: 32px;
+}
+
+/* UI REEL (CTA) */
+.ui-reel {
+  width: 100%; overflow: hidden; position: relative;
+  border-top: 1px solid var(--border-dark); padding: 32px 0;
+}
+.ui-reel::before, .ui-reel::after {
+  content: ''; position: absolute; top: 0; bottom: 0; z-index: 2; width: 80px; pointer-events: none;
+}
+.ui-reel::before { left: 0; background: linear-gradient(to right, var(--bg-dark), transparent) }
+.ui-reel::after  { right: 0; background: linear-gradient(to left, var(--bg-dark), transparent) }
+.reel-track {
+  display: flex; gap: 20px;
+  animation: reelScroll 28s linear infinite;
+  width: max-content;
+}
+.reel-track:hover { animation-play-state: paused }
+@keyframes reelScroll {
+  0%   { transform: translateX(0) }
+  100% { transform: translateX(-50%) }
+}
+.reel-phone {
+  flex-shrink: 0; width: 100px;
+  border: 1.5px solid var(--border-dark); border-radius: 18px;
+  background: #111626; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.reel-notch { height: 12px; background: #090D1C; display: flex; align-items: center; justify-content: center }
+.reel-notch::after { content: ''; width: 22px; height: 3px; background: #1C2440; border-radius: 2px }
+.reel-screen {
+  height: 150px; background: #141A30;
+  position: relative; overflow: hidden;
+}
+.reel-screen img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: block }
+.reel-screen-info {
+  height: 150px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  text-align: center; padding: 8px;
+}
+.reel-num { font-family: var(--body); font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--saffron) }
+.reel-name { font-family: var(--body); font-size: 10px; color: var(--dk-text-tertiary); line-height: 1.3 }
+
+/* CTA */
+.cta-panel { background: var(--bg-dark); padding: 0; border-bottom: none }
+.cta-inner {
+  max-width: 1100px; margin: 0 auto; padding: 72px 64px;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 48px;
+}
+.cta-label {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--dk-label); margin-bottom: 14px;
+}
+.cta-h3 {
+  font-family: var(--display); font-size: clamp(26px, 3.2vw, 40px);
+  font-weight: 800; color: #E0E6F5; line-height: 1.05;
+  letter-spacing: -.03em; margin-bottom: 12px;
+}
+.cta-desc { font-size: 13px; color: var(--dk-text-secondary); line-height: 1.7; max-width: 500px }
+.cta-actions { display: flex; align-items: flex-start; gap: 14px; flex-shrink: 0; flex-direction: column }
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--saffron); color: #fff; text-decoration: none;
+  font-family: var(--body); font-size: 14px; font-weight: 700;
+  padding: 14px 24px; border-radius: 7px;
+  white-space: nowrap; transition: opacity .18s, transform .15s;
+}
+.cta-btn:hover { opacity: .88; transform: translateY(-2px) }
+.cta-btn svg { width: 13px; height: 13px }
+.cta-read-time {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--dk-label);
+}
+
+/* PROJECT NAV */
+.pf-project-nav { background: var(--bg-dark); padding: 0; border-top: 1px solid var(--border-dark) }
+.pf-nav-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border-dark);
+}
+.pf-pnav-card {
+  background: var(--bg-dark); padding: 28px 36px;
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: background .18s;
+}
+.pf-pnav-card:hover { background: var(--bg-dark-2) }
+.pf-pnav-card.right { text-align: right }
+.pf-pnav-dir {
+  font-family: var(--body); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dk-label);
+}
+.pf-pnav-title {
+  font-family: var(--display); font-size: 20px; font-weight: 700;
+  color: var(--dk-text-primary); letter-spacing: -.01em;
+}
+.pf-pnav-sub { font-family: var(--body); font-size: 12px; color: var(--dk-text-tertiary) }
+
+/* ANIMATIONS */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease }
+.reveal.visible { opacity: 1; transform: none }
+.delay-1 { transition-delay: .1s }
+.delay-2 { transition-delay: .2s }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .panel { padding: 56px 28px }
+  .hero-inner { padding: 72px 28px 52px }
+  .scan-grid { grid-template-columns: 1fr; gap: 36px }
+  .stats-grid, .features-grid, .scope-grid { grid-template-columns: 1fr }
+  .stat-card, .feat-card { border-right: none; border-bottom: 1px solid var(--border) }
+  .stat-card:last-child, .feat-card:last-child { border-bottom: none }
+  .scope-col { border-right: none; border-bottom: 1px solid var(--border) }
+  .scope-col:last-child { border-bottom: none }
+  .ac-zones { grid-template-columns: 1fr }
+  .ac-zone { border-right: none; border-bottom: 1px solid var(--border) }
+  .ac-zone:last-child { border-bottom: none }
+  .screen-strip { grid-template-columns: 1fr }
+  .screen-item { border-right: none; border-bottom: 1px solid var(--border-dark) }
+  .screen-item:last-child { border-bottom: none }
+  .metric-row { grid-template-columns: 1fr }
+  .metric-name { border-right: none; border-bottom: 1px solid var(--border) }
+  .ref-grid { grid-template-columns: 1fr }
+  .dc { grid-template-columns: 28px 1fr }
+  .cta-inner { flex-direction: column; align-items: flex-start; padding: 52px 28px }
+  .pf-nav-inner { grid-template-columns: 1fr }
+  .hero-meta { flex-wrap: wrap; gap: 16px }
+  .hero-meta-item { border-right: none; margin-right: 0 }
+  .why-not-grid { grid-template-columns: 1fr }
+  .why-not-card { border-right: none; border-bottom: 1px solid var(--border) }
+  .why-not-card:last-child { border-bottom: none }
+  .update-card-body { grid-template-columns: 1fr }
+  .flow-strip { flex-wrap: wrap }
+  .flow-step { border-right: none; border-bottom: 1px solid var(--border) }
+  .flow-arrow { display: none }
+  .edge-row { grid-template-columns: 1fr }
+  .edge-state-name { padding-right: 0; padding-bottom: 4px; border-bottom: none }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a class="pf-back" href="index.html">
+  <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg>
+  Portfolio
+</a>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span>LokAI</span>
+      <span>Product Design · AI · Civic Tech</span>
+      <span>India</span>
+    </div>
+    <h1 class="hero-h1">Designing AI that <em>knows its place</em> in Indian law.</h1>
+    <p class="hero-lead">A multilingual guided decision system that takes an Indian citizen from a legal situation they don't understand to a document they can actually file — in their own language, in a single session.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hm-label">Role</div><div class="hm-value">End-to-end product design</div></div>
+      <div class="hero-meta-item"><div class="hm-label">Type</div><div class="hm-value">Speculative · Portfolio</div></div>
+      <div class="hero-meta-item"><div class="hm-label">Platform</div><div class="hm-value">Mobile · Web</div></div>
+      <div class="hero-meta-item"><div class="hm-label">Year</div><div class="hm-value">2025</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- AT A GLANCE -->
+<div class="panel reveal">
+  <div class="panel-inner">
+    <div class="scan-grid">
+      <div class="scan-facts">
+        <div>
+          <div class="sf-label">What it is</div>
+          <div class="sf-text">A mobile app for Indian citizens facing a legal situation they don't know how to act on. You describe your situation — in voice, text, or photo, in any Indian language — and LokAI tells you your legal position, names the exact law that applies, and produces a document you can file. Not a chatbot. Not a legal encyclopedia. A pathway from "I received this notice and I don't know what it means" to "I have something I can actually do."</div>
+        </div>
+        <div>
+          <div class="sf-label">Who it's for</div>
+          <div class="sf-text">A migrant worker in Maharashtra gets an eviction notice in Marathi. She can't read it. The system built to help her — consumer courts, RTI portals, NALSA helplines — assumes she already knows what the notice means and what to do next. That assumption fails 800 million people. <strong>LokAI is designed for that first step.</strong></div>
+        </div>
+        <div>
+          <div class="sf-label">Core idea</div>
+          <div class="sf-text">Understanding was never the barrier. The barrier is the first step. Every response ends in something the user can do. <strong>Success is not whether they read the response — it's whether they filed.</strong></div>
+        </div>
+      </div>
+      <div>
+        <div class="sd-label">Four decisions that shaped the product</div>
+        <ul class="sd-list">
+          <li class="sd-item">
+            <span class="sd-marker">→</span>
+            <div>
+              <span class="sd-decision-title">The output shifts mode, not just format</span>
+              Chat for intake — anxious users need a conversational surface. Assessment Card for output — legal facts need structure you can scan. The modality shift is the product.
+            </div>
+          </li>
+          <li class="sd-item">
+            <span class="sd-marker">→</span>
+            <div>
+              <span class="sd-decision-title">Citations instead of confidence scores</span>
+              An "87% confident" badge ends with LokAI. A cited RTI Act § 7(1) opens outward — the user can show it to a lawyer, a friend, a court clerk. Verifiability is the trust mechanism.
+            </div>
+          </li>
+          <li class="sd-item">
+            <span class="sd-marker">→</span>
+            <div>
+              <span class="sd-decision-title">Four use cases, explicitly defined — everything else declined</span>
+              RTI, consumer complaints, demand notices, notice interpretation. Anything outside that gets a calm redirect with a named human pathway. Breadth without reliability is a different kind of harm.
+            </div>
+          </li>
+          <li class="sd-item">
+            <span class="sd-marker">→</span>
+            <div>
+              <span class="sd-decision-title">Legal facts stay pinned while the conversation continues</span>
+              High-consequence information doesn't scroll away. A sticky sidebar keeps the user's legal position visible while they follow up. No memory tax on an anxious user.
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- THE PRODUCT -->
+<div class="panel panel--alt reveal">
+  <div class="panel-inner">
+    <div class="sec-label">What LokAI Does</div>
+    <h2 class="sec-h">Not a general chatbot. <em>Conversational intake, structured output.</em></h2>
+    <p class="sec-sub">Landlord notices, consumer complaints, employer violations, platform account terminations. A user describes their situation by voice, text, or photo — LokAI asks clarifying questions, then surfaces a structured Assessment Card with cited legal basis and a ready-to-file document.</p>
+    <div class="stats-grid reveal delay-1">
+      <div class="stat-card">
+        <div class="stat-num">5M+</div>
+        <div class="stat-label">Pending consumer court cases — not for lack of legal standing, but because most disputes never become formal filings</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">80%</div>
+        <div class="stat-label">Of India does not primarily use English — India's legal system operates almost entirely in English</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Existing tools designed for the emotional state of an anxious citizen rather than a curious researcher</div>
+      </div>
+    </div>
+    <div class="features-grid reveal delay-2">
+      <div class="feat-card">
+        <div class="feat-title">Voice experience — the primary input surface</div>
+        <div class="feat-desc">The home screen opens with a voice orb. Tap and speak in any Indian language — Hindi, Tamil, Bengali, Marathi, or Romanized text. Transcription appears below in real time. If microphone access is denied, the surface shifts to native-script text input. Full functionality is retained — voice is preferred, not required.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-title">Multilingual — processed natively, not translated</div>
+        <div class="feat-desc">Powered by Sarvam AI. Tamil, Bengali, Marathi, Hindi processed without routing through English — legal nuance survives the language gap. A term that translates ambiguously in English is resolved in the source language instead.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-title">Notice Interpreter — photo to plain-language breakdown</div>
+        <div class="feat-desc">A Marathi notice photographed and uploaded returns a split-screen interpretation. The deadline becomes the largest, highest-contrast element — because inaction on a deadline is the highest-consequence failure state.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-title">Pinned citation sidebar — memory tax, eliminated</div>
+        <div class="feat-desc">High-consequence legal facts pin to a right-hand sidebar. The conversational thread scrolls on the left; the core legal position stays visible on the right. The user never loses their leverage while following up.</div>
+      </div>
+    </div>
+
+    <!-- Desktop screenshot -->
+    <div class="desktop-screen-wrap reveal delay-2" style="margin-top:32px">
+      <div class="desktop-screen-bar">
+        <div class="desktop-screen-dots">
+          <div class="desktop-screen-dot"></div>
+          <div class="desktop-screen-dot"></div>
+          <div class="desktop-screen-dot"></div>
+        </div>
+        <div class="desktop-screen-label">Desktop — Home</div>
+      </div>
+      <div class="desktop-screen-body">
+        <img src="assets/lokai/lokai-desktop-home.png" alt="LokAI desktop homepage" onerror="this.style.display='none'">
+        <div class="desktop-img-ph">
+          <div class="desktop-img-ph-label">Screenshot placeholder</div>
+          <div class="desktop-img-ph-name">LokAI — Desktop Homepage</div>
+          <div class="desktop-img-ph-path">assets/lokai/lokai-desktop-home.png</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scope -->
+    <div class="scope-grid reveal delay-2">
+      <div class="scope-col">
+        <div class="scope-head yes">LokAI will</div>
+        <div class="scope-item">Tell you your legal position, clearly and in plain language</div>
+        <div class="scope-item">Generate RTI applications and consumer complaints</div>
+        <div class="scope-item">Interpret government notices in any Indian language</div>
+        <div class="scope-item">Route you to human help when it cannot assist</div>
+      </div>
+      <div class="scope-col">
+        <div class="scope-head no">LokAI will not</div>
+        <div class="scope-item">Replace a lawyer or provide legal advice</div>
+        <div class="scope-item">Handle criminal law, bail, or court proceedings</div>
+        <div class="scope-item">File documents on your behalf</div>
+        <div class="scope-item">Guarantee outcomes or legal accuracy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN STRIP 01–03 -->
+<div class="panel screen-panel reveal">
+  <div class="screen-strip">
+    <div class="screen-item">
+      <div class="screen-visual">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <img src="assets/lokai/lokai-screen-01-home.png" alt="LokAI Home screen" onerror="this.style.display='none'">
+            <div class="phone-screen-info">
+              <div class="phone-screen-num">01</div>
+              <div class="phone-screen-name">Home — voice orb</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-cap">
+        <span class="screen-cap-num">01 / Voice Input</span>
+        <div class="screen-cap-text">Voice orb as the primary input. Tap and speak in any Indian language. Transcription appears below in real time. The product starts where the user is — not where the legal system expects them to be.</div>
+      </div>
+    </div>
+    <div class="screen-item">
+      <div class="screen-visual">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <img src="assets/lokai/lokai-screen-02-assessment-card.png" alt="Assessment Card" onerror="this.style.display='none'">
+            <div class="phone-screen-info">
+              <div class="phone-screen-num">02</div>
+              <div class="phone-screen-name">Assessment Card</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-cap">
+        <span class="screen-cap-num">02 / Assessment Card</span>
+        <div class="screen-cap-text">Three-zone structured output: The Law / Your Position / What You Can Do. Citation stamp below the legal zone — sources named and tappable. Action CTA anchored to bottom.</div>
+      </div>
+    </div>
+    <div class="screen-item">
+      <div class="screen-visual">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <img src="assets/lokai/lokai-screen-03-notice-interpreter.png" alt="Notice Interpreter" onerror="this.style.display='none'">
+            <div class="phone-screen-info">
+              <div class="phone-screen-num">03</div>
+              <div class="phone-screen-name">Notice Interpreter</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-cap">
+        <span class="screen-cap-num">03 / Notice Interpreter</span>
+        <div class="screen-cap-text">Left: original Marathi notice with OCR status. Right: three-zone interpretation. Legal deadline becomes the largest saffron-bordered element — highest visual weight, highest consequence for inaction.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESEARCH PIVOT -->
+<div class="panel panel--alt reveal">
+  <div class="panel-inner">
+    <div class="sec-label">Research Direction</div>
+    <h2 class="sec-h">Four competitors already existed. The differentiator had to be <em>experience, not features.</em></h2>
+    <p class="sec-sub">NyayGuru, JuniorLawyer, VakilAI, LawLens — all had reasonable multilingual coverage. The gap in all four was the same: built by developers to demonstrate capability, not designed from the user's emotional state outward.</p>
+    <div class="pivot-block reveal delay-1">
+      <div class="pivot-row">
+        <div class="pivot-marker">Before</div>
+        <div class="pivot-text">Build a better legal Wikipedia: multilingual, comprehensive, well-structured.</div>
+      </div>
+      <div class="pivot-row">
+        <div class="pivot-marker">Finding</div>
+        <div class="pivot-text">I started with a comprehension problem. Two weeks in, every feature I was drawn to was an action feature: document generators, not explainers. The problem was never reading. It was filing.</div>
+      </div>
+      <div class="pivot-row after">
+        <div class="pivot-marker">After</div>
+        <div class="pivot-text">Every response must end in something the user can do. The product's measure of success is not whether they understood — but whether they filed.</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--ink-4);margin-top:12px;">One user interview at the point of abandonment would have surfaced this in an afternoon. All research here was desk research. That gap is honest about its consequences: every assumption about the action step is designed, not observed.</p>
+  </div>
+</div>
+
+<!-- KEY DECISIONS -->
+<div class="panel reveal">
+  <div class="panel-inner">
+    <div class="sec-label">Key Design Decisions</div>
+    <h2 class="sec-h">Three decisions that shaped the product itself, <em>not just the interface.</em></h2>
+    <div class="decisions reveal delay-1">
+
+      <!-- DECISION 01 -->
+      <div class="dc">
+        <div class="dc-num">01</div>
+        <div class="dc-body">
+          <div class="dc-title">Hybrid interface — conversational intake, Assessment Card output. Three-zone structured response.</div>
+          <div class="dc-toggle">
+            <span class="dc-rejected">Single-mode chat thread throughout, with "VerdictCard" output. Legal analysis, verdict, next steps — structured like a judge's summary.</span>
+            <span class="dc-sep">→</span>
+            <span class="dc-chosen">Two modes: chat bubbles for intake and clarification. Once a legal conclusion is reached, the UI shifts to a structured Assessment Card — THE LAW / YOUR POSITION / WHAT YOU CAN DO — surfaced inline in the thread. The name change from VerdictCard is also part of this decision.</span>
+          </div>
+          <div class="dc-why-hl">Legal information in a scrolling chat is unscannable. A purely structured form feels robotic to someone already anxious. The deliberate mode shift is the product. "VerdictCard" implies judicial finality LokAI has no authority to deliver — the name is where the trust boundary is set, before the user reads a word of the output.</div>
+
+          <!-- Assessment Card demo -->
+          <div class="assessment-card">
+            <div class="ac-header">
+              <div class="ac-header-label">LokAI Assessment Card</div>
+              <div class="ac-header-title">Landlord notice claiming unpaid rent — Maharashtra Rent Control Act</div>
+            </div>
+            <div class="ac-zones">
+              <div class="ac-zone">
+                <div class="ac-zone-label">The Law</div>
+                <div class="ac-zone-body">Under the MRC Act, a landlord cannot issue an eviction notice without first providing a written rent demand and a 30-day cure period.</div>
+              </div>
+              <div class="ac-zone">
+                <div class="ac-zone-label">Your Position</div>
+                <div class="ac-zone-body"><strong>You have legal standing.</strong> If no written demand preceded this notice, the notice is procedurally invalid.</div>
+              </div>
+              <div class="ac-zone">
+                <div class="ac-zone-label">What You Can Do</div>
+                <div class="ac-zone-body">Send a demand notice disputing the eviction. Generate the document below — it cites the specific section that applies.</div>
+              </div>
+            </div>
+            <div class="ac-footer">
+              <div class="citation-chip"><div class="citation-dot"></div>MRC Act § 12(3)</div>
+              <div class="citation-chip"><div class="citation-dot"></div>CPC Order 37</div>
+              <span class="ac-footer-note">Sources cited · Tap to verify</span>
+            </div>
+          </div>
+
+          <!-- Screen after decision 01 -->
+          <div class="dc-screen">
+            <div class="dc-screen-phone">
+              <div class="dc-screen-phone-notch"></div>
+              <div class="dc-screen-phone-body">
+                <img src="assets/lokai/lokai-screen-02-assessment-card.png" alt="Assessment Card" onerror="this.style.display='none'">
+                <div class="dc-screen-phone-info">
+                  <div class="dc-screen-phone-num">02</div>
+                  <div class="dc-screen-phone-name">Assessment Card</div>
+                </div>
+              </div>
+            </div>
+            <div class="dc-screen-caption">
+              <div class="dc-screen-caption-label">Screen — Assessment Card</div>
+              <div class="dc-screen-caption-text">The chat thread shows the user's intake and LokAI's clarifying questions. The Assessment Card surfaces inline once a legal conclusion is reached — not on a separate page. The modality shift happens in context, not behind a navigation event.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DECISION 02 -->
+      <div class="dc">
+        <div class="dc-num">02</div>
+        <div class="dc-body">
+          <div class="dc-title">Citation stamp + pinned sidebar — verifiable trust that stays in view</div>
+          <div class="dc-toggle">
+            <span class="dc-rejected">Confidence badge ("87% confident") — a single chat thread where cited sections scroll off-screen as conversation continues</span>
+            <span class="dc-sep">→</span>
+            <span class="dc-chosen">Citation stamp in navy ("RTI Act 2005 · s.7(1)") is the only trust signal. High-consequence facts pin to a sticky sidebar — static while the conversation scrolls on the left.</span>
+          </div>
+          <div class="dc-why-hl">A confidence score ends with LokAI. A citation opens outward — the user can show it to a lawyer, a friend, a forum. Pinning it to a sidebar eliminates the memory tax: an anxious user should not have to scroll back through a conversation to find the section that applies to them.</div>
+
+          <!-- Screen after decision 02 -->
+          <div class="dc-screen">
+            <div class="dc-screen-phone">
+              <div class="dc-screen-phone-notch"></div>
+              <div class="dc-screen-phone-body">
+                <img src="assets/lokai/lokai-screen-05-citation-sidebar.png" alt="Citation sidebar" onerror="this.style.display='none'">
+                <div class="dc-screen-phone-info">
+                  <div class="dc-screen-phone-num">05</div>
+                  <div class="dc-screen-phone-name">Citation sidebar</div>
+                </div>
+              </div>
+            </div>
+            <div class="dc-screen-caption">
+              <div class="dc-screen-caption-label">Screen — Citation sidebar</div>
+              <div class="dc-screen-caption-text">The right column is static. Chat scrolls left; pinned legal position stays right. The user can continue asking follow-up questions without losing the core answer. Each citation chip is tappable — it opens the source statute directly.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DECISION 03 -->
+      <div class="dc">
+        <div class="dc-num">03</div>
+        <div class="dc-body">
+          <div class="dc-title">Defined scope over open-ended capability</div>
+          <div class="dc-toggle">
+            <span class="dc-rejected">An open chat covering all legal queries — maximally capable, but unreliable. General-purpose AI hallucinates across legal jurisdictions.</span>
+            <span class="dc-sep">→</span>
+            <span class="dc-chosen">RTI, consumer complaints, demand notices, and notice interpretation only. Everything else explicitly declined — with specific human pathways (NALSA, Nyaaya helpline, Connect).</span>
+          </div>
+          <div class="dc-why-hl">Reliability within a defined domain builds more trust than best-effort across an unbounded one. When something falls outside scope, the response is a calm redirect: "This needs a lawyer, not an AI." No red error state. The boundary is the product's integrity — and it's the only thing preventing LokAI from drafting a bail application for someone facing criminal charges.</div>
+
+          <!-- Screen after decision 03 -->
+          <div class="dc-screen">
+            <div class="dc-screen-phone">
+              <div class="dc-screen-phone-notch"></div>
+              <div class="dc-screen-phone-body">
+                <img src="assets/lokai/lokai-screen-10-out-of-scope.png" alt="Out of scope redirect" onerror="this.style.display='none'">
+                <div class="dc-screen-phone-info">
+                  <div class="dc-screen-phone-num">10</div>
+                  <div class="dc-screen-phone-name">Out-of-scope redirect</div>
+                </div>
+              </div>
+            </div>
+            <div class="dc-screen-caption">
+              <div class="dc-screen-caption-label">Screen — Scope boundary</div>
+              <div class="dc-screen-caption-text">When a query falls outside scope, LokAI names the reason calmly and provides a specific human pathway — NALSA, Nyaaya, or a Connect referral. No red state. No alarm. The user leaves with a next step, not a dead end.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compact edge states -->
+    <div class="edge-states-compact reveal delay-2">
+      <div class="edge-states-label">Edge states &amp; failure behaviour</div>
+      <div class="edge-row">
+        <div class="edge-state-name">Microphone denied</div>
+        <div class="edge-state-desc">Voice orb turns grey with a lock icon. Input shifts to native-script text. <strong>Full functionality retained</strong> — voice is preferred, not required. No error modal.</div>
+      </div>
+      <div class="edge-row">
+        <div class="edge-state-name">Network / model error</div>
+        <div class="edge-state-desc">Two recovery actions surface: <strong>Try again</strong> and <strong>Copy my message.</strong> The second matters most — the user typed out a stressful legal situation and should not lose it to a network failure.</div>
+      </div>
+      <div class="edge-row">
+        <div class="edge-state-name">OCR fail — notice upload</div>
+        <div class="edge-state-desc">Low-resolution photo returns a re-upload prompt with framing tips. <strong>Conversation context is preserved</strong> — no session reset, no cold start. The user does not begin again.</div>
+      </div>
+      <div class="edge-row">
+        <div class="edge-state-name">Out of scope</div>
+        <div class="edge-state-desc">Calm redirect with a named human pathway. No red state, no alarm. The boundary is stated plainly — <strong>"This needs a lawyer, not an AI."</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY NOT GEMINI / CHATGPT -->
+<div class="panel panel--alt reveal">
+  <div class="panel-inner">
+    <div class="sec-label">Why Not a General-Purpose LLM</div>
+    <h2 class="sec-h">Three failure modes that rule out <em>ChatGPT, Gemini, or any open-ended model.</em></h2>
+    <p class="sec-sub">This was an explicit design constraint, not a positioning choice. A general-purpose LLM fails in a legal access product in ways that are not just inconvenient — they are harmful.</p>
+    <div class="why-not-grid reveal delay-1">
+      <div class="why-not-card">
+        <div class="why-not-num">01</div>
+        <div class="why-not-title">No scope enforcement — confident in the wrong domain</div>
+        <div class="why-not-body">Ask ChatGPT to draft a bail application. It will. Confidently. A general-purpose model has no mechanism for "this is outside what I can reliably handle." For a product in legal contexts, that is not a UX problem — it is a harm problem. LokAI's scope boundary is enforced at the model behaviour level, not just shown as a UI message.</div>
+      </div>
+      <div class="why-not-card">
+        <div class="why-not-num">02</div>
+        <div class="why-not-title">Citations are hallucinated — there is no retrieval</div>
+        <div class="why-not-body">Ask GPT-4 about RTI Section 7(1) and it will give you a plausible-sounding answer. The statute reference may be wrong. The sub-section may not exist. LokAI uses retrieval-augmented generation against actual statute text — the citation is real, it is tappable, and the user can verify it independently.</div>
+      </div>
+      <div class="why-not-card">
+        <div class="why-not-num">03</div>
+        <div class="why-not-title">Indian languages go through English — nuance gets compressed</div>
+        <div class="why-not-body">Most multilingual LLMs translate Indian languages into English, reason in English, then translate back. Legal nuance — the specific wording of a Section, the difference between "shall" and "may" — is compressed or lost in that round-trip. Sarvam AI processes Tamil, Bengali, Marathi, and Hindi natively. No English intermediary.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SARVAM / ONE FLOW — 2026 Update -->
+<div class="panel reveal">
+  <div class="panel-inner">
+    <div class="sec-label">2026 Update</div>
+    <h2 class="sec-h">The engine LokAI was designed around <em>now exists.</em></h2>
+    <p class="sec-sub">LokAI was designed in 2025 with a known gap: the multilingual model it depended on was not in production yet. In February 2026, Sarvam AI released their multilingual Indian language model — native processing across 10+ Indian languages, trained on Indian legal and civic text.</p>
+
+    <div class="update-card reveal delay-1">
+      <div class="update-card-header">
+        <div class="update-tag">Feb 2026</div>
+        <div class="update-card-title">Sarvam AI — multilingual Indian language model launched</div>
+      </div>
+      <div class="update-card-body">
+        <div>
+          <div class="update-block-label">What this closes</div>
+          <div class="update-block-text">The 2025 design documented the architecture and user experience, with Sarvam as the intended engine. That assumption is now buildable. The case study's technical model — native Indian language processing, no English intermediary, legal-domain retrieval — aligns directly with what Sarvam shipped in February 2026.</div>
+        </div>
+        <div>
+          <div class="update-block-label">Prototype in progress</div>
+          <div class="update-block-text">A working prototype integrating the Sarvam API is in progress. The 2025 case study documents the design decisions. This prototype closes the technical assumption that was left open. Link will be added when the prototype is ready to share.</div>
+          <a class="prototype-link" href="#" onclick="return false;">View prototype <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 10 10"><path d="M2 5h6M5 2l3 3-3 3"/></svg></a>
+          <div class="prototype-link-note">Prototype link — coming soon</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- One complete flow -->
+    <div style="margin-top:32px">
+      <p style="font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-4);margin-bottom:14px;display:flex;align-items:center;gap:10px;"><span style="display:block;width:16px;height:2px;background:var(--border);flex-shrink:0"></span>One complete session — from situation to filed document</p>
+      <div class="flow-strip">
+        <div class="flow-step">
+          <div class="flow-step-num">01</div>
+          <div class="flow-step-name">User describes situation</div>
+          <div class="flow-step-desc">Voice, text, or photo — any Indian language</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">02</div>
+          <div class="flow-step-name">LokAI asks clarifying questions</div>
+          <div class="flow-step-desc">Conversational thread — same language, same surface</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">03</div>
+          <div class="flow-step-name">Assessment Card surfaces</div>
+          <div class="flow-step-desc">The Law / Your Position / What You Can Do — with citations</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">04</div>
+          <div class="flow-step-name">User reviews citation</div>
+          <div class="flow-step-desc">Taps citation chip — opens the actual statute</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">05</div>
+          <div class="flow-step-name">User generates document</div>
+          <div class="flow-step-desc">RTI application or consumer complaint — pre-filled, ready to file</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">06</div>
+          <div class="flow-step-name">Downloads or shares</div>
+          <div class="flow-step-desc">Session complete. Something fileable exists where nothing did before.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- METRICS -->
+<div class="panel panel--alt reveal">
+  <div class="panel-inner">
+    <div class="sec-label">What I'd Measure</div>
+    <h2 class="sec-h">Three metrics, <em>each answering a real question about whether this worked.</em></h2>
+    <div class="metrics-list reveal delay-1">
+      <div class="metric-row">
+        <div class="metric-name">
+          <div class="metric-title">Action completion rate</div>
+          <div class="metric-type">Primary</div>
+        </div>
+        <div class="metric-desc">Did the user download or share a generated document? Not whether they read the response — whether they produced something fileable. Target: above 40% of sessions that reach the Assessment Card.</div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-name">
+          <div class="metric-title">Boundary honesty rate</div>
+          <div class="metric-type">Safety</div>
+        </div>
+        <div class="metric-desc">What percentage of out-of-scope queries route to human help rather than generating a low-confidence document? A product that confidently drafts a bail application is actively harmful.</div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-name">
+          <div class="metric-title">Language input distribution</div>
+          <div class="metric-type">Product health</div>
+        </div>
+        <div class="metric-desc">Split of voice, Romanized text, and native script across sessions. If voice is below 30%, there's a discovery or trust problem with the input design. If native script is near zero, the no-keyboard-setup assumption held.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFLECTION -->
+<div class="panel reveal">
+  <div class="panel-inner">
+    <div class="sec-label">Honest Reflection</div>
+    <h2 class="sec-h">What I'd change, what I got right, <em>and what the product still doesn't solve.</em></h2>
+    <div class="ref-grid reveal delay-1">
+      <div class="ref-card">
+        <div class="ref-head warn">A UX decision I'd revisit</div>
+        <div class="ref-body">The dashboard shows Chat Summaries: retrospective cards of what was discussed. A user returning to an ongoing legal dispute doesn't want a digest. They want to continue exactly where they stopped. The summaries should be continuation prompts, not retrospectives. I designed for the wrong returning-user mental model.</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-head open">What the product still doesn't solve</div>
+        <div class="ref-body">The hallucination risk is mitigated by the citation architecture: source-tagged retrieval reduces unverifiable claims. But it is not eliminated. A production LokAI would need periodic legal audits by human lawyers reviewing outputs against actual case outcomes. The design acknowledges this layer. It does not pretend to solve it.</div>
+      </div>
+    </div>
+    <div class="pullquote reveal delay-2">
+      LokAI doesn't win when it answers correctly. It wins when someone files something they never thought they could.
+    </div>
+  </div>
+</div>
+
+<!-- CTA + UI REEL -->
+<div class="cta-panel">
+  <div class="ui-reel">
+    <div class="reel-track">
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-01-home.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">01</div><div class="reel-name">Home — voice orb</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-02-assessment-card.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">02</div><div class="reel-name">Assessment Card</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-03-notice-interpreter.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">03</div><div class="reel-name">Notice Interpreter</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-04-doc-generator.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">04</div><div class="reel-name">Doc Generator</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-05-citation-sidebar.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">05</div><div class="reel-name">Citation sidebar</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-06-voice-orb.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">06</div><div class="reel-name">Voice experience</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-07-mic-denied.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">07</div><div class="reel-name">Mic denied</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-08-network-error.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">08</div><div class="reel-name">Network error</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-09-ocr-fail.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">09</div><div class="reel-name">OCR fail</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-10-out-of-scope.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">10</div><div class="reel-name">Out-of-scope redirect</div></div></div></div>
+      <!-- Duplicates for loop -->
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-01-home.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">01</div><div class="reel-name">Home — voice orb</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-02-assessment-card.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">02</div><div class="reel-name">Assessment Card</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-03-notice-interpreter.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">03</div><div class="reel-name">Notice Interpreter</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-04-doc-generator.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">04</div><div class="reel-name">Doc Generator</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-05-citation-sidebar.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">05</div><div class="reel-name">Citation sidebar</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-06-voice-orb.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">06</div><div class="reel-name">Voice experience</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-07-mic-denied.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">07</div><div class="reel-name">Mic denied</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-08-network-error.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">08</div><div class="reel-name">Network error</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-09-ocr-fail.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">09</div><div class="reel-name">OCR fail</div></div></div></div>
+      <div class="reel-phone"><div class="reel-notch"></div><div class="reel-screen"><img src="assets/lokai/lokai-screen-10-out-of-scope.png" alt="" onerror="this.style.display='none'"><div class="reel-screen-info"><div class="reel-num">10</div><div class="reel-name">Out-of-scope redirect</div></div></div></div>
+    </div>
+  </div>
+  <div class="cta-inner">
+    <div>
+      <div class="cta-label">Go deeper</div>
+      <div class="cta-h3">Read the full case study</div>
+      <p class="cta-desc">All 9 flow sections with per-decision reasoning: Notice Interpreter, edge states, and the boundary moment design. Competitive analysis, persona narratives, and the product scope argument for why general-purpose LLMs fail in legal contexts.</p>
+    </div>
+    <div class="cta-actions">
+      <a class="cta-btn" href="lokai-case-study-v8.html">
+        Full case study
+        <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+      </a>
+      <span class="cta-read-time">~ 20 min read</span>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT NAV -->
+<div class="pf-project-nav">
+  <div class="pf-nav-inner">
+    <a class="pf-pnav-card" href="sentinel-overview-v6.html">
+      <div class="pf-pnav-dir">← Previous</div>
+      <div class="pf-pnav-title">FlytBase Sentinel</div>
+      <div class="pf-pnav-sub">AI-native wildfire response</div>
+    </a>
+    <a class="pf-pnav-card right" href="feulai-overview-v6.html">
+      <div class="pf-pnav-dir">Next →</div>
+      <div class="pf-pnav-title">Feul.AI</div>
+      <div class="pf-pnav-sub">Audio data · Gig economy · India</div>
+    </a>
+  </div>
+</div>
+
+<script>
+const bar = document.getElementById('progress');
+window.addEventListener('scroll', () => {
+  const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  bar.style.width = pct + '%';
+}, { passive: true });
+
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target) } });
+}, { threshold: 0.06 });
+reveals.forEach(el => io.observe(el));
+</script>
+</body>
+</html>

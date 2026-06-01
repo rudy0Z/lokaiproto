@@ -1,0 +1,63 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* ── LokAI color tokens ───────────────────────────────────────────────────── */
+:root {
+  --surface-bg:      #F5F2EC;
+  --surface-card:    #FFFFFF;
+  --surface-raised:  #F4F2EE;
+  --navy:            #132846;
+  --navy-dark:       #152C54;
+  --navy-soft:       #EEF2F8;
+  --saffron:         #E8832A;
+  --saffron-dark:    #C4620A;
+  --terracotta:      #C4724A;
+  --text-primary:    #1A1916;
+  --text-secondary:  #4A4840;
+  --text-tertiary:   #8A8880;
+  --lokai-border:    #E8E4DC;
+  --border-focus:    #132846;
+}
+
+/* ── Global base ─────────────────────────────────────────────────────────── */
+
+/* Body/html background — warm parchment across the entire app */
+html, body {
+  background-color: var(--surface-bg) !important;
+}
+
+/* ── Focus rings — saffron, keyboard-only ────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--saffron);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Remove default outline since we supply :focus-visible */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Reduced motion — respect user OS preference ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Devanagari override — Hindi + Marathi text ───────────────────────────── */
+/* font-size: base + 1px, line-height: 1.85 minimum                           */
+.deva {
+  font-size: calc(1em + 1px);
+  line-height: 1.85;
+}
+
+/* ── Dark sidebar scrollbar ────────────────────────────────────────────────── */
+/* Dark sidebar scrollbar */
+.lokai-sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.lokai-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.lokai-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+.lokai-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }

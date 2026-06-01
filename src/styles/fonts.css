@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&display=swap');
+
+:root {
+  --font-editorial: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --font-deva: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  --font-tamil: 'Noto Sans Tamil', 'Inter', sans-serif;
+  --font-bengali: 'Noto Sans Bengali', 'Inter', sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv11'; /* Inter stylistic sets for cleaner digits */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Auto-apply correct script font based on [lang] attribute — chat content uses this */
+[lang="hi"], [lang="mr"], [lang="sa"] { font-family: var(--font-deva); }
+[lang="ta"] { font-family: var(--font-tamil); }
+[lang="bn"] { font-family: var(--font-bengali); }
