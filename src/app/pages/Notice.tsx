@@ -2,8 +2,7 @@
 import { Upload, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { SERIF, SANS, MONO, C, GRAD, SHADOW } from '../components/shared';
-import { Button as Btn } from '../components/ui/button';
+import { SERIF, SANS, MONO, C, GRAD, SHADOW, Btn } from '../components/shared';
 import { callSarvamOCR } from '../services/api';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
@@ -11,6 +10,32 @@ const NOTICE_CSS = `
   .notice-scroll::-webkit-scrollbar       { width: 4px; }
   .notice-scroll::-webkit-scrollbar-track { background: transparent; }
   .notice-scroll::-webkit-scrollbar-thumb { background: #E0DDD5; border-radius: 2px; }
+  .clause-amount {
+    text-decoration: underline;
+    text-decoration-color: #E8832A;
+    text-decoration-thickness: 2px;
+    color: #2A2420;
+    border-radius: 3px;
+    padding: 1px 3px;
+    transition: background 0.15s ease;
+    cursor: pointer;
+  }
+  .clause-amount:hover {
+    background: rgba(232,131,42,0.12);
+  }
+  .clause-section {
+    text-decoration: underline;
+    text-decoration-color: #132846;
+    text-decoration-thickness: 2px;
+    color: #2A2420;
+    border-radius: 3px;
+    padding: 1px 3px;
+    transition: background 0.15s ease;
+    cursor: pointer;
+  }
+  .clause-section:hover {
+    background: rgba(19,40,70,0.08);
+  }
 `;
 
 // ─── Paper texture — faint grid gives document a scanned feel ─────────────────
@@ -34,7 +59,7 @@ function CitationChip({ text }: { text: string }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '5px',
-      background: '#132846', borderRadius: '4px', padding: '3px 10px 3px 7px',
+      background: GRAD.oxbloodStamp, borderRadius: '4px', padding: '3px 10px 3px 7px',
       fontFamily: MONO, fontSize: '11px', color: '#FFFFFF',
       marginLeft: '6px', verticalAlign: 'middle', whiteSpace: 'nowrap',
     }}>
@@ -214,19 +239,13 @@ function OriginalNoticeColumn() {
               <div>
                 आपणास कळविण्यात येते की, उपरोक्त मालमत्तेसंदर्भात आर्थिक वर्ष २०२५–२६ करिता देय
                 मालमत्ता कर{' '}
-                {/* Amount → saffron underline */}
-                <span style={{
-                  textDecoration: 'underline', textDecorationColor: '#E8832A',
-                  textDecorationThickness: '2px', color: '#2A2420',
-                }}>
+                {/* Amount → saffron hover highlight */}
+                <span className="clause-amount">
                   रु. ३२,४८०/– (अक्षरी: बत्तीस हजार चारशे ऐंशी रुपये)
                 </span>{' '}
                 अदा केला नसल्याने,{' '}
-                {/* Section reference → navy underline */}
-                <span style={{
-                  textDecoration: 'underline', textDecorationColor: '#132846',
-                  textDecorationThickness: '2px', color: '#2A2420',
-                }}>
+                {/* Section reference → navy hover highlight */}
+                <span className="clause-section">
                   महाराष्ट्र महानगरपालिका अधिनियम, १८८८ च्या कलम १४९
                 </span>{' '}
                 अन्वये आपणास ही नोटीस देण्यात येत आहे.
@@ -240,24 +259,12 @@ function OriginalNoticeColumn() {
           <div style={{ fontFamily: MONO, fontSize: '13px', color: '#4A4840', lineHeight: 1.85, letterSpacing: '0.005em' }}>
             <div style={{ marginBottom: '10px' }}>
               You are hereby directed to clear the outstanding property tax dues of{' '}
-              {/* Amount → saffron underline */}
-              <strong style={{
-                color: '#2A2420',
-                textDecoration: 'underline', textDecorationColor: '#E8832A',
-                textDecorationThickness: '2px',
-              }}>₹32,480</strong> for the financial year 2025–26 within{' '}
-              {/* Date/period → navy underline */}
-              <strong style={{
-                color: C.navy,
-                textDecoration: 'underline', textDecorationColor: '#132846',
-                textDecorationThickness: '2px',
-              }}>30 days</strong> from the date of this notice, i.e., on or before{' '}
-              {/* Date → navy underline */}
-              <strong style={{
-                color: C.navy,
-                textDecoration: 'underline', textDecorationColor: '#132846',
-                textDecorationThickness: '2px',
-              }}>15 April 2026</strong>.
+              {/* Amount → interactive saffron highlight */}
+              <strong className="clause-amount">₹32,480</strong> for the financial year 2025–26 within{' '}
+              {/* Date/period → interactive navy highlight */}
+              <strong className="clause-section">30 days</strong> from the date of this notice, i.e., on or before{' '}
+              {/* Date → navy highlight */}
+              <strong className="clause-section">15 April 2026</strong>.
             </div>
             <div style={{ marginBottom: '10px' }}>
               Failure to comply shall result in recovery proceedings under Section 203 of the
@@ -349,6 +356,39 @@ const zones: Zone[] = [
 function InterpretationColumn() {
   const navigate = useNavigate();
   const [revealed, setRevealed] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  // Copy-to-clipboard for the "Guided Clipboard" approach
+  // The user gets the plain-language steps to review BEFORE any action
+  const COPY_TEXT = [
+    'NOTICE SUMMARY — BMC Property Tax Demand 2025-26',
+    '',
+    'WHAT THIS SAYS:',
+    'This is a property tax demand notice from the Brihanmumbai Municipal Corporation (BMC). You owe ₹32,480 in unpaid property tax for FY 2025–26.',
+    '',
+    'YOUR SITUATION:',
+    'Notice date: 18 March 2026. You have a 30-day window (by 15 April 2026) to pay before recovery action begins.',
+    '',
+    'WHAT YOU MUST DO:',
+    '1. Pay ₹32,480 via the BMC portal (mcgm.gov.in) or at the H/West Ward Office.',
+    '2. Always quote reference number BMC/H-West/2026/0341.',
+    '3. Save your payment receipt.',
+    '4. If you believe the amount is incorrect, file an objection in writing before the deadline.',
+    '',
+    'RELEVANT LAW: MMC Act, 1888 · Section 149',
+    '',
+    '⚠ This summary is provided for legal information only. Consult a lawyer before taking action.',
+  ].join('\n');
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(COPY_TEXT);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
 
   // Stagger zone reveals — 0ms, 220ms, 440ms after mount
   useEffect(() => {
@@ -411,14 +451,15 @@ function InterpretationColumn() {
         }}>
           <span style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880' }}>Interpreted just now</span>
           <div style={{ display: 'flex', gap: '16px' }}>
-            {['Copy', 'Save'].map(action => (
-              <button key={action} style={{
+            <button
+              onClick={handleCopy}
+              style={{
                 fontFamily: SANS, fontSize: '11px', fontWeight: 500,
-                color: C.navy, background: 'none', border: 'none', cursor: 'pointer',
-              }}>
-                {action}
-              </button>
-            ))}
+                color: copied ? C.green : C.navy, background: 'none', border: 'none', cursor: 'pointer',
+              }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
           </div>
         </div>
 
@@ -426,22 +467,73 @@ function InterpretationColumn() {
         <FeedbackRow />
       </div>
 
-      {/* Action buttons — primary gradient + outline secondary */}
+      {/* Action area — Guided Clipboard (no direct-send) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
-        <Btn
-          variant="primary"
-          onClick={() => navigate('/desktop/document-draft')}
-          style={{ width: '100%' }}
+        {/* PRIMARY: Copy guidance to clipboard — human reviews before any action */}
+        <button
+          onClick={handleCopy}
+          style={{
+            width: '100%',
+            padding: '12px 24px',
+            background: copied ? '#1F6B3A' : C.navy,
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '8px',
+            fontFamily: SANS,
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            transition: 'background 0.2s ease',
+          }}
         >
-          Generate Response Letter
-        </Btn>
-        <Btn
-          variant="secondary"
+          {copied ? '✓ Copied to clipboard' : 'Copy Notice Summary'}
+        </button>
+        {/* SECONDARY: Ask a follow-up — routes to chat, not a direct send */}
+        <button
           onClick={() => navigate('/desktop/chat')}
-          style={{ width: '100%' }}
+          style={{
+            width: '100%',
+            padding: '12px 24px',
+            background: 'transparent',
+            color: C.navy,
+            border: `1.5px solid ${C.navy}`,
+            borderRadius: '8px',
+            fontFamily: SANS,
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'background 0.15s ease',
+          }}
         >
           Ask a follow-up question
-        </Btn>
+        </button>
+      </div>
+
+      {/* Hallucination disclaimer — explicit, calm, not hidden */}
+      <div style={{
+        background: '#FFF8F0',
+        border: '1px solid rgba(233,133,43,0.24)',
+        borderLeft: `3px solid ${C.saffron}`,
+        borderRadius: '0 10px 10px 0',
+        padding: '12px 14px',
+        marginBottom: '14px',
+      }}>
+        <p style={{
+          fontFamily: SANS, fontSize: '12px', fontWeight: 600,
+          color: C.amber, margin: '0 0 4px',
+        }}>
+          Review before acting
+        </p>
+        <p style={{
+          fontFamily: SANS, fontSize: '12px', color: C.inkSoft, lineHeight: 1.55, margin: 0,
+        }}>
+          LokAI can misread amounts or deadlines in scanned documents. Always check the original notice
+          before paying or responding. This is legal information, not legal advice.
+        </p>
       </div>
 
       {/* Disclaimer */}
@@ -457,20 +549,25 @@ export default function Notice() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [parsedText, setParsedText] = useState<string | null>(null);
+  const [noticeStatus, setNoticeStatus] = useState<{
+    tone: 'idle' | 'success' | 'error';
+    message: string;
+  }>({ tone: 'idle', message: 'Upload any government or legal notice. LokAI will extract the text and keep the next step calm.' });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
+    setNoticeStatus({ tone: 'idle', message: 'Reading the notice. This may take a moment.' });
     try {
       const text = await callSarvamOCR(file);
       setParsedText(text);
-      alert('Document parsed successfully. You can now review or ask a follow-up question.');
+      setNoticeStatus({ tone: 'success', message: 'Text extracted. Review the summary, then ask a follow-up if anything looks unclear.' });
       console.log('Parsed Content:', text);
     } catch (err) {
       console.error('OCR failed:', err);
-      alert('OCR failed. Check console.');
+      setNoticeStatus({ tone: 'error', message: 'LokAI could not read this clearly. Upload a sharper image or type the notice text into chat.' });
     } finally {
       setLoading(false);
     }
@@ -520,6 +617,30 @@ export default function Notice() {
           <p style={{ fontFamily: SANS, fontSize: '13px', color: '#8A8880', margin: 0 }}>
             Upload any government or legal notice — LokAI reads and explains it in plain language.
           </p>
+        </div>
+
+        <div style={{
+          background: noticeStatus.tone === 'error' ? '#FFF5F2' : noticeStatus.tone === 'success' ? '#F1F8F3' : '#FFF8F0',
+          border: noticeStatus.tone === 'error' ? '1px solid rgba(184,54,28,0.22)' : noticeStatus.tone === 'success' ? '1px solid rgba(31,107,58,0.20)' : '1px solid rgba(233,133,43,0.24)',
+          borderLeft: noticeStatus.tone === 'error' ? `3px solid ${C.red}` : noticeStatus.tone === 'success' ? `3px solid ${C.green}` : `3px solid ${C.saffron}`,
+          borderRadius: '0 10px 10px 0',
+          padding: '12px 14px',
+          marginBottom: '22px',
+        }}>
+          <p style={{
+            fontFamily: SANS,
+            fontSize: '13px',
+            color: noticeStatus.tone === 'error' ? C.red : noticeStatus.tone === 'success' ? C.green : C.amber,
+            lineHeight: 1.55,
+            margin: 0,
+          }}>
+            {noticeStatus.message}
+          </p>
+          {parsedText && (
+            <p style={{ fontFamily: SANS, fontSize: '12px', color: C.muted, lineHeight: 1.55, margin: '6px 0 0' }}>
+              Extracted preview: {parsedText.slice(0, 160)}{parsedText.length > 160 ? '...' : ''}
+            </p>
+          )}
         </div>
 
         {/* ── Two-panel layout: left ~55%, right ~45% ── */}

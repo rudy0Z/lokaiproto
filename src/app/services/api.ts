@@ -1,4 +1,4 @@
-// ─── LokAI API Service ────────────────────────────────────────────────────────
+﻿// ─── LokAI API Service ────────────────────────────────────────────────────────
 // NVIDIA NIM endpoint · sarvamai/sarvam-m model
 // API key from VITE_NVIDIA_API_KEY env var — never hardcoded
 
@@ -17,6 +17,27 @@ export interface ContextPanel {
   relatedLaws: string[];
 }
 
+export type MatterType = 'tenancy' | 'rti' | 'consumer' | 'notice' | 'boundary';
+export type TrustLevel = 'clear' | 'needs_fact' | 'source_limited' | 'human_review';
+export type SourceCoverage = 'direct' | 'related' | 'missing' | 'conflicting';
+
+export interface LegalSource {
+  id: string;
+  title: string;
+  section: string;
+  jurisdiction: string;
+  excerpt: string;
+  coverage: SourceCoverage;
+  howUsed: string;
+}
+
+export interface ActionStep {
+  id: string;
+  title: string;
+  description: string;
+  status: 'locked' | 'current' | 'done' | 'waiting' | 'blocked';
+}
+
 export interface LokAIResponse {
   title:           string;
   zone1:           { label: string; finding: string };
@@ -26,6 +47,12 @@ export interface LokAIResponse {
   contextPanel:    ContextPanel;
   scope:           'in' | 'out';
   responseLanguage: string;
+  matterType?:      MatterType;
+  trustLevel?:      TrustLevel;
+  missingFacts?:    string[];
+  sources?:         LegalSource[];
+  nextSteps?:       ActionStep[];
+  dailyUpdate?:     { title: string; body: string; timestampLabel: string };
 }
 
 export interface APIMessage {
@@ -87,7 +114,7 @@ function buildOutOfScopeResponse(): LokAIResponse {
       ],
       cta: 'Ask a legal question',
     },
-    citations: ['LokAI Prototype Boundary'],
+    citations: ['LokAI Knowledge Base'],
     contextPanel: {
       primaryLaw: 'LokAI handles Indian legal guidance only',
       sections: [

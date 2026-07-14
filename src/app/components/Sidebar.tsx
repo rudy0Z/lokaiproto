@@ -14,9 +14,9 @@ const COLLAPSED_W = parseInt(LAYOUT.sidebarShut, 10);
 const NAV_ITEMS = [
   { path: '/desktop/dashboard',           label: 'Dashboard',          Icon: LayoutGrid,    exact: true },
   { path: '/desktop/chat',                label: 'Ask a Question',     Icon: MessageSquare, prefix: true, createsChat: true },
-  { path: '/desktop/documents',           label: 'My Documents',       Icon: Files },
-  { path: '/desktop/document-draft',      label: 'Draft Notice',       Icon: FilePenLine },
-  { path: '/desktop/notice-interpreter',  label: 'Notice Interpreter', Icon: ScanSearch },
+  { path: '/desktop/documents',           label: 'Case Files',         Icon: Files },
+  { path: '/desktop/document-draft',      label: 'Demand Notice',      Icon: FilePenLine },
+  { path: '/desktop/notice-interpreter',  label: 'Notice Upload',      Icon: ScanSearch },
 ];
 
 type NavItem = (typeof NAV_ITEMS)[number];
@@ -229,9 +229,10 @@ export function Sidebar() {
               </div>
 
               <div className="lokai-sidebar-scroll" style={{ height: '100%', overflowY: 'auto', padding: '0 12px 18px' }}>
-                {conversations.map(conv => {
+                {/* Cap the recent list so the rail stays calm — full history lives in the dashboard */}
+                {conversations.slice(0, 5).map(conv => {
                   const chatPath = `/desktop/chat/${conv.id}`;
-                  const chatActive = pathname === chatPath || activeId === conv.id;
+                  const chatActive = pathname === chatPath;
                   return (
                     <button
                       key={conv.id}
@@ -335,7 +336,7 @@ export function Sidebar() {
                 <>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: D.text, fontSize: 13, fontWeight: 650 }}>Priya Sharma</div>
-                    <div style={{ color: D.text3, fontSize: 11, marginTop: 3 }}>Mumbai · Prototype</div>
+                    <div style={{ color: D.text3, fontSize: 11, marginTop: 3 }}>Mumbai · India</div>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); openSettings(); }}

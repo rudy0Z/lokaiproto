@@ -246,7 +246,7 @@ function AICard({ response, isOutOfScope, onCopy }: { response: LokAIResponse; i
 }
 
 // ─── Thinking bubble — branded shimmer skeleton ───────────────────────────────
-function ThinkingBubble() {
+function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -273,7 +273,7 @@ function ThinkingBubble() {
           fontFamily: SANS, fontSize: 10, fontWeight: 600, color: '#A8A4A0',
           textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14,
         }}>
-          Analysing your question
+          {isFollowUp ? 'Processing follow-up' : 'Analysing your question'}
         </div>
         {/* Shimmer lines mimicking real content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -643,7 +643,7 @@ function InputBar({ onSend, loading }: { onSend:(t:string)=>void; loading:boolea
 // ─── Main Chat page ───────────────────────────────────────────────────────────
 export default function Chat() {
   const { chatId }   = useParams();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation() as { pathname: string; state: { initialQuestion?: string } | null | undefined };
   const navigate     = useNavigate();
   const { collapsed }= useSidebar();
   const sidebarW     = collapsed ? 64 : 240;
@@ -669,6 +669,8 @@ export default function Chat() {
   useEffect(() => {
     if (convId) setActiveId(convId);
   }, [convId, setActiveId]);
+
+
 
   useEffect(() => {
     const el = chatRef.current;
@@ -709,6 +711,15 @@ export default function Chat() {
       setLoading(false);
     }
   }, [conv, loading, addMessage, applyResponse]);
+
+  const initialQuestion = state?.initialQuestion;
+
+  useEffect(() => {
+    if (initialQuestion && conv && conv.messages.length === 0 && !loading) {
+      navigate(pathname, { replace: true, state: {} });
+      handleSend(initialQuestion);
+    }
+  }, [initialQuestion, conv, loading, handleSend, navigate, pathname]);
 
   const handleChipSelect = useCallback((question: string) => {
     if (!conv) {
@@ -793,7 +804,7 @@ export default function Chat() {
 
                 {renderedMessages}
 
-                {loading && <ThinkingBubble/>}
+                {loading && <ThinkingBubble isFollowUp={conv && conv.messages.filter(m => m.role === 'user').length > 1}/>}
 
                 {error && <InlineError message={error} onRetry={handleRetry}/>}
               </div>

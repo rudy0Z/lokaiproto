@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import CaptureLayout             from './CaptureLayout';
 
 // Shells
@@ -25,6 +25,8 @@ import MobileChatMarathi         from './pages/mobile/MobileChatMarathi';
 import MobileChatBoundary        from './pages/mobile/MobileChatBoundary';
 import MobileVoiceActive         from './pages/mobile/MobileVoiceActive';
 import MobileProfile             from './pages/mobile/MobileProfile';
+import MobileConsumerCase        from './pages/mobile/MobileConsumerCase';
+import MobileFiles               from './pages/mobile/MobileFiles';
 
 export const router = createBrowserRouter([
   {
@@ -74,8 +76,10 @@ export const router = createBrowserRouter([
           { path: 'chat/tamil',         Component: MobileChatTamil     },
           { path: 'chat/marathi',       Component: MobileChatMarathi   },
           { path: 'chat/out-of-scope',  Component: MobileChatBoundary  },
-          { path: 'voice',              Component: MobileVoiceActive   },
-          { path: 'profile',            Component: MobileProfile       },
+          { path: 'voice',              Component: MobileVoiceActive      },
+          { path: 'profile',            Component: MobileProfile           },
+          { path: 'case',               Component: MobileConsumerCase      }, // Stateful stepper: assess/plan/clarify
+          { path: 'files',              Component: MobileFiles             }, // Document files browser
         ],
       },
 

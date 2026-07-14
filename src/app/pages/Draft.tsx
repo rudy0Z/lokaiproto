@@ -2,6 +2,7 @@
 import { ArrowLeft, Download, Pencil, Paperclip, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { SERIF, SANS, C, GRAD, SHADOW, Btn } from '../components/shared';
+import { ReviewGate } from '../components/LokAIWorkflow';
 
 // ─── Scrollbar CSS ────────────────────────────────────────────────────────────
 const DRAFT_CSS = `
@@ -9,6 +10,15 @@ const DRAFT_CSS = `
   .draft-scroll::-webkit-scrollbar-track { background: transparent; }
   .draft-scroll::-webkit-scrollbar-thumb { background: #E0DDD5; border-radius: 2px; }
   .draft-scroll::-webkit-scrollbar-thumb:hover { background: #E8832A; }
+
+  /* Print / Save-as-PDF — show only the document, drop all app chrome */
+  @media print {
+    body::before { display: none !important; }
+    aside, .no-print { display: none !important; }
+    .draft-scroll { overflow: visible !important; padding: 0 !important; }
+    .draft-document-card { box-shadow: none !important; border: none !important; }
+    @page { margin: 18mm; }
+  }
 `;
 
 // ─── Section label — 10px uppercase #8A8880 ───────────────────────────────────
@@ -89,16 +99,18 @@ function LegalText({ children }: { children: React.ReactNode }) {
 function DocumentCard() {
   const [fields, setFields] = useState({
     date:           'March 25, 2026',
-    applicantName:  'Riya Sharma',
-    applicantAddr:  '14B, Pali Hill, Bandra West, Mumbai — 400050',
-    applicantPhone: '+91 98200 XXXXX',
-    applicantEmail: 'riya.sharma@email.com',
-    societyName:    'Pali Hill CHS, Bandra West',
-    permitDate:     'October 10, 2025',
-    ward:           'H/West Ward, Bandra',
-    pioName:        'The Public Information Officer',
-    pioOrg:         'Brihanmumbai Municipal Corporation (BMC)',
-    feeMode:        'Indian Postal Order / Court Fee Stamp',
+    buyerName:      'Priya Sharma',
+    buyerAddr:      '14B, Pali Hill, Bandra West, Mumbai — 400050',
+    buyerPhone:     '+91 98200 XXXXX',
+    buyerEmail:     'priya.sharma@email.com',
+    sellerName:     'Metro Mobile Store',
+    sellerAddr:     'Linking Road, Bandra West, Mumbai',
+    productName:    'Mobile phone',
+    purchaseDate:   'Add invoice date',
+    invoiceAmount:  '₹28,999',
+    defectSummary:  'Phone overheats and shuts down within two days of purchase.',
+    complaintHistory: 'Seller refused replacement verbally. Written complaint not confirmed yet.',
+    requestedRemedy: 'Repair, replacement, or full refund.',
   });
   const set = (key: keyof typeof fields) => (v: string) => setFields(f => ({ ...f, [key]: v }));
 
@@ -115,7 +127,7 @@ function DocumentCard() {
         color: '#1A1916', margin: '0 0 28px',
         textAlign: 'center', letterSpacing: '-0.1px',
       }}>
-        सूचना का अधिकार अधिनियम, 2005 के अंतर्गत आवेदन
+        Consumer Demand Notice
       </h2>
 
       <div style={{ height: '1px', background: '#E8E4DC', marginBottom: '24px' }} />
@@ -125,8 +137,8 @@ function DocumentCard() {
       <LegalText>
         <strong style={{ fontFamily: SANS, fontSize: '13px', color: '#1A1916', fontWeight: 600 }}>To,</strong>
       </LegalText>
-      <EditableField label="PIO Name & Designation" value={fields.pioName}  onChange={set('pioName')} />
-      <EditableField label="Organisation"           value={fields.pioOrg}   onChange={set('pioOrg')}  />
+      <EditableField label="Seller / Store Name" value={fields.sellerName} onChange={set('sellerName')} />
+      <EditableField label="Seller Address"     value={fields.sellerAddr} onChange={set('sellerAddr')}  />
 
       <SectionRule />
 
@@ -144,77 +156,84 @@ function DocumentCard() {
       <SectionLabel label="Subject" />
       <LegalText>
         <strong style={{ fontFamily: SANS, fontSize: '13px', color: '#1A1916', fontWeight: 600 }}>Subject:</strong>
-        {' '}Request for information regarding the status of building permit application submitted by{' '}
-        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.societyName}</span> on{' '}
-        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.permitDate}</span> to{' '}
-        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.ward}</span>.
+        {' '}Notice regarding defective{' '}
+        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.productName}</span>
+        {' '}purchased on{' '}
+        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.purchaseDate}</span>
+        {' '}and request for refund/replacement.
       </LegalText>
 
       {/* Salutation */}
       <LegalText>
-        Respected Sir/Madam,{'\n\n'}I,{' '}
-        <strong style={{ color: '#1A1916' }}>{fields.applicantName}</strong>, a citizen of India,
-        residing at{' '}
-        <strong style={{ color: '#1A1916' }}>{fields.applicantAddr}</strong>, hereby request the
-        following information under Section 6(1) of the Right to Information Act, 2005.
+        Dear Sir/Madam,{'\n\n'}I,{' '}
+        <strong style={{ color: '#1A1916' }}>{fields.buyerName}</strong>, am writing to formally notify you regarding a defect in the{' '}
+        <strong style={{ color: '#1A1916' }}>{fields.productName}</strong> purchased from your store. The product developed the following defect within two days of use:
+        {' '}{fields.defectSummary}
       </LegalText>
 
       <SectionRule />
 
       {/* Applicant Details */}
-      <SectionLabel label="Applicant Details" />
+      <SectionLabel label="Sender / Buyer Details" />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 28px' }}>
-        <EditableField label="Your Name"    value={fields.applicantName}  onChange={set('applicantName')}  />
-        <EditableField label="Your Phone"   value={fields.applicantPhone} onChange={set('applicantPhone')} />
-        <EditableField label="Your Address" value={fields.applicantAddr}  onChange={set('applicantAddr')}  />
-        <EditableField label="Your Email"   value={fields.applicantEmail} onChange={set('applicantEmail')} />
+        <EditableField label="Your Name"    value={fields.buyerName}  onChange={set('buyerName')}  />
+        <EditableField label="Your Phone"   value={fields.buyerPhone} onChange={set('buyerPhone')} />
+        <EditableField label="Your Address" value={fields.buyerAddr}  onChange={set('buyerAddr')}  />
+        <EditableField label="Your Email"   value={fields.buyerEmail} onChange={set('buyerEmail')} />
       </div>
+      <SectionLabel label="Purchase Details" />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 28px' }}>
-        <EditableField label="Society / Property Name" value={fields.societyName} onChange={set('societyName')} />
-        <EditableField label="Permit Application Date" value={fields.permitDate}  onChange={set('permitDate')}  />
-        <EditableField label="BMC Ward"                value={fields.ward}        onChange={set('ward')}        />
+        <EditableField label="Product Name"      value={fields.productName} onChange={set('productName')} />
+        <EditableField label="Purchase Date"     value={fields.purchaseDate} onChange={set('purchaseDate')} />
+        <EditableField label="Invoice Amount"    value={fields.invoiceAmount} onChange={set('invoiceAmount')} />
       </div>
 
       <SectionRule />
 
-      {/* Information Requested */}
-      <SectionLabel label="Information Requested" />
+      {/* Complaint Summary */}
+      <SectionLabel label="Notice Summary" />
       <LegalText>
-        1.&emsp;Current status of the building permit application submitted on {fields.permitDate}
-        {'\n'}2.&emsp;Reasons for any delay or non-processing of the said application
-        {'\n'}3.&emsp;Name and designation of the officer responsible for processing this permit
-        {'\n'}4.&emsp;Copy of any communications, orders, or objections raised in connection with this application
+        1.&emsp;Product purchased: {fields.productName}
+        {'\n'}2.&emsp;Defect reported: {fields.defectSummary}
+        {'\n'}3.&emsp;Previous communication: {fields.complaintHistory}
+        {'\n'}4.&emsp;Requested resolution: {fields.requestedRemedy}
       </LegalText>
+      <EditableField label="Requested Remedy" value={fields.requestedRemedy} onChange={set('requestedRemedy')} />
 
       <SectionRule />
 
       {/* Legal Reference */}
       <SectionLabel label="Legal Reference" />
       <LegalText>
-        As per{' '}
+        This packet is based on{' '}
         <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
-          Section 7(1) of the RTI Act, 2005
+          Section 2(10) of the Consumer Protection Act, 2019
         </span>
-        , the Public Information Officer is obligated to provide the requested information within{' '}
-        <strong style={{ color: '#1A1916' }}>30 days</strong> of receipt of this application.
-        Failure to respond within this period shall be deemed a refusal and will entitle me to
-        file a First Appeal under Section 19(1) of the Act.
+        {' '}for defect in goods,{' '}
+        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+          Section 2(11)
+        </span>
+        {' '}for deficiency in service, and{' '}
+        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+          Section 35
+        </span>
+        {' '}for complaint filing.
       </LegalText>
       <LegalText>
-        If the information requested is denied in full or in part, I request that the reason for
-        denial be provided in writing, as mandated by{' '}
-        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
-          Section 7(8) of the RTI Act, 2005
-        </span>
-        .
+        If the purchase happened through an online marketplace, the Consumer Protection
+        (E-Commerce) Rules, 2020 may also be relevant. LokAI has marked that source as related,
+        not direct, until the platform details are confirmed.
       </LegalText>
 
-      {/* Application fee */}
+      {/* Evidence */}
+      <SectionLabel label="Evidence Checklist" />
       <LegalText>
-        I am enclosing the prescribed application fee of{' '}
-        <strong style={{ color: '#1A1916' }}>₹10/–</strong> via:
+        1.&emsp;Invoice or payment receipt
+        {'\n'}2.&emsp;Warranty card or product listing
+        {'\n'}3.&emsp;Photos or video showing the defect
+        {'\n'}4.&emsp;Seller replies, call logs, or written complaint proof
+        {'\n'}5.&emsp;Repair report, if already inspected
       </LegalText>
-      <EditableField label="Fee Payment Mode" value={fields.feeMode} onChange={set('feeMode')} />
 
       <SectionRule />
 
@@ -223,9 +242,9 @@ function DocumentCard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <LegalText>
           Yours faithfully,{'\n\n'}
-          <strong style={{ color: '#1A1916' }}>{fields.applicantName}</strong>
-          {'\n'}{fields.applicantPhone}
-          {'\n'}{fields.applicantEmail}
+          <strong style={{ color: '#1A1916' }}>{fields.buyerName}</strong>
+          {'\n'}{fields.buyerPhone}
+          {'\n'}{fields.buyerEmail}
         </LegalText>
         <div style={{ textAlign: 'right', marginBottom: '18px' }}>
           <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8A8880', marginBottom: '32px' }}>
@@ -233,7 +252,7 @@ function DocumentCard() {
           </div>
           <div style={{ height: '1px', width: '160px', background: '#C4C0B8' }} />
           <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880', marginTop: '6px' }}>
-            {fields.applicantName} · {fields.date}
+            {fields.buyerName} · {fields.date}
           </div>
         </div>
       </div>
@@ -253,13 +272,13 @@ const steps = [
   },
   {
     num: '2',
-    title: 'Submit to the PIO',
-    desc: 'Deliver in person, by registered post, or through the rtionline.gov.in portal.',
+    title: 'Send a written complaint',
+    desc: 'Share the issue with the seller or platform first, and keep proof of delivery or acknowledgement.',
   },
   {
     num: '3',
-    title: 'Wait 30 days',
-    desc: 'Legally mandated response window. Keep a copy of your application and acknowledgement.',
+    title: 'File if ignored',
+    desc: 'Use the complaint packet if the seller does not respond or refuses a reasonable remedy.',
   },
 ];
 
@@ -339,8 +358,7 @@ function WhatNext() {
           fontFamily: SANS, fontSize: '13px', fontWeight: 400,
           color: '#4A4840', lineHeight: 1.65, margin: 0,
         }}>
-          Under RTI Act 2005, the PIO must respond within 30 days.
-          RTI अधिनियम 2005 के अंतर्गत, लोक सूचना अधिकारी को 30 दिन के भीतर उत्तर देना अनिवार्य है।
+          LokAI provides legal information, not legal advice. This packet is an AI draft and should be reviewed before filing or sharing.
         </p>
       </div>
     </div>
@@ -420,17 +438,10 @@ export default function Draft() {
   const navigate = useNavigate();
   const documentRef = React.useRef<HTMLDivElement | null>(null);
 
+  // Save as PDF — uses the browser's native print-to-PDF with a print stylesheet
+  // that strips app chrome, so the citizen gets a clean filing-ready document.
   const handleDownload = () => {
-    const content = documentRef.current?.innerText?.trim() || 'LokAI draft preview';
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'lokai-draft-preview.txt';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    window.print();
   };
 
   const handleEdit = () => {
@@ -446,7 +457,7 @@ export default function Draft() {
         <div style={{ maxWidth: '740px', margin: '0 auto' }}>
 
           {/* ── Header bar: back arrow · centered title · action buttons ── */}
-          <div style={{
+          <div className="no-print" style={{
             display: 'flex', alignItems: 'center',
             justifyContent: 'space-between',
             marginBottom: '24px',
@@ -476,11 +487,11 @@ export default function Draft() {
                 color: '#1A1916', margin: 0, letterSpacing: '-0.1px',
                 whiteSpace: 'nowrap',
               }}>
-                RTI Application — Draft
+                Consumer Demand Notice
               </h1>
             </div>
 
-            {/* Right: Edit + Download PDF buttons */}
+            {/* Right: Edit + Download text buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', zIndex: 1 }}>
               <Btn variant="secondary" size="sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleEdit}>
                 <Pencil style={{ width: '13px', height: '13px' }} />
@@ -488,7 +499,7 @@ export default function Draft() {
               </Btn>
               <Btn variant="primary" size="sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleDownload}>
                 <Download style={{ width: '13px', height: '13px' }} />
-                Download PDF
+                Save as PDF
               </Btn>
             </div>
           </div>
@@ -508,13 +519,38 @@ export default function Draft() {
               <circle cx="7" cy="9.5" r="0.7" fill="#E8832A" />
             </svg>
             <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 400, color: '#8A4500' }}>
-              AI draft — review all details before filing
+              AI draft — review all details before sending
             </span>
           </div>
 
           {/* ── Document card ── */}
-          <div ref={documentRef}>
+          <div ref={documentRef} className="draft-document-card">
             <DocumentCard />
+          </div>
+
+          {/* ── No-direct-send review gate — visible human-in-the-loop checkpoint ── */}
+          <div className="no-print" style={{ margin: '28px 0 8px' }}>
+            <ReviewGate
+              draftText={[
+                'LokAI — Consumer demand notice draft (review before sending)',
+                '',
+                'To: Metro Mobile Store',
+                'Address: Linking Road, Bandra West, Mumbai',
+                'Subject: Defective mobile phone — request for repair, replacement, or refund',
+                '',
+                'I purchased a mobile phone from Metro Mobile Store. The phone became defective',
+                'shortly after purchase. I asked the seller for a repair, replacement, or refund,',
+                'and the request was refused.',
+                '',
+                'Legal basis: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
+                '',
+                'I am keeping the invoice, defect photos, warranty, and seller messages as evidence',
+                'and request a resolution within a reasonable period.',
+                '',
+                '— Prepared with LokAI. Please review every detail before sending.',
+              ].join('\n')}
+              onPrint={() => window.print()}
+            />
           </div>
 
           {/* ── What to do next ── */}
@@ -523,7 +559,7 @@ export default function Draft() {
       </div>
 
       {/* ── Fixed bottom input bar ── */}
-      <div style={{
+      <div className="no-print" style={{
         flexShrink: 0,
         background: '#FFFFFF',
         borderTop: '1px solid #E8E4DC',

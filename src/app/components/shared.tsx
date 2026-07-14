@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 
 // ─── Font constants ───────────────────────────────────────────────────────────
 export const EDITORIAL = '"Fraunces", Georgia, serif';
@@ -57,7 +57,7 @@ export const C = {
   saffronSoft: 'rgba(233,133,43,0.10)',
   deepAmber: '#E9852B',
   terracotta: '#C4724A',
-  teal:      '#132846',
+  teal:      '#102A4C',
   oxbloodDark: '#6B1F1F',
   oxbloodSoft: 'rgba(107,31,31,0.08)',
   text:      '#1A1916',
@@ -66,13 +66,13 @@ export const C = {
   onDark:    '#FFFFFF',
   onDarkSoft: 'rgba(255,255,255,0.65)',
   borderLight: '#E5E0D6',
-  borderFocus: '#132846',
+  borderFocus: '#102A4C',
   rule:      '#E5E0D6',
   successSoft: 'rgba(31,107,58,0.08)',
   cautionSoft: 'rgba(138,69,0,0.08)',
   errorSoft:   'rgba(184,54,28,0.08)',
-  badgeBg:     'rgba(19,40,70,0.08)',
-  badgeText:   '#132846',
+  badgeBg:     'rgba(16,42,76,0.08)',
+  badgeText:   '#102A4C',
   badgeBorder: '#CDCAC4',
 } as const;
 
@@ -274,6 +274,10 @@ const SHARED_ANIM_CSS = `
 .lokai-lang-chip:hover:not(.selected) {
   background: ${C.surface2} !important;
 }
+.lokai-voice-orb:focus-visible {
+  outline: 2px solid ${C.saffron};
+  outline-offset: 3px;
+}
 `;
 
 function injectSharedStyles() {
@@ -289,7 +293,7 @@ function injectSharedStyles() {
 export function CitationStamp({ text }: { text: string }) {
   useEffect(() => { injectSharedStyles(); }, []);
   return (
-    <div style={{
+    <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '6px',
       background: GRAD.oxbloodStamp,
       color: '#FFFFFF',
@@ -302,7 +306,7 @@ export function CitationStamp({ text }: { text: string }) {
     }}>
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }} />
       {text}
-    </div>
+    </span>
   );
 }
 
@@ -310,6 +314,7 @@ export function CitationStamp({ text }: { text: string }) {
 export function LogoMark({ size = 34, light = false }: { size?: number; light?: boolean }) {
   const borderColor = light ? 'rgba(255,255,255,0.64)' : C.navy;
   const textColor   = light ? '#FFFFFF' : C.navy;
+  const floretSize = Math.round(size * 0.58);
   return (
     <div style={{
       width: `${size}px`, height: `${size}px`, borderRadius: '50%',
@@ -319,12 +324,17 @@ export function LogoMark({ size = 34, light = false }: { size?: number; light?: 
       flexShrink: 0,
       boxShadow: light ? 'inset 0 1px 0 rgba(255,255,255,0.08)' : '0 1px 2px rgba(16,42,76,0.08)',
     }}>
-      <span style={{
-        fontFamily: EDITORIAL, fontSize: '16px', fontWeight: 400,
-        color: textColor, lineHeight: 1, userSelect: 'none',
-      }}>
-        L
-      </span>
+      <svg
+        width={floretSize}
+        height={floretSize}
+        viewBox="58 6 36 40"
+        fill="none"
+        style={{ flexShrink: 0, color: textColor }}
+      >
+        <path d="M76 8C82 17 82 35 76 44C70 35 70 17 76 8Z" stroke="currentColor" strokeWidth="2.0" />
+        <path d="M59 26C65 18 87 18 93 26C87 34 65 34 59 26Z" stroke="currentColor" strokeWidth="2.0" />
+        <circle cx="76" cy="26" r="3.2" fill="currentColor" opacity={0.65} />
+      </svg>
     </div>
   );
 }
@@ -370,6 +380,18 @@ export function VoiceOrb({
 }) {
   useEffect(() => { injectSharedStyles(); }, []);
   const iconSize = Math.round(size * 0.38);
+  const buttonReset: React.CSSProperties = {
+    appearance: 'none',
+    padding: 0,
+    font: 'inherit',
+  };
+  const voiceLabel = state === 'listening'
+    ? 'Stop voice input'
+    : state === 'processing'
+      ? 'Voice input is processing'
+      : state === 'error'
+        ? 'Retry voice input'
+        : 'Start voice input';
 
   const MicIcon = () => (
     <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none" style={{ position: 'relative', zIndex: 1 }}>
@@ -385,9 +407,14 @@ export function VoiceOrb({
   // ── IDLE ──
   if (state === 'idle') {
     return (
-      <div
+      <button
+        type="button"
+        className="lokai-voice-orb"
+        aria-label={voiceLabel}
         onClick={onClick}
+        disabled={!onClick}
         style={{
+          ...buttonReset,
           width: `${size}px`, height: `${size}px`, borderRadius: '50%',
           background: C.surface2,
           border: `2px solid ${C.border}`,
@@ -396,7 +423,7 @@ export function VoiceOrb({
         }}
       >
         <MicIcon />
-      </div>
+      </button>
     );
   }
 
@@ -415,9 +442,11 @@ export function VoiceOrb({
           animation: 'lokaiPulseRing 1.6s ease-out infinite',
         }} />
         {/* Orb */}
-        <div onClick={onClick} style={{
+        <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
+          ...buttonReset,
           width: `${size}px`, height: `${size}px`, borderRadius: '50%',
           background: C.saffron,
+          border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, overflow: 'hidden', cursor: onClick ? 'pointer' : 'default',
           boxShadow: `0 4px 16px rgba(232,131,42,0.3)`,
@@ -437,7 +466,7 @@ export function VoiceOrb({
               }} />
             ))}
           </div>
-        </div>
+        </button>
       </div>
     );
   }
@@ -453,21 +482,24 @@ export function VoiceOrb({
           borderTopColor: 'rgba(255,255,255,0.5)',
           animation: 'lokaiSpin 1s linear infinite',
         }} />
-        <div onClick={onClick} style={{
+        <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
+          ...buttonReset,
           width: `${size}px`, height: `${size}px`, borderRadius: '50%',
           background: C.navy,
+          border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: onClick ? 'pointer' : 'default',
         }}>
           <MicIcon />
-        </div>
+        </button>
       </div>
     );
   }
 
   // ── ERROR ──
   return (
-    <div onClick={onClick} style={{
+    <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
+      ...buttonReset,
       width: `${size}px`, height: `${size}px`, borderRadius: '50%',
       background: 'rgba(184,54,28,0.08)',
       border: `1.5px solid ${C.red}`,
@@ -478,7 +510,7 @@ export function VoiceOrb({
         <line x1="4" y1="4" x2="12" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
         <line x1="12" y1="4" x2="4" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
       </svg>
-    </div>
+    </button>
   );
 }
 

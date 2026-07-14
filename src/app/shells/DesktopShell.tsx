@@ -3,15 +3,16 @@ import { Outlet, useNavigate, useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sidebar } from '../components/Sidebar';
 import { SettingsPanel } from '../components/SettingsPanel';
+import { CommandPalette } from '../components/CommandPalette';
 import { SidebarProvider, useSidebar } from '../context/SidebarContext';
 import { LAYOUT } from '../components/shared';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/desktop/dashboard':          'Dashboard — LokAI',
   '/desktop/chat':               'Ask a Question — LokAI',
-  '/desktop/documents':          'My Documents — LokAI',
-  '/desktop/notice-interpreter': 'Notice Interpreter — LokAI',
-  '/desktop/document-draft':     'Draft Notice — LokAI',
+  '/desktop/documents':          'Case Files — LokAI',
+  '/desktop/notice-interpreter': 'Notice Upload — LokAI',
+  '/desktop/document-draft':     'Demand Notice — LokAI',
 };
 
 function DesktopContent() {
@@ -59,18 +60,17 @@ export default function DesktopShell() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth < 1024) navigate('/mobile/home');
-    };
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    /* Initial-mount check only: opening the desktop workspace on a phone-size
+       viewport routes to mobile. Mid-session window resizes no longer yank
+       the user out of an active workspace. */
+    if (window.innerWidth < 1024) navigate('/mobile/home');
   }, [navigate]);
 
   return (
     <div style={{ minWidth: '1024px', height: '100vh', overflow: 'hidden', display: 'flex' }}>
       <SidebarProvider>
         <SettingsPanel />
+        <CommandPalette />
         <Sidebar />
         <DesktopContent />
       </SidebarProvider>

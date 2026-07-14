@@ -75,16 +75,16 @@ interface DocItem {
   accentColor: string; // top stripe of mini-doc
 }
 
-// ─── Sample Documents ─────────────────────────────────────────────────────────
+// ─── Case Documents ───────────────────────────────────────────────────────────
 const DOCUMENTS: DocItem[] = [
   {
     id: 1,
-    type: 'RTI Application',
-    title: 'RTI Appeal — BMC Building Permit',
+    type: 'Demand Notice',
+    title: 'Consumer Demand Notice — Defective Phone',
     status: 'Draft',
-    date: 'Created Mar 15, 2026',
-    linkedChat: 'BMC RTI — Building Permit',
-    linkedPath: '/desktop/chat/rti',
+    date: 'Created Mar 25, 2026',
+    linkedChat: 'Consumer refund case',
+    linkedPath: '/desktop/document-draft',
     accentColor: C.saffron,
     thumbLines: [
       { w: '55%', kind: 'title' },
@@ -96,12 +96,12 @@ const DOCUMENTS: DocItem[] = [
   },
   {
     id: 2,
-    type: 'Demand Notice',
-    title: 'Demand Notice — Security Deposit',
+    type: 'Evidence Summary',
+    title: 'Evidence Summary — Defective Phone',
     status: 'Completed',
-    date: 'Created Mar 18, 2026',
-    linkedChat: 'Security deposit dispute',
-    linkedPath: '/desktop/chat/deposit',
+    date: 'Updated Mar 25, 2026',
+    linkedChat: 'Consumer refund case',
+    linkedPath: '/desktop/chat/consumer',
     accentColor: C.navy,
     thumbLines: [
       { w: '62%', kind: 'title' },
@@ -113,13 +113,13 @@ const DOCUMENTS: DocItem[] = [
   },
   {
     id: 3,
-    type: 'Consumer Complaint',
-    title: 'Consumer Complaint — Mobile Phone',
-    status: 'Draft',
-    date: 'Created Mar 10, 2026',
-    linkedChat: 'Consumer complaint — mobile',
+    type: 'Source Summary',
+    title: 'Sources Used — Consumer Protection Act',
+    status: 'Completed',
+    date: 'Checked Mar 25, 2026',
+    linkedChat: 'Consumer refund case',
     linkedPath: '/desktop/chat/consumer',
-    accentColor: C.saffron,
+    accentColor: C.green,
     thumbLines: [
       { w: '68%', kind: 'title' },
       { w: '90%', kind: 'text'  },
@@ -130,12 +130,12 @@ const DOCUMENTS: DocItem[] = [
   },
   {
     id: 4,
-    type: 'RTI Application',
-    title: 'RTI Application — Water Supply',
+    type: 'Case History',
+    title: 'Audit Trail — Consumer Refund Case',
     status: 'Completed',
-    date: 'Created Feb 28, 2026',
-    linkedChat: 'Water Supply RTI',
-    linkedPath: '/desktop/chat/rti',
+    date: 'Updated Mar 25, 2026',
+    linkedChat: 'Consumer refund case',
+    linkedPath: '/desktop/chat/consumer',
     accentColor: C.navy,
     thumbLines: [
       { w: '52%', kind: 'title' },
@@ -143,40 +143,6 @@ const DOCUMENTS: DocItem[] = [
       { w: '44%', kind: 'field' },
       { w: '86%', kind: 'text'  },
       { w: '60%', kind: 'thin'  },
-    ],
-  },
-  {
-    id: 5,
-    type: 'Eviction Notice',
-    title: 'Eviction Notice Response',
-    status: 'Draft',
-    date: 'Created Feb 20, 2026',
-    linkedChat: 'Tenant rights — Mumbai',
-    linkedPath: '/desktop/chat/deposit',
-    accentColor: C.saffron,
-    thumbLines: [
-      { w: '58%', kind: 'title' },
-      { w: '41%', kind: 'field' },
-      { w: '83%', kind: 'text'  },
-      { w: '67%', kind: 'text'  },
-      { w: '74%', kind: 'thin'  },
-    ],
-  },
-  {
-    id: 6,
-    type: 'Demand Notice',
-    title: 'Demand Notice — Employer Dues',
-    status: 'Completed',
-    date: 'Created Feb 15, 2026',
-    linkedChat: 'Workplace rights complaint',
-    linkedPath: '/desktop/chat',
-    accentColor: C.navy,
-    thumbLines: [
-      { w: '60%', kind: 'title' },
-      { w: '36%', kind: 'field' },
-      { w: '80%', kind: 'text'  },
-      { w: '55%', kind: 'field' },
-      { w: '88%', kind: 'thin'  },
     ],
   },
 ];
@@ -332,7 +298,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
             cursor: 'pointer',
           }}
         >
-          From chat:{' '}
+          Linked to:{' '}
           <span style={{
             color: C.navy,
             borderBottom: `1px solid rgba(28,58,110,0.28)`,
@@ -355,7 +321,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
         >
           <ExternalLink style={{ width: '11px', height: '11px' }} />
-          Open Chat
+          Open
         </button>
         <button
           className="doc-footer-btn doc-footer-btn-secondary"
@@ -363,7 +329,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
         >
           <Download style={{ width: '11px', height: '11px' }} />
-          Download PDF
+          Download text
         </button>
       </div>
     </div>
@@ -382,7 +348,7 @@ function downloadDocument(doc: DocItem) {
     `Created: ${doc.date}`,
     `Linked conversation: ${doc.linkedChat}`,
     '',
-    'Prototype export preview',
+    'Document export preview',
   ].join('\n');
 
   const blob = new Blob([body], { type: 'text/plain;charset=utf-8' });
@@ -423,7 +389,7 @@ function FilterTabs({ active, onSelect }: { active: FilterTab; onSelect: (t: Fil
   );
 }
 
-// ─── My Documents Page ────────────────────────────────────────────────────────
+// ─── Case Files Page ──────────────────────────────────────────────────────────
 export default function Documents() {
   const navigate               = useNavigate();
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
@@ -438,18 +404,18 @@ export default function Documents() {
 
   // Dynamic subtitle per filter
   const subtitle = (() => {
-    if (activeTab === 'All')       return `${filtered.length} documents`;
+    if (activeTab === 'All')       return `${filtered.length} case files`;
     if (activeTab === 'Draft')     return `${filtered.length} draft${filtered.length !== 1 ? 's' : ''}`;
-    if (activeTab === 'Completed') return `${filtered.length} completed document${filtered.length !== 1 ? 's' : ''}`;
+    if (activeTab === 'Completed') return `${filtered.length} completed file${filtered.length !== 1 ? 's' : ''}`;
     return '';
   })();
 
   // Empty state label per filter
   const emptyLabel = (() => {
-    if (activeTab === 'All')       return 'No documents yet';
+    if (activeTab === 'All')       return 'No case files yet';
     if (activeTab === 'Draft')     return 'No drafts yet';
-    if (activeTab === 'Completed') return 'No completed documents yet';
-    return 'No documents yet';
+    if (activeTab === 'Completed') return 'No completed files yet';
+    return 'No case files yet';
   })();
 
   return (
@@ -476,7 +442,7 @@ export default function Documents() {
                 fontFamily: SANS, fontSize: '16px', fontWeight: 600,
                 color: '#1A1916', margin: '0 0 5px',
               }}>
-                My Documents
+                Case Files
               </h1>
               <p style={{
                 fontFamily: SANS, fontSize: '14px', color: '#8A8880', margin: 0,
@@ -501,7 +467,7 @@ export default function Documents() {
               }}
             >
               <Plus style={{ width: '15px', height: '15px' }} />
-              Create Document
+              Open Packet
             </button>
           </div>
 
@@ -561,7 +527,7 @@ export default function Documents() {
                 fontFamily: SANS, fontSize: '13px', color: C.muted,
                 margin: '0 0 24px', lineHeight: 1.6,
               }}>
-                Documents you generate from chats will appear here.
+                Packets, source notes, evidence summaries, and case history will appear here.
               </p>
               <button
                 onClick={() => navigate('/desktop/chat')}

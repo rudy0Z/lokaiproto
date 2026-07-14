@@ -4,14 +4,16 @@ import type { LokAIResponse, APIMessage, ContextPanel } from '../services/api';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Conversation {
-  id:           string;
-  title:        string;
-  messages:     APIMessage[];
-  contextPanel: ContextPanel | null;
-  createdAt:    Date;
-  status:       'Action Required' | 'In Progress' | 'Ready to File' | 'Out of Scope';
-  tags:         string[];
-  since:        string;
+  id:             string;
+  title:          string;
+  messages:       APIMessage[];
+  contextPanel:   ContextPanel | null;
+  createdAt:      Date;
+  status:         'Action Required' | 'In Progress' | 'Ready to File' | 'Out of Scope';
+  tags:           string[];
+  since:          string;
+  completedSteps: string[];   // milestone IDs that are done
+  isBlocked:      boolean;    // whether current case hit a blocker
 }
 
 interface ConversationCtx {
@@ -23,6 +25,12 @@ interface ConversationCtx {
   updateConversation: (id: string, patch: Partial<Conversation>) => void;
   addMessage:         (id: string, msg: APIMessage) => void;
   applyResponse:      (id: string, response: LokAIResponse) => void;
+  // ── Language preference — shared across all screens ──────────────────────────
+  selectedLanguage:   string;
+  setSelectedLanguage:(lang: string) => void;
+  // ── Per-conversation milestone tracking ──────────────────────────────────────
+  markStepComplete:   (convId: string, stepId: string) => void;
+  setBlocked:         (convId: string, blocked: boolean) => void;
 }
 
 // ─── Pre-built JSON strings for the dummy conversations ────────────────────────
@@ -77,25 +85,25 @@ const DEPOSIT_RESPONSE = JSON.stringify({
 } as LokAIResponse);
 
 const CONSUMER_RESPONSE = JSON.stringify({
-  title: 'Consumer Phone Complaint',
-  zone1: { label: 'THE LAW', finding: 'Under the Consumer Protection Act 2019, a seller cannot refuse replacement or refund for a defective product. This qualifies as "deficiency of service" and an "unfair trade practice."' },
-  zone2: { label: 'YOUR SITUATION', analysis: 'Your phone was defective and the seller refused to replace or refund it. Under the Consumer Protection Act 2019, you are entitled to a repair, replacement, or full refund. The seller\'s refusal constitutes an unfair trade practice, and you have strong grounds for a consumer forum complaint.' },
-  zone3: { label: 'WHAT YOU CAN DO', steps: ['Send a written complaint to the seller and manufacturer giving 15 days to resolve.', 'File a consumer complaint at the District Consumer Disputes Redressal Commission (DCDRC) — no lawyer needed for claims under ₹50 lakh.', 'You can also file on the National Consumer Helpline (NCH) at consumerhelpline.gov.in for faster resolution.'], cta: 'Draft your consumer complaint' },
-  citations: ['Consumer Protection Act 2019 · Section 2(11)', 'Consumer Protection Act 2019 · Section 35'],
+  title: 'Consumer Demand Notice — Defective Phone',
+  zone1: { label: 'THE LAW', finding: 'A defective product can qualify as a consumer issue. You can ask the seller for repair, replacement, or refund, and send a demand notice if they ignore your request.' },
+  zone2: { label: 'YOUR SITUATION', analysis: 'Your phone became defective soon after purchase and the seller refused a remedy. LokAI still needs the invoice date and whether you already complained in writing before the demand notice is complete.' },
+  zone3: { label: 'WHAT YOU CAN DO', steps: ['Send a written demand notice to the seller or platform and keep proof of delivery.', 'Save the invoice, warranty details, defect photos or videos, and seller replies together.', 'If the seller ignores the demand notice, prepare the formal court complaint packet.'], cta: 'Prepare demand notice' },
+  citations: ['Consumer Protection Act 2019 · Section 2(10)', 'Consumer Protection Act 2019 · Section 2(11)', 'Consumer Protection Act 2019 · Section 35'],
   contextPanel: {
     primaryLaw: 'Consumer Protection Act, 2019',
     sections: [
-      { ref: 'Section 2(11)', summary: 'Defines "deficiency" — any fault or shortcoming in quality, nature, or manner of service.' },
-      { ref: 'Section 35', summary: 'Consumer can file complaint before District Commission for goods/services disputes.' },
-      { ref: 'Section 47', summary: 'State Commission has jurisdiction for complaints exceeding ₹1 crore.' },
+      { ref: 'Section 2(10)', summary: 'Defines defect in goods.' },
+      { ref: 'Section 2(11)', summary: 'Defines deficiency in service.' },
+      { ref: 'Section 35', summary: 'Allows a consumer to file a complaint before the appropriate commission.' },
     ],
     keyFacts: [
-      'No lawyer required for DCDRC complaints under ₹50 lakh',
-      'Seller and manufacturer are jointly liable for defective products',
-      'Filing fee is nominal (₹100-₹200 depending on claim value)',
-      'Consumer Forums typically resolve cases in 90-150 days',
+      'Defective mobile phone reported',
+      'Seller refused replacement or refund',
+      'Written complaint status still needs confirmation',
+      'Invoice date is needed before the notice is complete',
     ],
-    relatedLaws: ['Sale of Goods Act, 1930', 'Information Technology Act, 2000 (for online purchases)'],
+    relatedLaws: ['Consumer Protection (E-Commerce) Rules, 2020, if the purchase was online'],
   },
   scope: 'in',
   responseLanguage: 'en',
@@ -160,10 +168,10 @@ const TAMIL_CONSUMER_RESPONSE = JSON.stringify({
 
 const OUT_OF_SCOPE_RESPONSE = JSON.stringify({
   title: 'Outside LokAI Scope',
-  zone1: { label: 'BOUNDARY', finding: 'This question is outside LokAI’s role. LokAI is designed for Indian legal rights, notices, complaints, tenancy issues, and guided document drafting.' },
+  zone1: { label: 'BOUNDARY', finding: 'This question is outside LokAI\'s role. LokAI is designed for Indian legal rights, notices, complaints, tenancy issues, and guided document drafting.' },
   zone2: { label: 'WHY', analysis: 'General questions like sports, weather, entertainment, coding, or health advice do not use the legal reasoning flow that LokAI is built for. The product stays narrow so the output remains structured and reliable.' },
   zone3: { label: 'TRY THIS INSTEAD', steps: ['Ask about a legal notice or government communication.', 'Describe a tenancy, consumer, employment, or police-related issue.', 'Paste the document or message you want explained in plain language.'], cta: 'Switch to a legal question' },
-  citations: ['LokAI Prototype Boundary'],
+  citations: ['LokAI Knowledge Base'],
   contextPanel: {
     primaryLaw: 'LokAI handles Indian legal information only',
     sections: [
@@ -179,104 +187,102 @@ const OUT_OF_SCOPE_RESPONSE = JSON.stringify({
 // ─── Seed data — portfolio demo conversations ────────────────────────────────
 
 function buildDummyConversations(): Conversation[] {
-  const rtiParsed     = JSON.parse(RTI_RESPONSE)     as LokAIResponse;
-  const depositParsed = JSON.parse(DEPOSIT_RESPONSE) as LokAIResponse;
-  const consumerParsed= JSON.parse(CONSUMER_RESPONSE)as LokAIResponse;
-  const hindiDepositParsed = JSON.parse(HINDI_DEPOSIT_RESPONSE) as LokAIResponse;
-  const marathiNoticeParsed = JSON.parse(MARATHI_NOTICE_RESPONSE) as LokAIResponse;
-  const tamilConsumerParsed = JSON.parse(TAMIL_CONSUMER_RESPONSE) as LokAIResponse;
-  const outOfScopeParsed = JSON.parse(OUT_OF_SCOPE_RESPONSE) as LokAIResponse;
+  const rtiParsed           = JSON.parse(RTI_RESPONSE)             as LokAIResponse;
+  const depositParsed       = JSON.parse(DEPOSIT_RESPONSE)         as LokAIResponse;
+  const consumerParsed      = JSON.parse(CONSUMER_RESPONSE)        as LokAIResponse;
+  const hindiDepositParsed  = JSON.parse(HINDI_DEPOSIT_RESPONSE)   as LokAIResponse;
+  const marathiNoticeParsed = JSON.parse(MARATHI_NOTICE_RESPONSE)  as LokAIResponse;
+  const tamilConsumerParsed = JSON.parse(TAMIL_CONSUMER_RESPONSE)  as LokAIResponse;
 
   return [
     {
-      id:      'out-of-scope',
-      title:   'Boundary Example',
-      tags:    ['Prototype', 'Scope'],
-      since:   'Demo · Just now',
-      status:  'Out of Scope',
-      createdAt: new Date(Date.now() - 5 * 60 * 1000),
-      contextPanel: outOfScopeParsed.contextPanel,
+      id:             'consumer',
+      title:          'Consumer Demand Notice — Defective Phone',
+      tags:           ['Consumer', 'Electronics'],
+      since:          'Today · Mumbai',
+      status:         'Action Required',
+      createdAt:      new Date(Date.now() - 12 * 60 * 1000),
+      contextPanel:   consumerParsed.contextPanel,
+      completedSteps: ['intake', 'clarify'],
+      isBlocked:      false,
       messages: [
-        { role: 'user',      content: 'Can you tell me tomorrow’s cricket score?' },
-        { role: 'assistant', content: OUT_OF_SCOPE_RESPONSE },
+        { role: 'user',      content: 'I bought a phone that turned out to be defective. The seller is refusing to replace or refund it.' },
+        { role: 'assistant', content: CONSUMER_RESPONSE },
       ],
     },
     {
-      id:      'hindi-deposit',
-      title:   'हिंदी Deposit Notice',
-      tags:    ['Hindi', 'Tenancy'],
-      since:   'Today · 5:06 PM · Mumbai',
-      status:  'Ready to File',
-      createdAt: new Date(Date.now() - 35 * 60 * 1000),
-      contextPanel: hindiDepositParsed.contextPanel,
+      id:             'hindi-deposit',
+      title:          'हिंदी Deposit Notice',
+      tags:           ['Hindi', 'Tenancy'],
+      since:          'Today · 5:06 PM · Mumbai',
+      status:         'Ready to File',
+      createdAt:      new Date(Date.now() - 35 * 60 * 1000),
+      contextPanel:   hindiDepositParsed.contextPanel,
+      completedSteps: ['intake', 'clarify', 'assess', 'plan'],
+      isBlocked:      false,
       messages: [
         { role: 'user',      content: 'मेरे landlord ने ₹40,000 security deposit वापस नहीं किया. मुझे हिंदी में notice चाहिए.' },
         { role: 'assistant', content: HINDI_DEPOSIT_RESPONSE },
       ],
     },
     {
-      id:      'marathi-notice',
-      title:   'मराठी Notice Reply',
-      tags:    ['Marathi', 'Notice'],
-      since:   'Today · 12:20 PM · Pune',
-      status:  'In Progress',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      contextPanel: marathiNoticeParsed.contextPanel,
+      id:             'marathi-notice',
+      title:          'मराठी Notice Reply',
+      tags:           ['Marathi', 'Notice'],
+      since:          'Today · 12:20 PM · Pune',
+      status:         'In Progress',
+      createdAt:      new Date(Date.now() - 5 * 60 * 60 * 1000),
+      contextPanel:   marathiNoticeParsed.contextPanel,
+      completedSteps: ['intake', 'clarify'],
+      isBlocked:      false,
       messages: [
         { role: 'user',      content: 'मला मराठीत legal notice चे उत्तर तयार करायचे आहे. 15 दिवसांची deadline आहे.' },
         { role: 'assistant', content: MARATHI_NOTICE_RESPONSE },
       ],
     },
     {
-      id:      'tamil-consumer',
-      title:   'Tamil Consumer Refund',
-      tags:    ['Tamil', 'Consumer'],
-      since:   'Yesterday · Chennai',
-      status:  'Action Required',
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      contextPanel: tamilConsumerParsed.contextPanel,
+      id:             'tamil-consumer',
+      title:          'Tamil Consumer Refund',
+      tags:           ['Tamil', 'Consumer'],
+      since:          'Yesterday · Chennai',
+      status:         'Action Required',
+      createdAt:      new Date(Date.now() - 24 * 60 * 60 * 1000),
+      contextPanel:   tamilConsumerParsed.contextPanel,
+      completedSteps: ['intake'],
+      isBlocked:      false,
       messages: [
         { role: 'user',      content: 'நான் வாங்கிய product defective. Seller refund தர மாட்டேன் சொல்கிறார்.' },
         { role: 'assistant', content: TAMIL_CONSUMER_RESPONSE },
       ],
     },
     {
-      id:      'rti',
-      title:   'BMC RTI — Building Permit',
-      tags:    ['RTI', 'Municipal', 'BMC'],
-      since:   'Mar 15 · 2:14 PM · Mumbai',
-      status:  'Action Required',
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-      contextPanel: rtiParsed.contextPanel,
+      id:             'rti',
+      title:          'BMC RTI — Building Permit',
+      tags:           ['RTI', 'Municipal', 'BMC'],
+      since:          'Mar 15 · 2:14 PM · Mumbai',
+      status:         'Action Required',
+      createdAt:      new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      contextPanel:   rtiParsed.contextPanel,
+      completedSteps: ['intake'],
+      isBlocked:      false,
       messages: [
         { role: 'user',      content: 'I filed an RTI with BMC about my building permit 45 days ago and got no response.' },
         { role: 'assistant', content: RTI_RESPONSE },
       ],
     },
     {
-      id:      'deposit',
-      title:   'Security Deposit — ₹40,000',
-      tags:    ['Tenancy', 'Deposit', 'Mumbai'],
-      since:   'Today · 4:12 PM · Mumbai',
-      status:  'Action Required',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      contextPanel: depositParsed.contextPanel,
+      id:             'deposit',
+      title:          'Security Deposit — ₹40,000',
+      tags:           ['Tenancy', 'Deposit', 'Mumbai'],
+      since:          'Today · 4:12 PM · Mumbai',
+      status:         'Action Required',
+      createdAt:      new Date(Date.now() - 2 * 60 * 60 * 1000),
+      contextPanel:   depositParsed.contextPanel,
+      completedSteps: ['intake', 'clarify', 'assess'],
+      isBlocked:      false,
       messages: [
         { role: 'user',      content: 'My landlord is not returning my ₹40,000 security deposit. It has been 35 days since I moved out.' },
         { role: 'assistant', content: DEPOSIT_RESPONSE },
-      ],
-    },
-    {
-      id:      'consumer',
-      title:   'Consumer Complaint — Mobile Phone',
-      tags:    ['Consumer', 'Electronics'],
-      since:   'Mar 10 · Mumbai',
-      status:  'In Progress',
-      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-      contextPanel: consumerParsed.contextPanel,
-      messages: [
-        { role: 'user',      content: 'I bought a phone that turned out to be defective. The seller is refusing to replace or refund it.' },
-        { role: 'assistant', content: CONSUMER_RESPONSE },
       ],
     },
   ];
@@ -293,11 +299,16 @@ const ConversationContext = createContext<ConversationCtx>({
   updateConversation: () => {},
   addMessage:         () => {},
   applyResponse:      () => {},
+  selectedLanguage:   'en',
+  setSelectedLanguage:() => {},
+  markStepComplete:   () => {},
+  setBlocked:         () => {},
 });
 
 export function ConversationProvider({ children }: { children: React.ReactNode }) {
-  const [conversations, setConversations] = useState<Conversation[]>(buildDummyConversations);
-  const [activeId,      setActiveId]      = useState<string | null>('deposit');
+  const [conversations,    setConversations]    = useState<Conversation[]>(buildDummyConversations);
+  const [activeId,         setActiveId]         = useState<string | null>('consumer');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
 
   const getConversation = useCallback(
     (id: string) => conversations.find(c => c.id === id),
@@ -306,20 +317,39 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
 
   const createConversation = useCallback((): Conversation => {
     const newConv: Conversation = {
-      id:           `conv-${Date.now()}`,
-      title:        'New conversation',
-      tags:         [],
-      since:        'Just now',
-      status:       'In Progress',
-      createdAt:    new Date(),
-      contextPanel: null,
-      messages:     [],
+      id:             `conv-${Date.now()}`,
+      title:          'New conversation',
+      tags:           [],
+      since:          'Just now',
+      status:         'In Progress',
+      createdAt:      new Date(),
+      contextPanel:   null,
+      messages:       [],
+      completedSteps: [],
+      isBlocked:      false,
     };
     setConversations(prev => {
       const updated = [newConv, ...prev];
       return updated.slice(0, 10); // cap at 10
     });
     return newConv;
+  }, []);
+
+  const markStepComplete = useCallback((convId: string, stepId: string) => {
+    setConversations(prev =>
+      prev.map(c => c.id !== convId ? c : {
+        ...c,
+        completedSteps: c.completedSteps.includes(stepId)
+          ? c.completedSteps
+          : [...c.completedSteps, stepId],
+      }),
+    );
+  }, []);
+
+  const setBlocked = useCallback((convId: string, blocked: boolean) => {
+    setConversations(prev =>
+      prev.map(c => c.id !== convId ? c : { ...c, isBlocked: blocked }),
+    );
   }, []);
 
   const updateConversation = useCallback((id: string, patch: Partial<Conversation>) => {
@@ -357,6 +387,8 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
       conversations, activeId, setActiveId,
       getConversation, createConversation, updateConversation,
       addMessage, applyResponse,
+      selectedLanguage, setSelectedLanguage,
+      markStepComplete, setBlocked,
     }}>
       {children}
     </ConversationContext.Provider>
@@ -366,3 +398,6 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
 export function useConversations() {
   return useContext(ConversationContext);
 }
+
+// Suppress unused warning — OUT_OF_SCOPE_RESPONSE is available for future use
+void OUT_OF_SCOPE_RESPONSE;

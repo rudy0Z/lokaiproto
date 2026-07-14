@@ -1,7 +1,9 @@
 ﻿import React, { useState } from 'react';
-import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight } from 'lucide-react';
+import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { SERIF, SANS, C, GRAD, SHADOW, BrandLogo } from '../../components/shared';
+import { useConversations } from '../../context/ConversationContext';
+import { ARTBOARD, IS_EMBED } from '../../embed';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED CHROME — exported for all mobile screens
@@ -10,6 +12,8 @@ import { SERIF, SANS, C, GRAD, SHADOW, BrandLogo } from '../../components/shared
 // ─── Status Bar ───────────────────────────────────────────────────────────────
 export function StatusBar({ light = false }: { light?: boolean }) {
   const fg = light ? '#FFFFFF' : C.ink;
+  /* The portfolio embed frame provides its own device chrome. */
+  if (IS_EMBED) return null;
   return (
     <div style={{
       height: '44px', display: 'flex', alignItems: 'flex-end',
@@ -66,6 +70,7 @@ export function TopNav({
           background: '#EEF2F8', border: `1px solid ${C.navy}`,
           borderRadius: '999px', padding: '5px 12px',
           cursor: 'pointer',
+          transition: 'background 0.15s ease',
         }}
       >
         <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 500, color: C.navy }}>
@@ -82,9 +87,9 @@ export function TopNav({
 // ─── Bottom Nav — 64px ────────────────────────────────────────────────────────
 const NAV_TABS = [
   { key: 'home',    label: 'Home',    Icon: Home,          route: '/mobile/home'       },
-  { key: 'chat',    label: 'Chat',    Icon: MessageSquare, route: '/mobile/chat/hindi' },
-  { key: 'docs',    label: 'Draft',   Icon: FileText,      route: '/desktop/document-draft' },
-  { key: 'profile', label: 'Profile', Icon: User,          route: '/mobile/profile'    },
+  { key: 'chat',    label: 'Case',    Icon: MessageSquare, route: '/mobile/case/consumer' },
+  { key: 'docs',    label: 'Files',   Icon: FileText,      route: '/mobile/files' },
+  { key: 'profile', label: 'Help',    Icon: User,          route: '/mobile/profile'    },
 ];
 
 export function BottomNav({ active = 'home' }: { active?: string }) {
@@ -137,6 +142,7 @@ export function BottomNav({ active = 'home' }: { active?: string }) {
 
 // ─── Home Indicator ────────────────────────────────────────────────────────────
 export function HomeIndicator({ light = false }: { light?: boolean }) {
+  if (IS_EMBED) return null;
   return (
     <div style={{
       height: '20px', background: light ? 'transparent' : '#FFFFFF',
@@ -152,6 +158,14 @@ export function HomeIndicator({ light = false }: { light?: boolean }) {
 }
 
 export function MobileRouteCanvas({ children }: { children: React.ReactNode }) {
+  /* Embedded: the iframe IS the phone — fill it edge to edge, no mock canvas. */
+  if (IS_EMBED) {
+    return (
+      <div style={{ width: '100%', height: '100dvh', overflow: 'hidden' }}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div style={{
       minHeight: '100vh',
@@ -222,7 +236,16 @@ const LANG_ITEMS = [
   { code: 'ml', name: 'മലയാളം', en: 'Malayalam' },
   { code: 'as', name: 'অসমীয়া', en: 'Assamese'  },
   { code: 'en', name: 'English', en: 'English'   },
-];
+] as const;
+
+// Shared language-label map so every screen shows the citizen's chosen language
+// in its own script — the preference set on Home persists across the whole flow.
+export const LANG_LABEL: Record<string, string> = {
+  en: 'English', hi: 'हिन्दी', mr: 'मराठी', ta: 'தமிழ்',
+  te: 'తెలుగు', bn: 'বাংলা', gu: 'ગુજરાતী', pa: 'ਪੰਜਾਬੀ',
+  kn: 'ಕನ್ನಡ', ml: 'മലയാളം', or: 'ଓଡ଼ିଆ', as: 'অসমীয়া',
+};
+export const getLangLabel = (code: string) => LANG_LABEL[code] ?? 'English';
 
 export function LanguageBottomSheet({ selected, onSelect, onClose }: {
   selected: string; onSelect: (code: string) => void; onClose: () => void;
@@ -307,6 +330,197 @@ function GreetingSection() {
   );
 }
 
+// ─── Active Case Timeline Card ─────────────────────────────────────────────────
+// Shown when the user has a case in progress. Persistent top-of-feed anchor.
+const CASE_STEPS = [
+  { id: 'intake',  label: 'Intake'   },
+  { id: 'clarify', label: 'Clarify'  },
+  { id: 'assess',  label: 'Analysis' },
+  { id: 'plan',    label: 'Plan'     },
+  { id: 'packet',  label: 'Packet'   },
+];
+
+function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
+  convId: string;
+  title: string;
+  completedSteps: string[];
+  isBlocked: boolean;
+}) {
+  const navigate = useNavigate();
+  const lastDone = CASE_STEPS.reduce((acc, s, i) =>
+    completedSteps.includes(s.id) ? i : acc, -1);
+  const nextStep = CASE_STEPS[lastDone + 1];
+
+  return (
+    <div
+      onClick={() => navigate(`/mobile/case/consumer?stage=${nextStep?.id || 'intake'}`)}
+      style={{
+        margin: '0 20px 20px',
+        borderRadius: '20px',
+        padding: '16px 18px',
+        background: [
+          'radial-gradient(ellipse 80% 90% at 0% 100%, rgba(255,227,184,0.52), transparent 68%)',
+          '#FFFFFF',
+        ].join(', '),
+        border: `1.5px solid ${C.navy}`,
+        boxShadow: '0 8px 24px rgba(16,42,76,0.10)',
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
+            Case in progress
+          </p>
+          <p style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {title}
+          </p>
+        </div>
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%',
+          background: isBlocked ? 'rgba(184,54,28,0.08)' : '#EEF2F8',
+          border: `1px solid ${isBlocked ? C.red : C.navy}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <ArrowRight size={14} color={isBlocked ? C.red : C.navy} />
+        </div>
+      </div>
+
+      {/* Step progress dots */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {CASE_STEPS.map((step, i) => {
+          const done    = completedSteps.includes(step.id);
+          const current = i === lastDone + 1;
+          const blocked = current && isBlocked;
+          return (
+            <React.Fragment key={step.id}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: '50%',
+                  background: done ? C.navy : blocked ? C.red : current ? 'rgba(16,42,76,0.12)' : '#F0EDE8',
+                  border: `1.5px solid ${done ? C.navy : blocked ? C.red : current ? C.navy : C.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'background 0.2s ease, border-color 0.2s ease',
+                }}>
+                  {done ? (
+                    <Check size={10} color="#FFFFFF" strokeWidth={2.5} />
+                  ) : (
+                    <Circle size={8} color={current ? C.navy : '#C0BDB6'} strokeWidth={2} />
+                  )}
+                </div>
+                <span style={{
+                  fontFamily: SANS, fontSize: 9, fontWeight: current || done ? 600 : 400,
+                  color: done ? C.navy : current ? C.ink : C.muted,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {step.label}
+                </span>
+              </div>
+              {i < CASE_STEPS.length - 1 && (
+                <div style={{
+                  flex: 1, height: 1.5, borderRadius: 1,
+                  background: done ? C.navy : '#E0DDD6',
+                  marginBottom: 16,
+                  transition: 'background 0.3s ease',
+                }} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Blocked warning */}
+      {isBlocked && (
+        <p style={{ fontFamily: SANS, fontSize: 11, color: C.red, margin: '10px 0 0', lineHeight: 1.4 }}>
+          ⚠ A detail is needed before LokAI can continue. Tap to resolve.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Language-Aware Suggestion Chips ──────────────────────────────────────────
+// These morph based on selected language so users in regional languages
+// see tappable prompts in their own script, lowering the barrier to type.
+const LANG_CHIPS: Record<string, { label: string; question: string }[]> = {
+  en: [
+    { label: 'My landlord kept my deposit',  question: 'My landlord has not returned my security deposit after I moved out.' },
+    { label: 'I got a legal notice',          question: 'I received a legal notice and need to understand what it means.' },
+    { label: 'Seller refused my refund',      question: 'I bought a defective product and the seller is refusing a refund.' },
+    { label: 'File an RTI',                   question: 'How do I file an RTI application to get government records?' },
+  ],
+  hi: [
+    { label: 'मकान मालिक ने जमा रोका',   question: 'मेरे मकान मालिक ने सिक्योरिटी डिपॉज़िट वापस नहीं किया।' },
+    { label: 'कानूनी नोटिस मिला',          question: 'मुझे एक कानूनी नोटिस मिला है, इसे समझने में मदद चाहिए।' },
+    { label: 'रिफंड से इनकार',              question: 'विक्रेता ने दोषपूर्ण उत्पाद का रिफंड देने से मना किया।' },
+    { label: 'RTI कैसे दर्ज करें',           question: 'मुझे RTI दाखिल करने की जानकारी चाहिए।' },
+  ],
+  mr: [
+    { label: 'ठेव रोखली',                   question: 'मकान मालकाने माझी सुरक्षा ठेव परत केली नाही।' },
+    { label: 'नोटिस मिळाली',                 question: 'मला कायदेशीर नोटिस मिळाली आहे, त्याचा अर्थ समजून घ्यायचा आहे।' },
+    { label: 'परतावा नाकारला',               question: 'विक्रेत्याने दोषपूर्ण वस्तूचा परतावा देण्यास नकार दिला।' },
+    { label: 'RTI अर्ज',                     question: 'RTI अर्ज कसा करायचा?' },
+  ],
+  ta: [
+    { label: 'டெபாசிட் திரும்பவில்லை',      question: 'என் வீட்டு உரிமையாளர் பாதுகாப்பு வைப்பை திரும்பப் தரவில்லை.' },
+    { label: 'சட்ட நோட்டீஸ் வந்தது',        question: 'எனக்கு சட்ட நோட்டீஸ் வந்துள்ளது, அதை புரிந்துகொள்ள உதவி வேண்டும்.' },
+    { label: 'Refund மறுத்தார்',              question: 'கோளாறு பொருளுக்கு seller refund தர மறுக்கிறார்.' },
+    { label: 'RTI எப்படி?',                  question: 'RTI விண்ணப்பம் எப்படி செய்வது?' },
+  ],
+  te: [
+    { label: 'డిపాజిట్ తిరిగి రాలేదు',      question: 'ఇంటి యజమాని నా సెక్యూరిటీ డిపాజిట్ తిరిగి ఇవ్వలేదు.' },
+    { label: 'చట్టపరమైన నోటీసు వచ్చింది',   question: 'నాకు చట్టపరమైన నోటీసు వచ్చింది దాన్ని అర్థం చేసుకోవాలి.' },
+    { label: 'రిఫండ్ నిరాకరణ',               question: 'లోపభూయిష్ట వస్తువుకు విక్రేత రిఫండ్ ఇవ్వడానికి నిరాకరించాడు.' },
+    { label: 'RTI ఎలా దాఖలు చేయాలి',        question: 'RTI అర్జీ ఎలా దాఖలు చేయాలి?' },
+  ],
+  bn: [
+    { label: 'ডিপোজিট ফেরত দেয়নি',          question: 'বাড়ির মালিক আমার সিকিউরিটি ডিপোজিট ফেরত দেননি।' },
+    { label: 'আইনি নোটিশ পেয়েছি',            question: 'আমি একটি আইনি নোটিশ পেয়েছি, এর অর্থ বুঝতে সাহায্য দরকার।' },
+    { label: 'রিফান্ড অস্বীকার',              question: 'বিক্রেতা ত্রুটিপূর্ণ পণ্যের রিফান্ড দিতে অস্বীকার করেছে।' },
+    { label: 'RTI কীভাবে করবেন',              question: 'RTI আবেদন কীভাবে করতে হয়?' },
+  ],
+};
+
+function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: string) => void }) {
+  const chips = LANG_CHIPS[lang] ?? LANG_CHIPS['en'];
+  return (
+    <div style={{ padding: '0 20px 20px' }}>
+      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+        Quick start
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {chips.map(chip => (
+          <button
+            key={chip.label}
+            onClick={() => onSelect(chip.question)}
+            style={{
+              fontFamily: SANS,
+              fontSize: 13,
+              fontWeight: 500,
+              color: C.navy,
+              background: '#FFFFFF',
+              border: `1px solid ${C.border}`,
+              borderRadius: '999px',
+              padding: '8px 14px',
+              cursor: 'pointer',
+              lineHeight: 1.3,
+              transition: 'border-color 0.15s ease, background 0.15s ease',
+            }}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Legal Signal Band — hero card ────────────────────────────────────────────
 function LegalSignalBand() {
   return (
     <div style={{
@@ -336,11 +550,11 @@ function LegalSignalBand() {
           background: 'rgba(255,255,255,0.70)',
           border: '1px solid rgba(16,42,76,0.10)',
           fontFamily: SANS, fontSize: '10px', fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase',
+          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
           color: C.navy,
         }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.saffron }} />
-          Prototype source trail
+          Verified source trail
         </div>
         <p style={{
           fontFamily: SERIF,
@@ -369,6 +583,65 @@ function LegalSignalBand() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ConsumerCaseStart() {
+
+  const navigate = useNavigate();
+  return (
+    <button
+      onClick={() => navigate('/mobile/case/consumer')}
+      style={{
+        width: '100%',
+        minHeight: 112,
+        background: '#FFFFFF',
+        border: `1px solid ${C.border}`,
+        borderRadius: 18,
+        boxShadow: SHADOW.sm,
+        padding: 16,
+        cursor: 'pointer',
+        textAlign: 'left',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        marginBottom: 24,
+      }}
+    >
+      <div style={{
+        width: 46,
+        height: 46,
+        borderRadius: 14,
+        background: '#EEF2F8',
+        border: `1px solid ${C.border}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <FileText size={19} color={C.navy} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          fontFamily: SANS,
+          fontSize: 11,
+          fontWeight: 700,
+          color: C.muted,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          margin: '0 0 5px',
+        }}>
+          Guided case
+        </p>
+        <p style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: C.ink, margin: '0 0 5px' }}>
+          Start Consumer Refund Case
+        </p>
+        <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+          Step-by-step help for a defective product or refund refusal.
+        </p>
+      </div>
+      <ArrowRight size={17} color={C.navy} />
+    </button>
   );
 }
 
@@ -407,13 +680,13 @@ const CONVERSATIONS = [
     route: '/mobile/chat/hindi',
   },
   {
-    id: 2,
-    dotColor: C.navy,
-    title: 'Boundary example',
-    snippet: 'See how LokAI responds when the question is outside Indian legal guidance.',
-    time: 'Demo',
-    lang: 'Prototype',
-    route: '/mobile/chat/out-of-scope',
+    id: 3,
+    dotColor: C.green,
+    title: 'Consumer refund case',
+    snippet: 'Defective phone with seller refusal. One detail needed before notice packet is complete.',
+    time: 'Today',
+    lang: 'English',
+    route: '/mobile/case/consumer',
   },
 ];
 
@@ -472,7 +745,7 @@ const NOTICES = [
     location: 'Bandra West',
     date: '18 Mar',
     urgent: true,
-    route: '/desktop/notice-interpreter',
+    route: '/mobile/case/consumer?failure=ocr_unreadable',
   },
   {
     id: 2,
@@ -482,7 +755,7 @@ const NOTICES = [
     location: 'H/West Ward',
     date: '22 Mar',
     urgent: false,
-    route: '/desktop/notice-interpreter',
+    route: '/mobile/case/consumer?failure=ocr_unreadable',
   },
 ];
 
@@ -552,7 +825,7 @@ function FloatingInput() {
   const navigate = useNavigate();
 
   return (
-    <button onClick={() => navigate('/mobile/chat/hindi')} style={{
+    <button onClick={() => navigate('/mobile/case/consumer')} style={{
       position: 'absolute',
       bottom: '80px',      // 64px bottom-nav + 16px gap
       left: '16px',
@@ -605,22 +878,40 @@ function FloatingInput() {
 // HOME ARTBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
 export function HomeArtboard() {
+  const { selectedLanguage, setSelectedLanguage, conversations } = useConversations();
   const [langSheetOpen, setLangSheetOpen] = useState(false);
-  const [selectedLang,  setSelectedLang]  = useState('en');
   const navigate = useNavigate();
+
+  // Find the most recent in-progress case for the Active Case Card
+  const activeCase = conversations.find(c =>
+    c.status === 'In Progress' || c.status === 'Action Required'
+  );
+
+  // Derive display label for the language chip (shared map — persists across screens)
+  const langLabel = getLangLabel(selectedLanguage);
+
+  const handleSuggestionTap = (question: string) => {
+    // Navigate to consumer case flow — in a real app this would pre-fill the intake
+    void question;
+    navigate('/mobile/case/consumer');
+  };
 
   return (
     <div style={{
-      width: '390px', height: '844px',
+      ...ARTBOARD,
       background: [
         'radial-gradient(ellipse 100% 42% at 50% 0%, rgba(221,231,255,0.60), transparent 70%)',
         'linear-gradient(180deg, #FBF8F1 0%, #F8F5EE 100%)',
       ].join(', '),
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      position: 'relative',   // allows FloatingInput position:absolute
+      position: 'relative',
     }}>
       <StatusBar />
-      <TopNav onLanguageTap={() => setLangSheetOpen(true)} bg="transparent" />
+      <TopNav
+        onLanguageTap={() => setLangSheetOpen(true)}
+        bg="transparent"
+        langLabel={langLabel}
+      />
 
       {/* ── Scrollable body — content ends 136px from bottom for floating input ── */}
       <div style={{
@@ -628,40 +919,62 @@ export function HomeArtboard() {
         background: '#F5F2EC', scrollbarWidth: 'none',
       } as React.CSSProperties}>
 
-        {/* Greeting — 32px top padding, no input here */}
+        {/* Greeting */}
         <GreetingSection />
         <LegalSignalBand />
 
         {/* Content sections — 20px margins each side */}
-        <div style={{ padding: '0 20px 136px' }}>
+        <div style={{ padding: '0 0 136px' }}>
 
-          {/* Your Conversations */}
-          <div style={{ marginBottom: '24px' }}>
-            <SectionHead title="Your Conversations" action="See all" onAction={() => navigate('/mobile/chat/hindi')} />
-            <div style={{
-              background: '#FFFFFF', borderRadius: '16px',
-              padding: '0 16px', border: '1px solid #E8E4DC',
-            }}>
-              {CONVERSATIONS.map((conv, i) => (
-                <div key={conv.id} onClick={() => navigate(conv.route)}>
-                  <ConversationRow conv={conv} isLast={i === CONVERSATIONS.length - 1} onOpen={() => navigate(conv.route)} />
-                </div>
-              ))}
+          {/* Active Case Timeline Card — only shown when a case is in progress */}
+          {activeCase && activeCase.id === 'consumer' && (
+            <ActiveCaseCard
+              convId={activeCase.id}
+              title={activeCase.title}
+              completedSteps={activeCase.completedSteps}
+              isBlocked={activeCase.isBlocked}
+            />
+          )}
+
+          {/* Language-Aware Suggestion Chips */}
+          <SuggestionChips lang={selectedLanguage} onSelect={handleSuggestionTap} />
+
+          <div style={{ padding: '0 20px' }}>
+            <ConsumerCaseStart />
+
+            {/* Your Conversations */}
+            <div style={{ marginBottom: '24px' }}>
+              <SectionHead title="Your Conversations" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=assess')} />
+              <div style={{
+                background: '#FFFFFF', borderRadius: '16px',
+                padding: '0 16px', border: '1px solid #E8E4DC',
+              }}>
+                {CONVERSATIONS.map((conv, i) => {
+                  // Route conversations into the stateful case stepper rather than the
+                  // legacy static chat screens, so progress, language, and trust state persist.
+                  const stage = ['assess', 'plan', 'clarify'][i % 3];
+                  const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
+                  return (
+                    <div key={conv.id} onClick={toCase}>
+                      <ConversationRow conv={conv} isLast={i === CONVERSATIONS.length - 1} onOpen={toCase} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Notices Near You */}
+            <div style={{ marginBottom: '24px' }}>
+              <SectionHead title="Notices Near You" />
+              <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(26,25,22,0.04)' }}>
+                {NOTICES.map((n, i) => (
+                  <div key={n.id} onClick={() => navigate(n.route)}>
+                    <NoticeListItem notice={n} isLast={i === NOTICES.length - 1} onOpen={() => navigate(n.route)} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Notices Near You — list style, not cards */}
-          <div style={{ marginBottom: '24px' }}>
-            <SectionHead title="Notices Near You" />
-            <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(26,25,22,0.04)' }}>
-              {NOTICES.map((n, i) => (
-                <div key={n.id} onClick={() => navigate(n.route)}>
-                  <NoticeListItem notice={n} isLast={i === NOTICES.length - 1} onOpen={() => navigate(n.route)} />
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
       </div>
 
@@ -675,8 +988,8 @@ export function HomeArtboard() {
       {/* ── Language bottom sheet ── */}
       {langSheetOpen && (
         <LanguageBottomSheet
-          selected={selectedLang}
-          onSelect={(code) => { setSelectedLang(code); setLangSheetOpen(false); }}
+          selected={selectedLanguage}
+          onSelect={(code) => { setSelectedLanguage(code); setLangSheetOpen(false); }}
           onClose={() => setLangSheetOpen(false)}
         />
       )}
