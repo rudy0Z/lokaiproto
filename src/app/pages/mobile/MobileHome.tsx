@@ -2,7 +2,7 @@
 import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { SERIF, SANS, C, GRAD, SHADOW, BrandLogo } from '../../components/shared';
-import { useConversations } from '../../context/ConversationContext';
+import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -668,29 +668,38 @@ function SectionHead({ title, action, onAction }: { title: string; action?: stri
   );
 }
 
-// ─── Your Conversations — 2 list-style rows ────────────────────────────────────
-const CONVERSATIONS = [
-  {
-    id: 1,
-    dotColor: '#C4724A',
-    title: 'Landlord deposit issue',
-    snippet: 'Your landlord must return ₹40,000 within the statutory period after vacating.',
-    time: '2h ago',
-    lang: 'Hindi',
-    route: '/mobile/chat/hindi',
-  },
-  {
-    id: 3,
-    dotColor: C.green,
-    title: 'Consumer refund case',
-    snippet: 'Defective phone with seller refusal. One detail needed before notice packet is complete.',
-    time: 'Today',
-    lang: 'English',
-    route: '/mobile/case/consumer',
-  },
-];
+// ─── Your Conversations — real matter history, not a status card ──────────────
+type ConversationRowItem = { id: string; dotColor: string; title: string; time: string; lang: string };
 
-function ConversationRow({ conv, isLast, onOpen }: { conv: typeof CONVERSATIONS[0]; isLast: boolean; onOpen: () => void }) {
+const STATUS_DOT_COLOR: Record<Conversation['status'], string> = {
+  'Ready to File':     C.green,
+  'In Progress':       C.navy,
+  'Action Required':   '#C4724A',
+  'Out of Scope':      C.muted,
+};
+
+/** Reads the language off the latest assistant reply so the dot list reflects the real conversation, not invented copy. */
+function toConversationRowItem(conv: Conversation): ConversationRowItem {
+  const lastAssistant = [...conv.messages].reverse().find(m => m.role === 'assistant');
+  let lang = 'English';
+  if (lastAssistant) {
+    try {
+      const parsed = JSON.parse(lastAssistant.content) as { responseLanguage?: string };
+      if (parsed.responseLanguage) lang = getLangLabel(parsed.responseLanguage);
+    } catch {
+      // Non-JSON content (legacy message) — keep the English default.
+    }
+  }
+  return {
+    id: conv.id,
+    dotColor: STATUS_DOT_COLOR[conv.status],
+    title: conv.title,
+    time: conv.since,
+    lang,
+  };
+}
+
+function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; isLast: boolean; onOpen: () => void }) {
   return (
     <div style={{
       height: '64px',
@@ -878,14 +887,22 @@ function FloatingInput() {
 // HOME ARTBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
 export function HomeArtboard() {
-  const { selectedLanguage, setSelectedLanguage, conversations } = useConversations();
+  const { selectedLanguage, setSelectedLanguage, conversations, activeId, getConversation } = useConversations();
   const [langSheetOpen, setLangSheetOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Find the most recent in-progress case for the Active Case Card
-  const activeCase = conversations.find(c =>
-    c.status === 'In Progress' || c.status === 'Action Required'
-  );
+  // The one live matter is whichever the app explicitly activated — not a scan
+  // for "any conversation that looks in-progress." A citizen has one case open
+  // at a time; the rest is history.
+  const activeCase = getConversation(activeId ?? '');
+
+  // Everything else is matter history — most recent first, capped so the list
+  // stays a glance, not a second dashboard.
+  const historyItems = conversations
+    .filter(c => c.id !== activeCase?.id)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 3)
+    .map(toConversationRowItem);
 
   // Derive display label for the language chip (shared map — persists across screens)
   const langLabel = getLangLabel(selectedLanguage);
@@ -942,26 +959,28 @@ export function HomeArtboard() {
           <div style={{ padding: '0 20px' }}>
             <ConsumerCaseStart />
 
-            {/* Your Conversations */}
-            <div style={{ marginBottom: '24px' }}>
-              <SectionHead title="Your Conversations" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=assess')} />
-              <div style={{
-                background: '#FFFFFF', borderRadius: '16px',
-                padding: '0 16px', border: '1px solid #E8E4DC',
-              }}>
-                {CONVERSATIONS.map((conv, i) => {
-                  // Route conversations into the stateful case stepper rather than the
-                  // legacy static chat screens, so progress, language, and trust state persist.
-                  const stage = ['assess', 'plan', 'clarify'][i % 3];
-                  const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
-                  return (
-                    <div key={conv.id} onClick={toCase}>
-                      <ConversationRow conv={conv} isLast={i === CONVERSATIONS.length - 1} onOpen={toCase} />
-                    </div>
-                  );
-                })}
+            {/* Your Conversations — real matter history, not the active one twice */}
+            {historyItems.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
+                <div style={{
+                  background: '#FFFFFF', borderRadius: '16px',
+                  padding: '0 16px', border: '1px solid #E8E4DC',
+                }}>
+                  {historyItems.map((conv, i) => {
+                    // Route into the stateful case stepper rather than the legacy static
+                    // chat screens, so progress, language, and trust state persist.
+                    const stage = ['assess', 'plan', 'clarify'][i % 3];
+                    const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
+                    return (
+                      <div key={conv.id} onClick={toCase}>
+                        <ConversationRow conv={conv} isLast={i === historyItems.length - 1} onOpen={toCase} />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Notices Near You */}
             <div style={{ marginBottom: '24px' }}>
