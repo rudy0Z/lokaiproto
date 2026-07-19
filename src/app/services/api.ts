@@ -2,6 +2,8 @@
 // NVIDIA NIM endpoint · sarvamai/sarvam-m model
 // API key from VITE_NVIDIA_API_KEY env var — never hardcoded
 
+import { z } from 'zod';
+
 export interface LokAIZone {
   label:   string;
   finding?: string;
@@ -240,68 +242,175 @@ function buildDemoResponse(messages: APIMessage[]): LokAIResponse {
   };
 }
 
-export async function callLokAI(messages: APIMessage[]): Promise<LokAIResponse> {
-  const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
-  if (!apiKey) {
-    console.warn('[LokAI API] Missing VITE_NVIDIA_API_KEY. Using structured demo response.');
-    return buildDemoResponse(messages);
+// ─── Service error taxonomy ───────────────────────────────────────────────────
+// Every failure path gets a typed kind + a retryable flag instead of a bare
+// Error. This is what lets a caller (or a future "LokAI paused" banner) tell
+// "you're offline" apart from "the model sent something we don't trust."
+export type ApiMode = 'demo' | 'live';
+
+export type ServiceFailureKind =
+  | 'offline'
+  | 'timeout'
+  | 'invalid_response'
+  | 'permission'
+  | 'unsupported'
+  | 'server';
+
+export class LokAIServiceError extends Error {
+  kind: ServiceFailureKind;
+  retryable: boolean;
+
+  constructor(kind: ServiceFailureKind, message: string, retryable = true) {
+    super(message);
+    this.name = 'LokAIServiceError';
+    this.kind = kind;
+    this.retryable = retryable;
+  }
+}
+
+export type ServiceResult<T> = {
+  mode: ApiMode;
+  data: T;
+  error?: LokAIServiceError;
+};
+
+async function fetchWithServiceErrors(input: RequestInfo | URL, init: RequestInit, timeout = TIMEOUT_MS): Promise<Response> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new LokAIServiceError('offline', 'You appear to be offline. Your input is still saved.', true);
   }
 
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new LokAIServiceError('permission', `LokAI could not authenticate with the model service (${response.status}).`, false);
+      }
+      throw new LokAIServiceError('server', `LokAI could not complete the request (${response.status}).`, response.status >= 500);
+    }
+    return response;
+  } catch (err) {
+    if (err instanceof LokAIServiceError) throw err;
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new LokAIServiceError('timeout', 'LokAI took too long to respond. Your question is still saved.', true);
+    }
+    throw new LokAIServiceError('server', err instanceof Error ? err.message : 'LokAI could not reach the service.', true);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ─── Response contract ────────────────────────────────────────────────────────
+// The safety boundary is enforced here, in the schema, not only in the prompt.
+// A model reply that doesn't fit this shape — or that claims scope:"out" while
+// dressing zone1 up as ordinary legal findings instead of a boundary — is
+// rejected before it ever reaches the UI, not silently trusted.
+const LokAIResponseSchema = z
+  .object({
+    title: z.string().min(1),
+    zone1: z.object({ label: z.string().min(1), finding: z.string().min(1) }),
+    zone2: z.object({ label: z.string().min(1), analysis: z.string().min(1) }),
+    zone3: z.object({ label: z.string().min(1), steps: z.array(z.string().min(1)).min(1), cta: z.string().min(1) }),
+    citations: z.array(z.string()),
+    contextPanel: z.object({
+      primaryLaw: z.string(),
+      sections: z.array(z.object({ ref: z.string(), summary: z.string() })),
+      keyFacts: z.array(z.string()),
+      relatedLaws: z.array(z.string()),
+    }),
+    scope: z.enum(['in', 'out']),
+    responseLanguage: z.string().min(2),
+    matterType: z.enum(['tenancy', 'rti', 'consumer', 'notice', 'boundary']).optional(),
+    trustLevel: z.enum(['clear', 'needs_fact', 'source_limited', 'human_review']).optional(),
+    missingFacts: z.array(z.string()).optional(),
+    sources: z
+      .array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          section: z.string(),
+          jurisdiction: z.string(),
+          excerpt: z.string(),
+          coverage: z.enum(['direct', 'related', 'missing', 'conflicting']),
+          howUsed: z.string(),
+        }),
+      )
+      .optional(),
+    nextSteps: z
+      .array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          description: z.string(),
+          status: z.enum(['locked', 'current', 'done', 'waiting', 'blocked']),
+        }),
+      )
+      .optional(),
+    dailyUpdate: z.object({ title: z.string(), body: z.string(), timestampLabel: z.string() }).optional(),
+  })
+  .refine((val) => val.scope !== 'out' || val.zone1.label === 'BOUNDARY', {
+    message: 'An out-of-scope response must be labeled as a boundary, not presented as ordinary legal guidance.',
+  });
+
+export async function callLokAIDetailed(messages: APIMessage[]): Promise<ServiceResult<LokAIResponse>> {
+  const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
+  if (!apiKey) {
+    console.warn('[LokAI API] Missing VITE_NVIDIA_API_KEY. Using structured demo response.');
+    return { mode: 'demo', data: buildDemoResponse(messages) };
+  }
 
   try {
-    const response = await fetch('/api/nvidia/chat/completions', {
+    const response = await fetchWithServiceErrors('/api/nvidia/chat/completions', {
       method: 'POST',
-      signal: controller.signal,
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model:       'sarvamai/sarvam-m',
-        messages:    [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+        model: 'sarvamai/sarvam-m',
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
         temperature: 0.3,
-        max_tokens:  700,
-        stream:      false,
+        max_tokens: 700,
+        stream: false,
       }),
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      console.error('[LokAI API] HTTP error:', response.status, response.statusText, body);
-      throw new Error(`API error ${response.status}: ${response.statusText}`);
-    }
-
-    const data    = await response.json();
+    const data = await response.json();
     const content = data.choices?.[0]?.message?.content ?? '';
+    if (!content) throw new LokAIServiceError('invalid_response', 'LokAI received an empty response from the model.', true);
 
-    if (!content) throw new Error('Empty API response');
+    const clean = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-    // Strip any accidental markdown fences
-    const clean = content
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .trim();
-
+    let parsed: unknown;
     try {
-      return JSON.parse(clean) as LokAIResponse;
+      parsed = JSON.parse(clean);
     } catch {
       console.error('[LokAI API] JSON parse failed. Raw content:', clean);
-      throw new Error('JSON parse failed');
+      throw new LokAIServiceError('invalid_response', 'LokAI could not parse the model response as JSON.', true);
     }
-  } catch (err: unknown) {
-    clearTimeout(timeoutId);
-    console.error('[LokAI API] Fetch error:', err);
-    if (err instanceof Error && err.name === 'AbortError') {
-      console.warn('[LokAI API] Timed out. Using structured demo response.');
-      return buildDemoResponse(messages);
+
+    const validated = LokAIResponseSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.error('[LokAI API] Response failed the safety contract:', validated.error.issues);
+      throw new LokAIServiceError('invalid_response', "The model response did not match LokAI's response contract.", true);
     }
-    console.warn('[LokAI API] Falling back to structured demo response.');
-    return buildDemoResponse(messages);
+
+    return { mode: 'live', data: validated.data as LokAIResponse };
+  } catch (err) {
+    const serviceError =
+      err instanceof LokAIServiceError
+        ? err
+        : new LokAIServiceError('server', err instanceof Error ? err.message : 'LokAI could not reach the service.', true);
+    console.error(`[LokAI API] ${serviceError.kind}:`, serviceError.message);
+    return { mode: 'demo', data: buildDemoResponse(messages), error: serviceError };
   }
+}
+
+/** Backward-compatible wrapper — existing callers keep getting a bare LokAIResponse. */
+export async function callLokAI(messages: APIMessage[]): Promise<LokAIResponse> {
+  const result = await callLokAIDetailed(messages);
+  return result.data;
 }
 
 // ─── Sarvam Speech-to-Text (STT) ─────────────────────────────────────────────
