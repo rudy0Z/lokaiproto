@@ -498,7 +498,11 @@ function CaseArtboard() {
   const failureState = failure ? getFailureState(failure as FailureKind) : null;
   const isVerifyStage = stage === 'verify';
   const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
-  const [previewApproved, setPreviewApproved] = useState(false);
+  // Deep-linkable: ?stage=packet&approved=1 lands straight on the reviewable
+  // draft. Without it, the intent-preview gate is real and can't be skipped —
+  // see blocksNext below — but a link meant to show the finished packet
+  // shouldn't have to describe clicking through a gate to get there.
+  const [previewApproved, setPreviewApproved] = useState(() => params.get('approved') === '1');
   const [replyPrepared, setReplyPrepared] = useState(false);
   // In Guide-me mode there's nothing to approve — LokAI never drafts. Otherwise
   // the packet stage stays locked on "Next" until the intent preview is approved,

@@ -193,6 +193,7 @@ function buildDummyConversations(): Conversation[] {
   const hindiDepositParsed  = JSON.parse(HINDI_DEPOSIT_RESPONSE)   as LokAIResponse;
   const marathiNoticeParsed = JSON.parse(MARATHI_NOTICE_RESPONSE)  as LokAIResponse;
   const tamilConsumerParsed = JSON.parse(TAMIL_CONSUMER_RESPONSE)  as LokAIResponse;
+  const outOfScopeParsed    = JSON.parse(OUT_OF_SCOPE_RESPONSE)    as LokAIResponse;
 
   return [
     {
@@ -283,6 +284,21 @@ function buildDummyConversations(): Conversation[] {
       messages: [
         { role: 'user',      content: 'My landlord is not returning my ₹40,000 security deposit. It has been 35 days since I moved out.' },
         { role: 'assistant', content: DEPOSIT_RESPONSE },
+      ],
+    },
+    {
+      id:             'out-of-scope',
+      title:          outOfScopeParsed.title,
+      tags:           ['Boundary'],
+      since:          '3 days ago · Mumbai',
+      status:         'Out of Scope',
+      createdAt:      new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      contextPanel:   outOfScopeParsed.contextPanel,
+      completedSteps: ['intake'],
+      isBlocked:      false,
+      messages: [
+        { role: 'user',      content: 'Can you tell me the cricket score from last night?' },
+        { role: 'assistant', content: OUT_OF_SCOPE_RESPONSE },
       ],
     },
   ];
@@ -398,6 +414,3 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
 export function useConversations() {
   return useContext(ConversationContext);
 }
-
-// Suppress unused warning — OUT_OF_SCOPE_RESPONSE is available for future use
-void OUT_OF_SCOPE_RESPONSE;

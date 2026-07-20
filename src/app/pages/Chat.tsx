@@ -7,7 +7,7 @@ import { CitationStamp } from '../components/ui/CitationStamp';
 import { Button as Btn } from '../components/ui/button';
 import { useSidebar } from '../context/SidebarContext';
 import { useConversations } from '../context/ConversationContext';
-import { callLokAI, callSarvamTTS, callSarvamSTT } from '../services/api';
+import { callLokAIDetailed, callSarvamTTS, callSarvamSTT } from '../services/api';
 import type { LokAIResponse, ContextPanel } from '../services/api';
 
 // ─── Animation styles ─────────────────────────────────────────────────────────
@@ -693,20 +693,23 @@ export default function Chat() {
         role: m.role as 'user'|'assistant',
         content: m.content,
       }));
-      const response = await callLokAI(history);
-      applyResponse(conv.id, response);
+      // callLokAIDetailed never throws — it always resolves with a usable
+      // response, falling back to the demo content on failure. `error` is
+      // only set when that fallback happened because something actually went
+      // wrong (not when it's just demo mode from a missing API key), so it's
+      // the right, typed signal for whether to show the error banner.
+      const result = await callLokAIDetailed(history);
+      applyResponse(conv.id, result.data);
+      if (result.error) {
+        console.error(`[Chat] ${result.error.kind}:`, result.error.message);
+        setError(result.error.message);
+      }
     } catch (err: unknown) {
+      // Belt-and-suspenders: covers a failure in applyResponse/addMessage
+      // itself, not the API call, which callLokAIDetailed already handles.
       const msg = err instanceof Error ? err.message : String(err);
       console.error('[Chat] handleSend error:', msg);
-      if (msg.includes('timed out')) {
-        setError('Request timed out after 15 seconds. Check your connection and try again.');
-      } else if (msg.includes('parse') || msg.includes('JSON')) {
-        setError('Response formatting error. Try again.');
-      } else if (msg.includes('API error')) {
-        setError(`API error — ${msg}. Check the console for details.`);
-      } else {
-        setError(`Error: ${msg}`);
-      }
+      setError(`Error: ${msg}`);
     } finally {
       setLoading(false);
     }

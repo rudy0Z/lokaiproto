@@ -564,7 +564,6 @@ export default function Notice() {
       const text = await callSarvamOCR(file);
       setParsedText(text);
       setNoticeStatus({ tone: 'success', message: 'Text extracted. Review the summary, then ask a follow-up if anything looks unclear.' });
-      console.log('Parsed Content:', text);
     } catch (err) {
       console.error('OCR failed:', err);
       setNoticeStatus({ tone: 'error', message: 'LokAI could not read this clearly. Upload a sharper image or type the notice text into chat.' });
