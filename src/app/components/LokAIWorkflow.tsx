@@ -4,8 +4,10 @@ import { C, MONO, SANS, SERIF, SHADOW } from './shared';
 import type {
   AuditEvent,
   CaseWorkflowState,
+  EvidenceItem,
   FailureState,
   FilingPacket,
+  NoticeAssessment,
   RiskLevel,
   SourceCoverage,
   VerificationFact,
@@ -664,6 +666,87 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
  * stays locked until all facts are confirmed: the human owns the inputs, which
  * neutralises the AI-misread-a-date liability that sinks legal AI.
  */
+const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg: string; label: string; labelColor: string }> = {
+  uploaded:    { border: C.green,   bg: '#F5F9F6', label: 'Uploaded',          labelColor: C.green },
+  missing:     { border: C.border,  bg: '#FAF8F3', label: 'Not uploaded yet',  labelColor: C.muted },
+  conflicting: { border: C.saffron, bg: '#FFF8F0', label: 'Conflicts a fact',  labelColor: C.amber },
+};
+
+/**
+ * Evidence Locker — the other half of grounding. WorkflowTrustPanel already
+ * shows whether the *law* is well-sourced; this shows whether the *evidence*
+ * holds together. Checked against the same evidenceChecklist the filing
+ * packet uses, so "what's needed" never drifts from "what's actually there."
+ */
+export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
+  const uploadedCount = items.filter(i => i.status !== 'missing').length;
+  return (
+    <div style={{
+      background: '#FFFFFF',
+      border: `1px solid ${C.border}`,
+      borderRadius: 18,
+      padding: 15,
+      boxShadow: SHADOW.sm,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <h3 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
+          Evidence locker
+        </h3>
+        <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted }}>
+          {uploadedCount} of {items.length} uploaded
+        </span>
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+        What LokAI checked before trusting the facts below — including whether any two documents disagree.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map(item => {
+          const style = EVIDENCE_STATUS_STYLE[item.status];
+          return (
+            <div key={item.id} style={{
+              background: style.bg,
+              border: `1px solid ${item.status === 'conflicting' ? 'rgba(233,133,43,0.32)' : C.border}`,
+              borderLeft: `3px solid ${style.border}`,
+              borderRadius: '0 10px 10px 0',
+              padding: '9px 11px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: C.ink, margin: 0 }}>
+                  {item.label}
+                </p>
+                <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: style.labelColor, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {style.label}
+                </span>
+              </div>
+              {item.extractedFacts && item.extractedFacts.length > 0 && (
+                <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {item.extractedFacts.map(f => (
+                    <span key={f.label} style={{
+                      fontFamily: SANS, fontSize: 11, color: C.inkSoft,
+                      background: '#FFFFFF', border: `1px solid ${C.border}`,
+                      borderRadius: 999, padding: '2px 9px',
+                    }}>
+                      {f.label}: <strong style={{ color: C.ink }}>{f.value}</strong>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {item.conflictNote && (
+                <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.amber, lineHeight: 1.5, margin: '7px 0 0' }}>
+                  {item.conflictNote}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function VerificationScratchpad({
   facts,
   onConfirmed,
@@ -1043,6 +1126,79 @@ export function FailureStateCard({ failure }: { failure: FailureState }) {
           {failure.safeFallback}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * NoticeAssessmentCard — the same "verify before trusting" discipline the
+ * intake side applies to the citizen's own facts, applied to whatever the
+ * other side sends back. A genuine reply gets a decoded summary and an
+ * editable reply draft; scam signals get flagged and stop short of one,
+ * the same boundary FailureStateCard draws for high_risk intake.
+ */
+export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessment: NoticeAssessment; onPrepareReply?: () => void }) {
+  const isRisky = assessment.riskLevel === 'high_risk_signals';
+  return (
+    <div style={{
+      background: isRisky ? '#FFF1EE' : '#FFFFFF',
+      border: `1px solid ${isRisky ? 'rgba(184,54,28,0.22)' : C.border}`,
+      borderLeft: `4px solid ${isRisky ? C.red : C.green}`,
+      borderRadius: '4px 16px 16px 16px',
+      padding: 16,
+      boxShadow: SHADOW.sm,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10,
+    }}>
+      <span style={{
+        alignSelf: 'flex-start',
+        fontFamily: SANS, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+        color: isRisky ? C.red : C.green,
+        background: isRisky ? 'rgba(184,54,28,0.08)' : 'rgba(31,107,58,0.08)',
+        borderRadius: 999, padding: '3px 9px',
+      }}>
+        {isRisky ? 'Verify before trusting' : 'Looks genuine'}
+      </span>
+      <h3 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
+        {assessment.title}
+      </h3>
+      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+        {assessment.decodedSummary}
+      </p>
+      <div style={{ background: isRisky ? '#FDF3F1' : '#F5F9F6', borderRadius: 10, padding: '10px 12px' }}>
+        <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: isRisky ? C.red : C.green, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Why LokAI flagged this
+        </p>
+        <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+          {assessment.riskExplanation}
+        </p>
+      </div>
+      {assessment.extractedAmount && (
+        <p style={{ fontFamily: SANS, fontSize: 13, color: C.ink, margin: 0 }}>
+          <strong>Offer:</strong> {assessment.extractedAmount}
+        </p>
+      )}
+      <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, margin: 0 }}>
+        {assessment.deadline}
+      </p>
+      {!isRisky && assessment.suggestedReply && onPrepareReply && (
+        <button
+          onClick={onPrepareReply}
+          style={{
+            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4,
+          }}
+        >
+          Prepare a reply <ArrowRight size={14} />
+        </button>
+      )}
+      {isRisky && (
+        <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.muted, lineHeight: 1.5, margin: 0 }}>
+          LokAI won't prepare a reply to this message. Do not send money or personal documents based on it.
+        </p>
+      )}
     </div>
   );
 }

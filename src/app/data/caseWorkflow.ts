@@ -208,10 +208,107 @@ export function getVerificationFacts(): VerificationFact[] {
       label: 'Purchase date',
       value: '15 Apr 2026',
       status: 'needs_review',
-      hint: 'LokAI read this from a blurry invoice line — check it matches your receipt before we rely on it for deadlines.',
+      hint: 'LokAI read this from a blurry invoice line, and the seller-chat screenshot in your evidence references 12 Apr instead — check which date is correct before we rely on it for deadlines.',
     },
     { id: 'defect', label: 'Defect', value: 'Overheats and shuts down', status: 'confirmed' },
   ];
+}
+
+// ─── Evidence Locker ───────────────────────────────────────────────────────────
+// Grounding has two sides: the law side (sources, coverage, groundingScore above)
+// and the evidence side — whether the facts LokAI is reasoning over actually hold
+// up against each other. This is the evidence side: what's uploaded, what's
+// missing, and whether two documents silently disagree.
+export type EvidenceStatus = 'uploaded' | 'missing' | 'conflicting';
+
+export interface EvidenceExtractedFact {
+  label: string;
+  value: string;
+}
+
+export interface EvidenceItem {
+  id: string;
+  label: string;
+  status: EvidenceStatus;
+  extractedFacts?: EvidenceExtractedFact[];
+  /** Only set when status is 'conflicting' — names the other document and what disagrees. */
+  conflictNote?: string;
+}
+
+/**
+ * Matches FilingPacket.evidenceChecklist 1:1 so the locker and the packet never
+ * disagree about what "the evidence" means. One item is deliberately marked
+ * conflicting: the seller-chat screenshot references a different date than the
+ * invoice, which is what the purchaseDate fact above is actually flagging.
+ */
+export function getEvidenceLocker(): EvidenceItem[] {
+  return [
+    {
+      id: 'invoice',
+      label: 'Invoice or payment receipt',
+      status: 'uploaded',
+      extractedFacts: [
+        { label: 'Date read from invoice', value: '15 Apr 2026' },
+        { label: 'Amount', value: '₹28,999' },
+      ],
+    },
+    {
+      id: 'seller-chat',
+      label: 'Seller replies, call logs, or written complaint proof',
+      status: 'conflicting',
+      extractedFacts: [{ label: 'Date mentioned in the message', value: '12 Apr 2026' }],
+      conflictNote: 'This message references 12 Apr — three days before the invoice date LokAI read. Confirm which one is correct in the facts below; it changes when the response window starts.',
+    },
+    {
+      id: 'defect-evidence',
+      label: 'Photos or video showing the defect',
+      status: 'uploaded',
+      extractedFacts: [{ label: 'Captured', value: 'Today' }],
+    },
+    { id: 'warranty', label: 'Warranty card or product listing', status: 'missing' },
+    { id: 'repair-report', label: 'Repair report, if already inspected', status: 'missing' },
+  ];
+}
+
+// ─── Notice risk classification ────────────────────────────────────────────────
+// The other half of "keep me on track": once a reply arrives, LokAI decodes it
+// and classifies the risk before treating it as trustworthy input — the same
+// discipline the intake side already applies to the citizen's own facts.
+export type NoticeRiskLevel = 'looks_genuine' | 'high_risk_signals';
+export type NoticeAssessmentKind = 'offer' | 'scam_signals';
+
+export interface NoticeAssessment {
+  kind: NoticeAssessmentKind;
+  title: string;
+  decodedSummary: string;
+  riskLevel: NoticeRiskLevel;
+  riskExplanation: string;
+  deadline: string;
+  extractedAmount?: string;
+  suggestedReply?: string;
+}
+
+export function getNoticeAssessment(kind: NoticeAssessmentKind): NoticeAssessment {
+  if (kind === 'scam_signals') {
+    return {
+      kind: 'scam_signals',
+      title: 'A reply notice was uploaded',
+      decodedSummary: 'The message claims to be from a "consumer resolution office" and asks for a processing fee before it will release any refund.',
+      riskLevel: 'high_risk_signals',
+      riskExplanation: 'Genuine consumer forums and companies do not charge an upfront fee to process a refund complaint. The message has no advocate enrollment number, no case number, and no verifiable sender domain — the markers LokAI checks before treating a notice as authentic.',
+      deadline: 'Claims a 24-hour deadline — itself a common pressure tactic, not a real statutory window.',
+    };
+  }
+  return {
+    kind: 'offer',
+    title: 'Metro Mobile Store replied',
+    decodedSummary: 'The seller offers a 50% refund (₹14,500) instead of the full amount, citing "used condition" of the phone.',
+    riskLevel: 'looks_genuine',
+    riskExplanation: 'The reply comes from the same email thread as the original purchase and references the correct invoice number and defect description.',
+    deadline: 'The seller asks for a response within 7 days.',
+    extractedAmount: '₹14,500 offered of ₹28,999 claimed',
+    suggestedReply: 'Decline the partial offer and restate the full refund request, citing the same statutory sections, with a final 7-day deadline before filing.',
+  };
 }
 
 export function buildFilingPacket(caseFacts = CONSUMER_FACTS): FilingPacket {

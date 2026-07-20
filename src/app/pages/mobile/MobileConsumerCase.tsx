@@ -6,11 +6,13 @@ import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLang
 import { useConversations } from '../../context/ConversationContext';
 import {
   AuditTrailList,
+  EvidenceLocker,
   FailureStateCard,
   FilingPacketPreview,
   HumanReviewCard,
   LokAIProgressList,
   LokAISourceDrawer,
+  NoticeAssessmentCard,
   ReviewGate,
   SourceCard,
   VerificationScratchpad,
@@ -19,11 +21,14 @@ import {
 } from '../../components/LokAIWorkflow';
 import {
   getConsumerWorkflowState,
+  getEvidenceLocker,
   getFailureState,
   getFailureTrustSignals,
+  getNoticeAssessment,
   getVerificationFacts,
   type FailureKind,
   type FilingPacket,
+  type NoticeAssessmentKind,
   type WorkflowStage,
 } from '../../data/caseWorkflow';
 import { ARTBOARD } from '../../embed';
@@ -447,17 +452,23 @@ function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
 }
 
 // ─── Tracking banner — the one deadline-aware moment, layered on Prepare/Track ─
-function TrackingBanner() {
+// Clickable once a reply exists, so the "Keep me on track" promise has a real
+// destination instead of describing a feature that never arrives.
+function TrackingBanner({ onClick }: { onClick: () => void }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)', borderLeft: `3px solid ${C.saffron}`,
-      borderRadius: '0 12px 12px 0', padding: '10px 14px',
-    }}>
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%',
+        background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)', borderLeft: `3px solid ${C.saffron}`,
+        borderRadius: '0 12px 12px 0', padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
+      }}
+    >
       <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.5 }}>
-        LokAI will flag it here when the seller's response window ends.
+        LokAI will flag it here when the seller's response window ends. Tap to see how that looks.
       </span>
-    </div>
+      <ArrowRight size={13} color={C.amber} style={{ flexShrink: 0 }} />
+    </button>
   );
 }
 
@@ -467,9 +478,10 @@ function CaseArtboard() {
   const [sourceOpen, setSourceOpen] = useState(false);
   const { selectedLanguage } = useConversations();
   const failure = params.get('failure');
+  const notice = params.get('notice') as NoticeAssessmentKind | null;
   const rawStage = params.get('stage');
   const stage = failure ? 'failure' : mapStage(rawStage);
-  const showDemoFailures = params.get('demo') === '1' || params.get('capture') === '1';
+  const showDemoControls = params.get('demo') === '1' || params.get('capture') === '1';
   const workflow = useMemo(() => {
     const base = getConsumerWorkflowState(stage);
     if (!failure) return base;
@@ -487,6 +499,7 @@ function CaseArtboard() {
   const isVerifyStage = stage === 'verify';
   const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
   const [previewApproved, setPreviewApproved] = useState(false);
+  const [replyPrepared, setReplyPrepared] = useState(false);
   // In Guide-me mode there's nothing to approve — LokAI never drafts. Otherwise
   // the packet stage stays locked on "Next" until the intent preview is approved,
   // the same way verify already locks on unconfirmed facts.
@@ -498,6 +511,10 @@ function CaseArtboard() {
 
   const goFailure = (kind: FailureKind) => {
     navigate(`/mobile/case/consumer?failure=${kind}`);
+  };
+
+  const goNotice = (kind: NoticeAssessmentKind) => {
+    navigate(`/mobile/case/consumer?stage=packet&notice=${kind}`);
   };
 
   return (
@@ -560,71 +577,108 @@ function CaseArtboard() {
           <AIDisclaimerBanner />
 
           {stage === 'failure' && failureState && <FailureStateCard failure={failureState} />}
-          {stage === 'intake'     && <IntakeView onNext={() => goStage('clarify')} />}
-          {stage === 'clarify'    && <ClarifyView onNext={() => goStage('verify')} />}
-          {stage === 'verify'     && (
-            <VerificationScratchpad
-              facts={getVerificationFacts()}
-              onConfirmed={() => goStage('assessment')}
-            />
-          )}
-          {stage === 'retrieve'   && (
+
+          {notice && (
             <>
-              <LokAIProgressList items={workflow.progressEvents} />
-              {workflow.sources.map(source => <SourceCard key={source.id} source={source} compact />)}
-            </>
-          )}
-          {stage === 'assess'     && (
-            <>
-              <AssessmentView onOpenSources={() => setSourceOpen(true)} />
-              <WorkflowTrustPanel workflow={workflow} onOpenSources={() => setSourceOpen(true)} />
-            </>
-          )}
-          {stage === 'plan'       && (
-            <WorkflowActionPlan steps={workflow.actionPlan} interactive onPacket={() => goStage('packet')} />
-          )}
-          {stage === 'packet'     && (
-            <>
-              <AutonomyDial value={autonomy} onChange={setAutonomy} />
-              {autonomy === 'guide' ? (
-                <GuideOnlyCard packet={workflow.filingPacket} />
-              ) : !previewApproved ? (
-                <IntentPreviewCard
-                  packet={workflow.filingPacket}
-                  onApprove={() => setPreviewApproved(true)}
-                  onBack={() => goStage('plan')}
+              <NoticeAssessmentCard
+                assessment={getNoticeAssessment(notice)}
+                onPrepareReply={notice === 'offer' ? () => setReplyPrepared(true) : undefined}
+              />
+              {notice === 'offer' && replyPrepared && (
+                <ReviewGate
+                  draftText={[
+                    'LokAI — Reply to seller\'s partial offer (review before sending)',
+                    '',
+                    'Subject: Re: Defective mobile phone — full refund still requested',
+                    '',
+                    'Thank you for your response. I do not accept the 50% partial refund, as the',
+                    'phone was defective at the time of purchase and I raised the issue promptly.',
+                    '',
+                    'I am requesting the full refund of ₹28,999 within 7 days. If this is not',
+                    'resolved, I will file a formal complaint with the District Consumer Commission.',
+                    '',
+                    'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
+                    '',
+                    '— Prepared with LokAI. Please review every detail before sending.',
+                  ].join('\n')}
+                  onPrint={() => window.print()}
                 />
-              ) : (
-                <>
-                  <WorkflowActionPlan steps={workflow.actionPlan} onPacket={() => goStage('packet')} />
-                  <FilingPacketPreview packet={workflow.filingPacket} />
-                  {/* No-direct-send review gate — the visible human-in-the-loop checkpoint */}
-                  <ReviewGate
-                    draftText={[
-                      'LokAI — Consumer demand notice draft (review before sending)',
-                      '',
-                      'Subject: Defective mobile phone — request for repair, replacement, or refund',
-                      '',
-                      'I purchased a mobile phone from Metro Mobile Store. The phone became',
-                      'defective within two days (overheating and shutting down). I asked the',
-                      'seller for a repair, replacement, or refund and the request was refused.',
-                      '',
-                      'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
-                      '',
-                      'I am keeping the invoice, defect photos, warranty, and seller messages as',
-                      'evidence and request a resolution within a reasonable period.',
-                      '',
-                      '— Prepared with LokAI. Please review every detail before sending.',
-                    ].join('\n')}
-                    onPrint={() => window.print()}
-                  />
-                  {autonomy === 'track' && <TrackingBanner />}
-                </>
               )}
             </>
           )}
-          {stage === 'audit'      && <AuditTrailList events={workflow.auditTrail} />}
-          {stage === 'escalation' && <HumanReviewCard workflow={workflow} />}
+
+          {!notice && (
+            <>
+              {stage === 'intake'     && <IntakeView onNext={() => goStage('clarify')} />}
+              {stage === 'clarify'    && <ClarifyView onNext={() => goStage('verify')} />}
+              {stage === 'verify'     && (
+                <>
+                  <EvidenceLocker items={getEvidenceLocker()} />
+                  <VerificationScratchpad
+                    facts={getVerificationFacts()}
+                    onConfirmed={() => goStage('assessment')}
+                  />
+                </>
+              )}
+              {stage === 'retrieve'   && (
+                <>
+                  <LokAIProgressList items={workflow.progressEvents} />
+                  {workflow.sources.map(source => <SourceCard key={source.id} source={source} compact />)}
+                </>
+              )}
+              {stage === 'assess'     && (
+                <>
+                  <AssessmentView onOpenSources={() => setSourceOpen(true)} />
+                  <WorkflowTrustPanel workflow={workflow} onOpenSources={() => setSourceOpen(true)} />
+                </>
+              )}
+              {stage === 'plan'       && (
+                <WorkflowActionPlan steps={workflow.actionPlan} interactive onPacket={() => goStage('packet')} />
+              )}
+              {stage === 'packet'     && (
+                <>
+                  <AutonomyDial value={autonomy} onChange={setAutonomy} />
+                  {autonomy === 'guide' ? (
+                    <GuideOnlyCard packet={workflow.filingPacket} />
+                  ) : !previewApproved ? (
+                    <IntentPreviewCard
+                      packet={workflow.filingPacket}
+                      onApprove={() => setPreviewApproved(true)}
+                      onBack={() => goStage('plan')}
+                    />
+                  ) : (
+                    <>
+                      <WorkflowActionPlan steps={workflow.actionPlan} onPacket={() => goStage('packet')} />
+                      <FilingPacketPreview packet={workflow.filingPacket} />
+                      {/* No-direct-send review gate — the visible human-in-the-loop checkpoint */}
+                      <ReviewGate
+                        draftText={[
+                          'LokAI — Consumer demand notice draft (review before sending)',
+                          '',
+                          'Subject: Defective mobile phone — request for repair, replacement, or refund',
+                          '',
+                          'I purchased a mobile phone from Metro Mobile Store. The phone became',
+                          'defective within two days (overheating and shutting down). I asked the',
+                          'seller for a repair, replacement, or refund and the request was refused.',
+                          '',
+                          'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
+                          '',
+                          'I am keeping the invoice, defect photos, warranty, and seller messages as',
+                          'evidence and request a resolution within a reasonable period.',
+                          '',
+                          '— Prepared with LokAI. Please review every detail before sending.',
+                        ].join('\n')}
+                        onPrint={() => window.print()}
+                      />
+                      {autonomy === 'track' && <TrackingBanner onClick={() => goNotice('offer')} />}
+                    </>
+                  )}
+                </>
+              )}
+              {stage === 'audit'      && <AuditTrailList events={workflow.auditTrail} />}
+              {stage === 'escalation' && <HumanReviewCard workflow={workflow} />}
+            </>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button
@@ -668,7 +722,7 @@ function CaseArtboard() {
             </button>
           </div>
 
-          {showDemoFailures && (
+          {showDemoControls && (
             <div
               aria-label="Failure state demo controls"
               style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}
@@ -691,6 +745,37 @@ function CaseArtboard() {
                 }}
               >
                 {kind.replace(/_/g, ' ')}
+              </button>
+            ))}
+            </div>
+          )}
+
+          {showDemoControls && (
+            <div
+              aria-label="Notice assessment demo controls"
+              style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}
+            >
+            {([
+              ['offer', 'seller reply: offer'],
+              ['scam_signals', 'seller reply: scam signals'],
+            ] as [NoticeAssessmentKind, string][]).map(([kind, label]) => (
+              <button
+                key={kind}
+                onClick={() => goNotice(kind)}
+                style={{
+                  minHeight: 32,
+                  borderRadius: 999,
+                  border: `1px solid ${C.saffron}`,
+                  background: '#FFFFFF',
+                  color: C.amber,
+                  fontFamily: SANS,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '0 9px',
+                  cursor: 'pointer',
+                }}
+              >
+                {label}
               </button>
             ))}
             </div>
