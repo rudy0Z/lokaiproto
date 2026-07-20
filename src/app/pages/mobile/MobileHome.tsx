@@ -699,6 +699,30 @@ function toConversationRowItem(conv: Conversation): ConversationRowItem {
   };
 }
 
+// ─── Past Matters — shared between the active-matter and empty-home states ────
+function PastMattersList({ items }: { items: ConversationRowItem[] }) {
+  const navigate = useNavigate();
+  if (items.length === 0) return null;
+  return (
+    <div style={{ marginBottom: '24px' }}>
+      <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
+      <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: '1px solid #E8E4DC' }}>
+        {items.map((conv, i) => {
+          // Route into the stateful case stepper rather than the legacy static
+          // chat screens, so progress, language, and trust state persist.
+          const stage = ['assess', 'plan', 'clarify'][i % 3];
+          const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
+          return (
+            <div key={conv.id} onClick={toCase}>
+              <ConversationRow conv={conv} isLast={i === items.length - 1} onOpen={toCase} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; isLast: boolean; onOpen: () => void }) {
   return (
     <div style={{
@@ -744,90 +768,6 @@ function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; 
   );
 }
 
-// ─── Notices Near You — list items (not cards), 64px, border-bottom ──────────
-const NOTICES = [
-  {
-    id: 1,
-    badge: 'BMC',
-    badgeColor: '#C4724A',
-    title: 'Property Tax Demand 2025–26',
-    location: 'Bandra West',
-    date: '18 Mar',
-    urgent: true,
-    route: '/mobile/case/consumer?failure=ocr_unreadable',
-  },
-  {
-    id: 2,
-    badge: 'Municipal',
-    badgeColor: C.navy,
-    title: 'Development Plan Amendment',
-    location: 'H/West Ward',
-    date: '22 Mar',
-    urgent: false,
-    route: '/mobile/case/consumer?failure=ocr_unreadable',
-  },
-];
-
-function NoticeListItem({ notice, isLast, onOpen }: { notice: typeof NOTICES[0]; isLast: boolean; onOpen: () => void }) {
-  return (
-    <div style={{
-      height: '64px',
-      borderBottom: isLast ? 'none' : `1px solid #E8E4DC`,
-      display: 'flex', alignItems: 'center', gap: '12px',
-      cursor: 'pointer',
-    }}>
-      {/* Source badge */}
-      <span style={{
-        fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-        color: '#FFFFFF', background: notice.badgeColor,
-        borderRadius: '4px', padding: '3px 7px',
-        textTransform: 'uppercase', letterSpacing: '0.04em',
-        flexShrink: 0,
-      }}>
-        {notice.badge}
-      </span>
-
-      {/* Title + location */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontFamily: SANS, fontSize: '14px', fontWeight: 600,
-          color: '#1A1916', lineHeight: 1.3,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {notice.title}
-        </div>
-        <div style={{
-          fontFamily: SANS, fontSize: '12px', color: '#8A8880',
-          marginTop: '2px',
-        }}>
-          {notice.location}
-        </div>
-      </div>
-
-      {/* Date + arrow */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-        {notice.urgent && (
-          <span style={{
-            fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-            color: '#8A4500', background: '#FFF3E8',
-            borderRadius: '4px', padding: '2px 6px',
-          }}>
-            !</span>
-        )}
-        <span style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880' }}>{notice.date}</span>
-        <button
-          onClick={onOpen}
-          style={{
-            fontFamily: SANS, fontSize: '16px', color: '#C8C4BC', lineHeight: 1,
-            border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-          }}
-        >
-          ›
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Floating Pill Input — position:absolute above bottom nav ─────────────────
 function FloatingInput() {
@@ -938,63 +878,35 @@ export function HomeArtboard() {
 
         {/* Greeting */}
         <GreetingSection />
-        <LegalSignalBand />
 
-        {/* Content sections — 20px margins each side */}
-        <div style={{ padding: '0 0 136px' }}>
-
-          {/* Active Case Timeline Card — only shown when a case is in progress */}
-          {activeCase && activeCase.id === 'consumer' && (
+        {activeCase && activeCase.id === 'consumer' ? (
+          // Active state: a matter is already open. ActiveCaseCard is the one
+          // entry point back into it — the onboarding sections below would
+          // just be a second, redundant way in, so they're left out here.
+          <div style={{ padding: '0 0 136px' }}>
             <ActiveCaseCard
               convId={activeCase.id}
               title={activeCase.title}
               completedSteps={activeCase.completedSteps}
               isBlocked={activeCase.isBlocked}
             />
-          )}
-
-          {/* Language-Aware Suggestion Chips */}
-          <SuggestionChips lang={selectedLanguage} onSelect={handleSuggestionTap} />
-
-          <div style={{ padding: '0 20px' }}>
-            <ConsumerCaseStart />
-
-            {/* Your Conversations — real matter history, not the active one twice */}
-            {historyItems.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
-                <div style={{
-                  background: '#FFFFFF', borderRadius: '16px',
-                  padding: '0 16px', border: '1px solid #E8E4DC',
-                }}>
-                  {historyItems.map((conv, i) => {
-                    // Route into the stateful case stepper rather than the legacy static
-                    // chat screens, so progress, language, and trust state persist.
-                    const stage = ['assess', 'plan', 'clarify'][i % 3];
-                    const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
-                    return (
-                      <div key={conv.id} onClick={toCase}>
-                        <ConversationRow conv={conv} isLast={i === historyItems.length - 1} onOpen={toCase} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Notices Near You */}
-            <div style={{ marginBottom: '24px' }}>
-              <SectionHead title="Notices Near You" />
-              <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(26,25,22,0.04)' }}>
-                {NOTICES.map((n, i) => (
-                  <div key={n.id} onClick={() => navigate(n.route)}>
-                    <NoticeListItem notice={n} isLast={i === NOTICES.length - 1} onOpen={() => navigate(n.route)} />
-                  </div>
-                ))}
-              </div>
+            <div style={{ padding: '0 20px' }}>
+              <PastMattersList items={historyItems} />
             </div>
           </div>
-        </div>
+        ) : (
+          // Empty state: nothing active yet. This is the only point where the
+          // trust intro, quick-start chips, and the "start a case" CTA earn
+          // their place — they're an onboarding surface, not a permanent one.
+          <div style={{ padding: '0 0 136px' }}>
+            <LegalSignalBand />
+            <SuggestionChips lang={selectedLanguage} onSelect={handleSuggestionTap} />
+            <div style={{ padding: '0 20px' }}>
+              <ConsumerCaseStart />
+              <PastMattersList items={historyItems} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Fixed chrome at bottom ── */}
