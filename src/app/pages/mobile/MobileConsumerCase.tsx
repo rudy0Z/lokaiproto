@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Camera, FileText, Mic, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { C, SANS, SERIF, SHADOW } from '../../components/shared';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
@@ -23,6 +23,7 @@ import {
   getFailureTrustSignals,
   getVerificationFacts,
   type FailureKind,
+  type FilingPacket,
   type WorkflowStage,
 } from '../../data/caseWorkflow';
 import { ARTBOARD } from '../../embed';
@@ -313,6 +314,153 @@ function AssessmentView({ onOpenSources }: { onOpenSources: () => void }) {
   );
 }
 
+// ─── Autonomy Dial — how much should LokAI do on this matter? ─────────────────
+// A guardrail made visible: the user picks how far LokAI goes before the
+// drafting stage, instead of the product deciding silently on their behalf.
+type AutonomyLevel = 'guide' | 'prepare' | 'track';
+
+const AUTONOMY_OPTIONS: { level: AutonomyLevel; label: string; hint: string; Icon: typeof Compass }[] = [
+  { level: 'guide', label: 'Guide me', hint: "Explain only — LokAI won't draft anything.", Icon: Compass },
+  { level: 'prepare', label: 'Prepare with me', hint: 'Review-gated drafts, same as today.', Icon: PenLine },
+  { level: 'track', label: 'Keep me on track', hint: "Adds a reminder when the seller's response window ends.", Icon: BellRing },
+];
+
+function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (level: AutonomyLevel) => void }) {
+  const active = AUTONOMY_OPTIONS.find(o => o.level === value);
+  return (
+    <div style={{
+      background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 18,
+      padding: 14, boxShadow: SHADOW.xs, display: 'flex', flexDirection: 'column', gap: 10,
+    }}>
+      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+        How much should LokAI do?
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        {AUTONOMY_OPTIONS.map(({ level, label, Icon }) => {
+          const isActive = value === level;
+          return (
+            <button
+              key={level}
+              onClick={() => onChange(level)}
+              aria-pressed={isActive}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                padding: '10px 6px', borderRadius: 12,
+                border: `1.5px solid ${isActive ? C.navy : C.border}`,
+                background: isActive ? '#EEF2F8' : '#FFFFFF',
+                cursor: 'pointer',
+              }}
+            >
+              <Icon size={16} color={isActive ? C.navy : C.muted} />
+              <span style={{
+                fontFamily: SANS, fontSize: 10.5, fontWeight: isActive ? 700 : 500,
+                color: isActive ? C.navy : C.inkSoft, textAlign: 'center', lineHeight: 1.25,
+              }}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {active && (
+        <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+          {active.hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Intent Preview — the plan, before LokAI acts on it ────────────────────────
+function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket; onApprove: () => void; onBack: () => void }) {
+  const basis = packet.fields.find(f => f.id === 'basis')?.value;
+  return (
+    <div style={{
+      background: '#FFFFFF', border: `1.5px solid ${C.navy}`, borderRadius: 20,
+      padding: 18, boxShadow: SHADOW.sm, display: 'flex', flexDirection: 'column', gap: 12,
+    }}>
+      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+        Before LokAI prepares this
+      </p>
+      <p style={{ fontFamily: SERIF, fontSize: 22, lineHeight: 1.2, color: C.ink, margin: 0 }}>
+        {packet.title}
+      </p>
+      <ul style={{ margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {packet.fields.filter(f => f.id !== 'basis').slice(0, 4).map(f => (
+          <li key={f.id} style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
+            <strong style={{ color: C.ink }}>{f.label}:</strong> {f.value}
+          </li>
+        ))}
+        <li style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
+          {packet.evidenceChecklist.length} evidence items checked against what's already confirmed
+        </li>
+      </ul>
+      {basis && (
+        <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, margin: 0 }}>
+          Legal basis: {basis}
+        </p>
+      )}
+      <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+        You'll review and can edit every field before anything is finalized. Nothing sends automatically.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+        <button
+          onClick={onBack}
+          style={{
+            minHeight: 44, borderRadius: 12, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            color: C.inkSoft, fontFamily: SANS, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          Not yet
+        </button>
+        <button
+          onClick={onApprove}
+          style={{
+            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          }}
+        >
+          Prepare the draft
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Guide-only mode — explains, never drafts ──────────────────────────────────
+function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
+  return (
+    <div style={{
+      background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: 18,
+      padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+        Guide me mode
+      </p>
+      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+        A {packet.title.toLowerCase()} for this matter would typically request repair, replacement,
+        or refund and cite the sections LokAI found earlier. LokAI won't prepare or send anything in
+        this mode — switch to "Prepare with me" when you're ready to draft it.
+      </p>
+    </div>
+  );
+}
+
+// ─── Tracking banner — the one deadline-aware moment, layered on Prepare/Track ─
+function TrackingBanner() {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)', borderLeft: `3px solid ${C.saffron}`,
+      borderRadius: '0 12px 12px 0', padding: '10px 14px',
+    }}>
+      <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.5 }}>
+        LokAI will flag it here when the seller's response window ends.
+      </span>
+    </div>
+  );
+}
+
 function CaseArtboard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -337,6 +485,12 @@ function CaseArtboard() {
   }, [stage, failure]);
   const failureState = failure ? getFailureState(failure as FailureKind) : null;
   const isVerifyStage = stage === 'verify';
+  const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
+  const [previewApproved, setPreviewApproved] = useState(false);
+  // In Guide-me mode there's nothing to approve — LokAI never drafts. Otherwise
+  // the packet stage stays locked on "Next" until the intent preview is approved,
+  // the same way verify already locks on unconfirmed facts.
+  const blocksNext = isVerifyStage || (stage === 'packet' && autonomy !== 'guide' && !previewApproved);
 
   const goStage = (next: MobileStageParam) => {
     navigate(`/mobile/case/consumer?stage=${next}`);
@@ -431,28 +585,42 @@ function CaseArtboard() {
           )}
           {stage === 'packet'     && (
             <>
-              <WorkflowActionPlan steps={workflow.actionPlan} onPacket={() => goStage('packet')} />
-              <FilingPacketPreview packet={workflow.filingPacket} />
-              {/* No-direct-send review gate — the visible human-in-the-loop checkpoint */}
-              <ReviewGate
-                draftText={[
-                  'LokAI — Consumer demand notice draft (review before sending)',
-                  '',
-                  'Subject: Defective mobile phone — request for repair, replacement, or refund',
-                  '',
-                  'I purchased a mobile phone from Metro Mobile Store. The phone became',
-                  'defective within two days (overheating and shutting down). I asked the',
-                  'seller for a repair, replacement, or refund and the request was refused.',
-                  '',
-                  'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
-                  '',
-                  'I am keeping the invoice, defect photos, warranty, and seller messages as',
-                  'evidence and request a resolution within a reasonable period.',
-                  '',
-                  '— Prepared with LokAI. Please review every detail before sending.',
-                ].join('\n')}
-                onPrint={() => window.print()}
-              />
+              <AutonomyDial value={autonomy} onChange={setAutonomy} />
+              {autonomy === 'guide' ? (
+                <GuideOnlyCard packet={workflow.filingPacket} />
+              ) : !previewApproved ? (
+                <IntentPreviewCard
+                  packet={workflow.filingPacket}
+                  onApprove={() => setPreviewApproved(true)}
+                  onBack={() => goStage('plan')}
+                />
+              ) : (
+                <>
+                  <WorkflowActionPlan steps={workflow.actionPlan} onPacket={() => goStage('packet')} />
+                  <FilingPacketPreview packet={workflow.filingPacket} />
+                  {/* No-direct-send review gate — the visible human-in-the-loop checkpoint */}
+                  <ReviewGate
+                    draftText={[
+                      'LokAI — Consumer demand notice draft (review before sending)',
+                      '',
+                      'Subject: Defective mobile phone — request for repair, replacement, or refund',
+                      '',
+                      'I purchased a mobile phone from Metro Mobile Store. The phone became',
+                      'defective within two days (overheating and shutting down). I asked the',
+                      'seller for a repair, replacement, or refund and the request was refused.',
+                      '',
+                      'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
+                      '',
+                      'I am keeping the invoice, defect photos, warranty, and seller messages as',
+                      'evidence and request a resolution within a reasonable period.',
+                      '',
+                      '— Prepared with LokAI. Please review every detail before sending.',
+                    ].join('\n')}
+                    onPrint={() => window.print()}
+                  />
+                  {autonomy === 'track' && <TrackingBanner />}
+                </>
+              )}
             </>
           )}
           {stage === 'audit'      && <AuditTrailList events={workflow.auditTrail} />}
@@ -461,21 +629,21 @@ function CaseArtboard() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button
               onClick={() => goStage(nextStage(stage))}
-              disabled={isVerifyStage}
-              aria-disabled={isVerifyStage}
+              disabled={blocksNext}
+              aria-disabled={blocksNext}
               style={{
                 minHeight: 44,
                 borderRadius: 12,
                 border: 'none',
-                background: isVerifyStage ? C.border : C.navy,
-                color: isVerifyStage ? C.muted : '#FFFFFF',
+                background: blocksNext ? C.border : C.navy,
+                color: blocksNext ? C.muted : '#FFFFFF',
                 fontFamily: SANS,
                 fontSize: 12,
                 fontWeight: 800,
-                cursor: isVerifyStage ? 'not-allowed' : 'pointer',
+                cursor: blocksNext ? 'not-allowed' : 'pointer',
               }}
             >
-              {isVerifyStage ? 'Confirm facts above' : 'Next'}
+              {isVerifyStage ? 'Confirm facts above' : blocksNext ? 'Approve the plan above' : 'Next'}
             </button>
             <button
               onClick={() => goStage('human-review')}
