@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, SANS, SERIF, SHADOW } from '../../components/shared';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
@@ -96,7 +96,7 @@ function AIDisclaimerBanner() {
   );
 }
 
-function HeaderBar({ stageLabel }: { stageLabel: string }) {
+function HeaderBar({ stageLabel, matterLabel = 'Consumer refund case' }: { stageLabel: string; matterLabel?: string }) {
   const navigate = useNavigate();
   return (
     <div style={{
@@ -127,7 +127,7 @@ function HeaderBar({ stageLabel }: { stageLabel: string }) {
       </button>
       <div style={{ minWidth: 0 }}>
         <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
-          Consumer refund case
+          {matterLabel}
         </p>
         <p style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {stageLabel}
@@ -472,9 +472,89 @@ function TrackingBanner({ onClick }: { onClick: () => void }) {
   );
 }
 
+// ─── Unsupported matter — the scope boundary, pointed inward ──────────────────
+// The prototype only builds the consumer-refund journey end to end. Rather than
+// open a tenancy or RTI matter into the consumer stepper under someone else's
+// title, this states the limit plainly and still shows what LokAI did capture.
+const UNSUPPORTED_MATTERS: Record<string, { title: string; category: string; captured: string[] }> = {
+  'hindi-deposit':  { title: 'हिंदी Deposit Notice',        category: 'Tenancy · Hindi',   captured: ['Matter classified as a tenancy deposit dispute', 'Maharashtra Rent Control Act identified as the primary source', 'Language preference set to Hindi'] },
+  'marathi-notice': { title: 'मराठी Notice Reply',           category: 'Notice · Marathi',  captured: ['Matter classified as a notice reply', 'A 15-day response window was extracted', 'Language preference set to Marathi'] },
+  'tamil-consumer': { title: 'Tamil Consumer Refund',        category: 'Consumer · Tamil',  captured: ['Matter classified as a consumer refund', 'Consumer Protection Act sections identified', 'Language preference set to Tamil'] },
+  'rti':            { title: 'BMC RTI — Building Permit',    category: 'RTI · Municipal',   captured: ['Matter classified as an RTI delay', 'RTI Act Sections 7(1) and 19(1) identified', 'A first-appeal deadline was calculated'] },
+  'deposit':        { title: 'Security Deposit — ₹40,000',   category: 'Tenancy · Mumbai',  captured: ['Matter classified as a deposit recovery', 'Maharashtra Rent Control Act identified as the primary source', 'A 30-day statutory window was extracted'] },
+  'out-of-scope':   { title: 'Outside LokAI Scope',          category: 'Boundary',          captured: ['Question classified as non-legal', 'No legal source was retrieved', 'No draft was prepared'] },
+};
+
+function UnsupportedMatterCard({ matterId }: { matterId: string }) {
+  const navigate = useNavigate();
+  const matter = UNSUPPORTED_MATTERS[matterId];
+  const title = matter?.title ?? 'This matter';
+  const captured = matter?.captured ?? [];
+
+  return (
+    <div style={{
+      background: '#FFFFFF', border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.navy}`,
+      borderRadius: '4px 18px 18px 18px', padding: 18, boxShadow: SHADOW.sm,
+      display: 'flex', flexDirection: 'column', gap: 12,
+    }}>
+      <span style={{
+        alignSelf: 'flex-start', fontFamily: SANS, fontSize: 10, fontWeight: 700,
+        textTransform: 'uppercase', letterSpacing: '0.06em', color: C.navy,
+        background: '#EEF2F8', borderRadius: 999, padding: '3px 9px',
+      }}>
+        {matter?.category ?? 'Matter'}
+      </span>
+      <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.22 }}>
+        {title}
+      </h2>
+      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+        Only the consumer-refund journey is built end to end in this prototype. LokAI classified
+        this matter and found its sources, but the guided steps, verification, and drafting are
+        not implemented for it — so it stops here instead of running you through the wrong flow.
+      </p>
+      {captured.length > 0 && (
+        <div style={{ background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: 12, padding: '11px 13px' }}>
+          <p style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
+            What LokAI captured
+          </p>
+          <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {captured.map(item => (
+              <li key={item} style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.5 }}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
+        <button
+          onClick={() => navigate('/mobile/home')}
+          style={{
+            minHeight: 44, borderRadius: 12, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            color: C.inkSoft, fontFamily: SANS, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          Back to home
+        </button>
+        <button
+          onClick={() => navigate('/mobile/case/consumer?stage=intake')}
+          style={{
+            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+          }}
+        >
+          Open the built journey
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CaseArtboard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { matterId } = useParams();
+  // Only 'consumer' has a built journey. Anything else gets the honest
+  // boundary instead of the consumer stepper wearing another matter's name.
+  const isSupportedMatter = !matterId || matterId === 'consumer';
   const [sourceOpen, setSourceOpen] = useState(false);
   const { selectedLanguage } = useConversations();
   const failure = params.get('failure');
@@ -536,7 +616,10 @@ function CaseArtboard() {
       <style>{CASE_CSS}</style>
       <StatusBar />
       <TopNav bg="transparent" onLanguageTap={() => navigate('/mobile/home')} langLabel={getLangLabel(selectedLanguage)} />
-      <HeaderBar stageLabel={workflow.stageLabel} />
+      <HeaderBar
+        stageLabel={isSupportedMatter ? workflow.stageLabel : 'Not built in this prototype'}
+        matterLabel={isSupportedMatter ? 'Consumer refund case' : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
+      />
 
       {/* Language continuity note — when a non-English language is chosen, be honest
           that the structured guidance is shown in English while full translation is a
@@ -562,6 +645,10 @@ function CaseArtboard() {
           aria-live="polite"
           style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
         >
+          {!isSupportedMatter ? (
+            <UnsupportedMatterCard matterId={matterId ?? ''} />
+          ) : (
+            <>
           <div style={{
             background: '#FFFFFF',
             border: `1px solid ${C.border}`,
@@ -783,6 +870,8 @@ function CaseArtboard() {
               </button>
             ))}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createHashRouter, Navigate } from 'react-router';
 import CaptureLayout             from './CaptureLayout';
 
 // Shells
@@ -28,7 +28,15 @@ import MobileProfile             from './pages/mobile/MobileProfile';
 import MobileConsumerCase        from './pages/mobile/MobileConsumerCase';
 import MobileFiles               from './pages/mobile/MobileFiles';
 
-export const router = createBrowserRouter([
+/*
+ * Hash router, not browser router — deliberately.
+ * The portfolio embeds every prototype as `<base>/index.html#<route>` (see
+ * getPrototypeSrc in the portfolio's lib/prototypes.ts), and embed.ts reads
+ * `embed=1` off that same hash. A browser router ignores the hash entirely,
+ * so every embedded deep link fell through to the `/` fallback. Sentinel
+ * already uses createHashRouter for this reason; LokAI now matches it.
+ */
+export const router = createHashRouter([
   {
     Component: CaptureLayout,
     children: [
@@ -78,7 +86,11 @@ export const router = createBrowserRouter([
           { path: 'chat/out-of-scope',  Component: MobileChatBoundary  },
           { path: 'voice',              Component: MobileVoiceActive      },
           { path: 'profile',            Component: MobileProfile           },
-          { path: 'case',               Component: MobileConsumerCase      }, // Stateful stepper: assess/plan/clarify
+          { path: 'case',               element: <Navigate to="/mobile/case/consumer" replace /> },
+          // :matterId — 'consumer' is the fully built journey; every other id
+          // renders the designed unsupported-matter boundary rather than
+          // silently showing the consumer case under someone else's title.
+          { path: 'case/:matterId',     Component: MobileConsumerCase      },
           { path: 'files',              Component: MobileFiles             }, // Document files browser
         ],
       },

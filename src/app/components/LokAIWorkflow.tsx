@@ -51,18 +51,27 @@ const CSS = `
 export function NumberTicker({ value, durationMs = 900, suffix = '' }: { value: number; durationMs?: number; suffix?: string }) {
   const [display, setDisplay] = useState(0);
   const rafRef = useRef<number | undefined>(undefined);
+  // Animate from wherever the number currently sits, not from zero. Without
+  // this, a live score change (74 → 88 when the last fact is confirmed) reads
+  // as a collapse to zero and a re-climb, which says the opposite of what the
+  // interaction means.
+  const fromRef = useRef(0);
 
   useEffect(() => {
     const reduce = typeof window !== 'undefined'
       && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { setDisplay(value); return; }
+    if (reduce) { setDisplay(value); fromRef.current = value; return; }
 
+    const from = fromRef.current;
+    const delta = value - from;
     const start = performance.now();
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / durationMs);
       // easeOutCubic
       const eased = 1 - Math.pow(1 - t, 3);
-      setDisplay(Math.round(eased * value));
+      const next = Math.round(from + eased * delta);
+      setDisplay(next);
+      fromRef.current = next;
       if (t < 1) rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -77,7 +86,7 @@ export function NumberTicker({ value, durationMs = 900, suffix = '' }: { value: 
  * Colour shifts with how much of the assessment is source-backed; below 85
  * it reads amber to signal the verdict should be treated as provisional.
  */
-export function GroundingMeter({ score, grounded, total }: { score: number; grounded: number; total: number }) {
+export function GroundingMeter({ score, grounded, total, note, live = false }: { score: number; grounded: number; total: number; note?: string; live?: boolean }) {
   const tone = score >= 85 ? C.green : score >= 70 ? C.saffron : C.oxblood;
   return (
     <div style={{
@@ -91,7 +100,7 @@ export function GroundingMeter({ score, grounded, total }: { score: number; grou
         <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.inkSoft }}>
           Grounding score
         </span>
-        <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: tone, lineHeight: 1 }}>
+        <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: tone, lineHeight: 1, transition: 'color 0.5s ease' }}>
           <NumberTicker value={score} suffix="%" />
         </span>
       </div>
@@ -104,13 +113,16 @@ export function GroundingMeter({ score, grounded, total }: { score: number; grou
             background: tone,
             borderRadius: 999,
             transformOrigin: 'left center',
-            animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both',
+            /* Live meters transition width/colour as the score changes; static
+               ones keep the original fill-in-on-mount animation. */
+            ...(live
+              ? { transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1), background 0.5s ease' }
+              : { animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both' }),
           }}
         />
       </div>
       <p style={{ fontFamily: SANS, fontSize: 10.5, color: C.muted, lineHeight: 1.45, margin: '7px 0 0' }}>
-        {grounded} of {total} key claims map to a verified source. Not a model confidence score —
-        it measures how much of this answer is backed by law LokAI can show you.
+        {note ?? `${grounded} of ${total} key claims map to a verified source. Not a model confidence score — it measures how much of this answer is backed by law LokAI can show you.`}
       </p>
     </div>
   );
@@ -760,6 +772,14 @@ export function VerificationScratchpad({
 
   const confirmedCount = items.filter(i => i.status === 'confirmed').length;
   const allConfirmed = confirmedCount === items.length;
+  // How many were already confirmed on arrival — the score should start at
+  // caseWorkflow's unverified 74 (amber, i.e. provisional) regardless of how
+  // many facts happen to be pre-confirmed, and only reach 88 when the user
+  // has resolved the ones LokAI flagged.
+  const [initialConfirmed] = useState(() => facts.filter(f => f.status === 'confirmed').length);
+  const toResolve = Math.max(1, items.length - initialConfirmed);
+  const resolved = Math.max(0, confirmedCount - initialConfirmed);
+  const liveScore = Math.round(74 + (88 - 74) * Math.min(1, resolved / toResolve));
 
   const confirm = (id: string) =>
     setItems(prev => prev.map(i => (i.id === id ? { ...i, status: 'confirmed' } : i)));
@@ -790,6 +810,20 @@ export function VerificationScratchpad({
         LokAI pulled these from what you shared and your invoice. Confirm or fix each one — your
         guidance is only as accurate as these facts, so you own them, not the AI.
       </p>
+
+      {/* Live grounding meter — the whole thesis in one interaction. The score
+          is held down by the unconfirmed fact and climbs the moment the user
+          resolves it, so grounding visibly comes from *their* confirmation
+          rather than the model asserting confidence in itself. */}
+      <GroundingMeter
+        live
+        score={liveScore}
+        grounded={confirmedCount}
+        total={items.length}
+        note={allConfirmed
+          ? 'These facts are yours now. The assessment is built on what you confirmed, not on what the AI guessed.'
+          : `Held below 85% until you resolve ${items.length - confirmedCount} flagged fact${items.length - confirmedCount === 1 ? '' : 's'}. This measures source-backing, not model confidence.`}
+      />
 
       {/* Progress */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>

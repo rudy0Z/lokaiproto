@@ -708,10 +708,10 @@ function PastMattersList({ items }: { items: ConversationRowItem[] }) {
       <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
       <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: '1px solid #E8E4DC' }}>
         {items.map((conv, i) => {
-          // Route into the stateful case stepper rather than the legacy static
-          // chat screens, so progress, language, and trust state persist.
-          const stage = ['assess', 'plan', 'clarify'][i % 3];
-          const toCase = () => navigate(`/mobile/case/consumer?stage=${stage}`);
+          // Route to the matter that was actually tapped. Only 'consumer' has a
+          // built journey; every other id lands on the designed unsupported-matter
+          // boundary rather than opening the consumer case under its title.
+          const toCase = () => navigate(`/mobile/case/${conv.id}`);
           return (
             <div key={conv.id} onClick={toCase}>
               <ConversationRow conv={conv} isLast={i === items.length - 1} onOpen={toCase} />
