@@ -458,21 +458,50 @@ export async function callSarvamTTS(text: string, language: string = 'hi-IN'): P
 }
 
 // ─── Sarvam Document Parse (OCR) ─────────────────────────────────────────────
-export async function callSarvamOCR(file: File): Promise<string> {
+// Unlike callLokAI, this had no demo fallback at all — missing/failing meant
+// a thrown error and a dead upload button, not a graceful degrade. It also
+// hits /api/sarvam/..., a Vite dev-only proxy path that doesn't exist in the
+// production embed, so even a real key would 404 there regardless. Brought
+// in line with callLokAIDetailed's contract: never throws, always resolves
+// with something usable, and tags whether it's real or demo content.
+const DEMO_OCR_TEXT = [
+  'BRIHANMUMBAI MUNICIPAL CORPORATION',
+  'Property Tax Demand Notice',
+  '',
+  'Ref. No: BMC/H-West/2026/0341          Date: 18 March 2026',
+  '',
+  'You are hereby directed to clear the outstanding property tax dues of',
+  'Rs. 32,480 for the financial year 2025-26 within 30 days from the date',
+  'of this notice, i.e., on or before 15 April 2026.',
+  '',
+  'Failure to comply shall result in recovery proceedings under Section',
+  '203 of the Mumbai Municipal Corporation Act, 1888.',
+].join('\n');
+
+export async function callSarvamOCR(file: File): Promise<ServiceResult<string>> {
   const apiKey = import.meta.env.VITE_SARVAM_API_KEY;
-  if (!apiKey) throw new Error('VITE_SARVAM_API_KEY is not set.');
+  if (!apiKey) {
+    console.warn('[Sarvam OCR] Missing VITE_SARVAM_API_KEY. Using demo extracted text.');
+    return { mode: 'demo', data: DEMO_OCR_TEXT };
+  }
 
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await fetch('/api/sarvam/v1/document-parse', {
-    method: 'POST',
-    headers: { 'api-subscription-key': apiKey },
-    body: formData,
-  });
-
-  if (!response.ok) throw new Error(`OCR failed: ${response.statusText}`);
-  const data = await response.json();
-  // Document parse usually returns structured data; we'll return the full text for now
-  return data.parsed_content || '';
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetchWithServiceErrors('/api/sarvam/v1/document-parse', {
+      method: 'POST',
+      headers: { 'api-subscription-key': apiKey },
+      body: formData,
+    });
+    const data = await response.json();
+    const text = data.parsed_content || DEMO_OCR_TEXT;
+    return { mode: 'live', data: text };
+  } catch (err) {
+    const serviceError =
+      err instanceof LokAIServiceError
+        ? err
+        : new LokAIServiceError('server', err instanceof Error ? err.message : 'OCR request failed.', true);
+    console.error(`[Sarvam OCR] ${serviceError.kind}:`, serviceError.message);
+    return { mode: 'demo', data: DEMO_OCR_TEXT, error: serviceError };
+  }
 }

@@ -3,7 +3,7 @@ import { Upload, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { SERIF, SANS, MONO, C, GRAD, SHADOW, Btn } from '../components/shared';
-import { callSarvamOCR } from '../services/api';
+import { callLokAIDetailed, callSarvamOCR, type LokAIResponse } from '../services/api';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 const NOTICE_CSS = `
@@ -166,12 +166,12 @@ function FeedbackRow() {
 // ─── Left panel — Original Notice ─────────────────────────────────────────────
 // Document card: #F9F7F3 (paper feel), shadow-md, radius 12px, padding 32px
 // Highlights: amounts = saffron underline, dates/sections = navy underline
-function OriginalNoticeColumn() {
+function OriginalNoticeColumn({ parsedText }: { parsedText: string | null }) {
   return (
     <div style={{ flex: 55, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
       <ColLabel>Original Notice</ColLabel>
 
-      {/* "● Marathi document detected" chip — standalone above document card */}
+      {/* Status chip — standalone above document card */}
       <div style={{ marginBottom: '12px' }}>
         <span style={{
           fontFamily: SANS, fontSize: '12px', fontWeight: 500,
@@ -183,11 +183,63 @@ function OriginalNoticeColumn() {
             width: '7px', height: '7px', borderRadius: '50%',
             background: '#1F6B3A', display: 'inline-block', flexShrink: 0,
           }} />
-          Marathi document detected
+          {parsedText ? 'Your uploaded document' : 'Example notice · Marathi document detected'}
         </span>
       </div>
 
-      {/* Document card — paper feel */}
+      {parsedText ? (
+        <UploadedNoticeCard text={parsedText} />
+      ) : (
+        <ExampleNoticeCard />
+      )}
+    </div>
+  );
+}
+
+/** The real, uploaded document — plain extracted text, no fabricated highlighting. */
+function UploadedNoticeCard({ text }: { text: string }) {
+  return (
+    <div style={{
+      background: '#F9F7F3',
+      borderRadius: '12px',
+      boxShadow: SHADOW.md,
+      flex: 1,
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <PaperTexture />
+      <div style={{ position: 'relative', zIndex: 1, padding: '32px', flex: 1, overflowY: 'auto' }}>
+        <pre style={{
+          fontFamily: MONO, fontSize: '13px', color: '#3A3630', lineHeight: 1.85,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0,
+        }}>
+          {text}
+        </pre>
+      </div>
+      <div style={{
+        position: 'relative', zIndex: 1,
+        borderTop: '1px solid #E8E4DC',
+        padding: '12px 32px',
+        display: 'flex', alignItems: 'center', gap: '8px',
+        background: '#F9F7F3',
+      }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="4.5" stroke="#8A8880" strokeWidth="0.9" />
+          <path d="M4 6L5.5 7.5L8 4.5" stroke="#8A8880" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880' }}>
+          OCR complete · {text.length} characters
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** The pre-built example — kept exactly as designed, now only shown before an upload. */
+function ExampleNoticeCard() {
+  return (
+      /* Document card — paper feel */
       <div style={{
         background: '#F9F7F3',
         borderRadius: '12px',
@@ -308,14 +360,14 @@ function OriginalNoticeColumn() {
           </span>
         </div>
       </div>
-    </div>
   );
 }
 
 // ─── Interpretation zones ─────────────────────────────────────────────────────
+// Fallback content for the example notice, shown until a real upload exists.
 interface Zone { label: string; content: React.ReactNode; citation?: string; }
 
-const zones: Zone[] = [
+const EXAMPLE_ZONES: Zone[] = [
   {
     label: 'WHAT THIS SAYS',
     content: (
@@ -352,33 +404,76 @@ const zones: Zone[] = [
   },
 ];
 
+// Rebuilds the same Zone[] shape from a live/demo LokAIResponse so the
+// example's layout and the real interpretation are visually identical —
+// only the source of the content changes.
+function zonesFromInterpretation(response: LokAIResponse): Zone[] {
+  return [
+    { label: response.zone1.label, content: response.zone1.finding, citation: response.citations[0] },
+    { label: response.zone2.label, content: response.zone2.analysis },
+    {
+      label: response.zone3.label,
+      content: (
+        <>
+          {response.zone3.steps.map((step, i) => (
+            <div key={i} style={{ marginBottom: i < response.zone3.steps.length - 1 ? '6px' : 0 }}>
+              {i + 1}. {step}
+            </div>
+          ))}
+        </>
+      ),
+    },
+  ];
+}
+
+function copyTextFromInterpretation(response: LokAIResponse): string {
+  return [
+    `NOTICE SUMMARY — ${response.title}`,
+    '',
+    `${response.zone1.label}:`,
+    response.zone1.finding,
+    '',
+    `${response.zone2.label}:`,
+    response.zone2.analysis,
+    '',
+    `${response.zone3.label}:`,
+    ...response.zone3.steps.map((step, i) => `${i + 1}. ${step}`),
+    '',
+    response.citations.length > 0 ? `RELEVANT LAW: ${response.citations.join(', ')}` : '',
+    '',
+    '⚠ This summary is provided for legal information only. Consult a lawyer before taking action.',
+  ].filter(Boolean).join('\n');
+}
+
+const EXAMPLE_COPY_TEXT = [
+  'NOTICE SUMMARY — BMC Property Tax Demand 2025-26',
+  '',
+  'WHAT THIS SAYS:',
+  'This is a property tax demand notice from the Brihanmumbai Municipal Corporation (BMC). You owe ₹32,480 in unpaid property tax for FY 2025–26.',
+  '',
+  'YOUR SITUATION:',
+  'Notice date: 18 March 2026. You have a 30-day window (by 15 April 2026) to pay before recovery action begins.',
+  '',
+  'WHAT YOU MUST DO:',
+  '1. Pay ₹32,480 via the BMC portal (mcgm.gov.in) or at the H/West Ward Office.',
+  '2. Always quote reference number BMC/H-West/2026/0341.',
+  '3. Save your payment receipt.',
+  '4. If you believe the amount is incorrect, file an objection in writing before the deadline.',
+  '',
+  'RELEVANT LAW: MMC Act, 1888 · Section 149',
+  '',
+  '⚠ This summary is provided for legal information only. Consult a lawyer before taking action.',
+].join('\n');
+
 // ─── Right panel — "What This Means" ─────────────────────────────────────────
-function InterpretationColumn() {
+function InterpretationColumn({ parsedText, interpretation }: { parsedText: string | null; interpretation: LokAIResponse | null }) {
   const navigate = useNavigate();
   const [revealed, setRevealed] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  // Copy-to-clipboard for the "Guided Clipboard" approach
-  // The user gets the plain-language steps to review BEFORE any action
-  const COPY_TEXT = [
-    'NOTICE SUMMARY — BMC Property Tax Demand 2025-26',
-    '',
-    'WHAT THIS SAYS:',
-    'This is a property tax demand notice from the Brihanmumbai Municipal Corporation (BMC). You owe ₹32,480 in unpaid property tax for FY 2025–26.',
-    '',
-    'YOUR SITUATION:',
-    'Notice date: 18 March 2026. You have a 30-day window (by 15 April 2026) to pay before recovery action begins.',
-    '',
-    'WHAT YOU MUST DO:',
-    '1. Pay ₹32,480 via the BMC portal (mcgm.gov.in) or at the H/West Ward Office.',
-    '2. Always quote reference number BMC/H-West/2026/0341.',
-    '3. Save your payment receipt.',
-    '4. If you believe the amount is incorrect, file an objection in writing before the deadline.',
-    '',
-    'RELEVANT LAW: MMC Act, 1888 · Section 149',
-    '',
-    '⚠ This summary is provided for legal information only. Consult a lawyer before taking action.',
-  ].join('\n');
+  const isInterpreting = !!parsedText && !interpretation;
+  const zones = interpretation ? zonesFromInterpretation(interpretation) : EXAMPLE_ZONES;
+  const COPY_TEXT = interpretation ? copyTextFromInterpretation(interpretation) : EXAMPLE_COPY_TEXT;
 
   const handleCopy = async () => {
     try {
@@ -390,13 +485,16 @@ function InterpretationColumn() {
     }
   };
 
-  // Stagger zone reveals — 0ms, 220ms, 440ms after mount
+  // Stagger zone reveals — 0ms, 220ms, 440ms after mount, and again whenever
+  // a real interpretation replaces the example so the transition gets the
+  // same reveal instead of the new content just snapping in.
   useEffect(() => {
+    setRevealed(0);
     const timers = [0, 220, 440].map((delay, i) =>
       setTimeout(() => setRevealed(r => Math.max(r, i + 1)), delay)
     );
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [interpretation]);
 
   return (
     <div style={{ flex: 45, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
@@ -413,9 +511,16 @@ function InterpretationColumn() {
         display: 'flex', flexDirection: 'column',
         boxShadow: SHADOW.md,
       }}>
-        {/* Zones — staggered reveal */}
+        {/* Zones — staggered reveal, or a plain loading state between upload and interpretation */}
         <div style={{ flex: 1 }}>
-          {zones.map((zone, i) => (
+          {isInterpreting && (
+            <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontFamily: SANS, fontSize: '13px', color: C.muted }}>
+                Interpreting your document…
+              </span>
+            </div>
+          )}
+          {!isInterpreting && zones.map((zone, i) => (
             <AnimatePresence key={zone.label}>
               {i < revealed && (
                 <motion.div
@@ -449,7 +554,9 @@ function InterpretationColumn() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           borderTop: '1px solid #F0EDE8',
         }}>
-          <span style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880' }}>Interpreted just now</span>
+          <span style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880' }}>
+            {interpretation ? 'Interpreted just now' : 'Example interpretation'}
+          </span>
           <div style={{ display: 'flex', gap: '16px' }}>
             <button
               onClick={handleCopy}
@@ -549,11 +656,17 @@ export default function Notice() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [parsedText, setParsedText] = useState<string | null>(null);
+  const [interpretation, setInterpretation] = useState<LokAIResponse | null>(null);
   const [noticeStatus, setNoticeStatus] = useState<{
     tone: 'idle' | 'success' | 'error';
     message: string;
   }>({ tone: 'idle', message: 'Upload any government or legal notice. LokAI will extract the text and keep the next step calm.' });
 
+  // Until an upload succeeds, both panels show the worked BMC example so the
+  // interaction pattern is visible before anyone uploads anything. The moment
+  // real text exists, both panels switch to it — previously they never did,
+  // so the upload's only visible effect was a one-line text preview in the
+  // status banner while the rest of the page stayed frozen on the example.
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -561,9 +674,23 @@ export default function Notice() {
     setLoading(true);
     setNoticeStatus({ tone: 'idle', message: 'Reading the notice. This may take a moment.' });
     try {
-      const text = await callSarvamOCR(file);
-      setParsedText(text);
-      setNoticeStatus({ tone: 'success', message: 'Text extracted. Review the summary, then ask a follow-up if anything looks unclear.' });
+      const ocr = await callSarvamOCR(file);
+      setParsedText(ocr.data);
+      setNoticeStatus({
+        tone: 'success',
+        // Demo mode fires for two different reasons — no key configured, or a
+        // real request that failed (confirmed: it's the latter against the
+        // live Sarvam endpoint right now, a 404). Don't claim a specific
+        // cause the code can't actually verify; state the fact plainly.
+        message: ocr.mode === 'demo'
+          ? "Text extracted (demo — live OCR unavailable right now). Here's how LokAI would interpret it."
+          : 'Text extracted. Review the summary, then ask a follow-up if anything looks unclear.',
+      });
+
+      const result = await callLokAIDetailed([
+        { role: 'user', content: `Interpret this legal notice for the recipient:\n\n${ocr.data}` },
+      ]);
+      setInterpretation(result.data);
     } catch (err) {
       console.error('OCR failed:', err);
       setNoticeStatus({ tone: 'error', message: 'LokAI could not read this clearly. Upload a sharper image or type the notice text into chat.' });
@@ -644,8 +771,8 @@ export default function Notice() {
 
         {/* ── Two-panel layout: left ~55%, right ~45% ── */}
         <div style={{ display: 'flex', gap: '28px', alignItems: 'stretch' }}>
-          <OriginalNoticeColumn />
-          <InterpretationColumn />
+          <OriginalNoticeColumn parsedText={parsedText} />
+          <InterpretationColumn parsedText={parsedText} interpretation={interpretation} />
         </div>
       </div>
     </main>
