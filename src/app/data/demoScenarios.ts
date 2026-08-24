@@ -79,6 +79,25 @@ export const LEGAL_GLOSSARY: Record<string, GlossaryEntry> = {
   },
 };
 
+/**
+ * Prepared jurisdiction for the demo matter.
+ *
+ * Jurisdiction is a founding pillar of LokAI, not decoration: the product
+ * exists for people facing state/local rules they have never encountered,
+ * so which forum's rules are being applied has to be legible before the
+ * user asks a question the product cannot answer for their state.
+ *
+ * `district` is what actually determines the consumer forum; `state` and
+ * `country` frame which statute applies at all.
+ */
+export const DEMO_JURISDICTION = {
+  district: 'Mumbai Suburban',
+  state: 'Maharashtra',
+  country: 'India',
+  /** Shown where space is tight. */
+  short: 'Mumbai Suburban, Maharashtra',
+} as const;
+
 const consumerSource: DemoSource = {
   id: 'consumer-act',
   title: 'Consumer Protection Act, 2019',

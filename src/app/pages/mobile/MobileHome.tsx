@@ -1,9 +1,12 @@
 ﻿import React, { useState } from 'react';
-import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle } from 'lucide-react';
+import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { BrandLogo, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { LANGUAGE_REGISTRY, type LanguageEntry } from '../../data/languagePacks';
+import { DEMO_JURISDICTION } from '../../data/demoScenarios';
+import { Composer } from '../../components/ai/Turn';
+import { useDemo } from '../../context/DemoContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -194,28 +197,34 @@ export function Breadcrumb({ path }: { path: string }) {
   );
 }
 
-// ─── Input dock (exported for re-use in chat screens) ─────────────────────────
-export function MobileInputDock({ placeholder = 'Tell us your problem...' }: { placeholder?: string }) {
+/**
+ * Docked composer for chat-style screens.
+ *
+ * Was a picture of an input — a mic `<svg>` inside a plain `<div>` and a
+ * `<span>` of placeholder text, with no textarea and no handlers. Now the
+ * real Composer, so the mic is reachable wherever this dock appears.
+ */
+export function MobileInputDock({
+  placeholder = 'Tell us your problem…',
+  onSubmit,
+}: {
+  placeholder?: string;
+  onSubmit?: (text: string) => void;
+}) {
+  const { runPreparedInput } = useDemo();
   return (
     <div style={{
       flexShrink: 0, background: '#FFFFFF',
       borderTop: `1px solid ${C.border}`, padding: '12px 16px',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{
-          width: '44px', height: '44px', borderRadius: LAYOUT.radius.full,
-          background: C.bgRaised, border: `2px solid ${C.border}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, cursor: 'pointer',
-        }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" stroke={C.muted} strokeWidth="1.1" />
-            <path d="M3 8.5C3 11.3 5.2 13.5 8 13.5C10.8 13.5 13 11.3 13 8.5" stroke={C.muted} strokeWidth="1.1" strokeLinecap="round" />
-            <line x1="8" y1="13.5" x2="8" y2="15.5" stroke={C.muted} strokeWidth="1.1" strokeLinecap="round" />
-          </svg>
-        </div>
-        <span style={{ flex: 1, fontFamily: SANS, fontSize: TYPE.body.size, color: C.muted }}>{placeholder}</span>
-      </div>
+      <Composer
+        compact
+        placeholder={placeholder}
+        onSubmit={(text) => {
+          if (onSubmit) onSubmit(text);
+          else void runPreparedInput(text);
+        }}
+      />
     </div>
   );
 }
@@ -318,10 +327,33 @@ export function LanguageBottomSheet({ selected, onSelect, onClose }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Greeting Section ─────────────────────────────────────────────────────────
+/**
+ * Jurisdiction leads, not the date.
+ *
+ * Was a hardcoded "Saturday, 25 March · Mumbai" — a stale decoration that
+ * also contradicted the prepared matter (whose purchase date is June 2026),
+ * with location as an afterthought. Jurisdiction is a founding pillar here:
+ * LokAI exists for people facing rules they did not know applied to them,
+ * so which forum's rules are in play belongs above the fold, before they
+ * ask something the product cannot answer for their district.
+ */
 function GreetingSection() {
+  const today = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  });
+
   return (
     <div style={{ padding: '28px 20px 16px' }}>
-      {/* "Good morning," italic + "Priya" upright bold — DM Serif 26px */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+        <MapPin size={13} color={C.navy} strokeWidth={2} />
+        <span style={{
+          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
+          color: C.navy, letterSpacing: '0.06em', textTransform: 'uppercase',
+        }}>
+          {DEMO_JURISDICTION.short}
+        </span>
+      </div>
+
       <p style={{
         fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
         color: C.ink, margin: '0 0 7px', lineHeight: 1.2,
@@ -330,12 +362,12 @@ function GreetingSection() {
         <span>Good morning, </span>
         <span style={{ fontWeight: 700 }}>Priya</span>
       </p>
-      {/* Date + location — 13px #8A8880 */}
+
       <p style={{
         fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted,
         margin: 0, lineHeight: 1.5,
       }}>
-        Saturday, 25 March · Mumbai
+        {today} · Guidance follows {DEMO_JURISDICTION.country} consumer rules
       </p>
     </div>
   );
@@ -782,57 +814,43 @@ function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; 
 }
 
 
-// ─── Floating Pill Input — position:absolute above bottom nav ─────────────────
-function FloatingInput() {
+/**
+ * Floating composer — the real one, above the bottom nav.
+ *
+ * This was a `<button>` that navigated to the case, dressed up to look like
+ * an input: a decorative mic `<div>`, a static placeholder `<span>`, and a
+ * decorative send arrow. Three inert controls in one component, which
+ * .design-os/03-direction.md explicitly rejects — and it meant mobile had
+ * no working text input and no reachable mic anywhere, while the fully
+ * built voice-enabled Composer sat in two desktop-only call sites.
+ *
+ * Now it renders that same Composer. Voice is an input mode available from
+ * the home surface, not a screen you navigate away to.
+ */
+function FloatingComposer() {
   const navigate = useNavigate();
+  const { runPreparedInput } = useDemo();
 
   return (
-    <button onClick={() => navigate('/mobile/case/consumer')} style={{
+    <div style={{
       position: 'absolute',
       bottom: '80px',      // 64px bottom-nav + 16px gap
       left: '16px',
       right: '16px',
-      height: '56px',
-      background: '#FFFFFF',
-      border: `1.5px solid ${C.navy}`,
-      borderRadius: LAYOUT.radius.pill,
-      boxShadow: SHADOW.xs,
-      display: 'flex', alignItems: 'center',
-      padding: '0 10px',
-      gap: '8px',
       zIndex: 20,
-      cursor: 'pointer',
-      textAlign: 'left',
     }}>
-      {/* Voice orb — 36px, navy mic */}
-      <div style={{
-        width: '36px', height: '36px', borderRadius: LAYOUT.radius.full, flexShrink: 0,
-        background: '#EEF2F8',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-      }}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" stroke={C.navy} strokeWidth="1.2" />
-          <path d="M3 8.5C3 11.3 5.2 13.5 8 13.5C10.8 13.5 13 11.3 13 8.5" stroke={C.navy} strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="8" y1="13.5" x2="8" y2="15.5" stroke={C.navy} strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      </div>
-
-      {/* Placeholder */}
-      <span style={{ flex: 1, fontFamily: SANS, fontSize: TYPE.body.size, color: C.muted }}>
-        Tell us your problem...
-      </span>
-
-      {/* Send arrow — 36px gradient circle */}
-      <div style={{
-        width: '36px', height: '36px', borderRadius: LAYOUT.radius.full, flexShrink: 0,
-        background: GRAD.buttonPrimary,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-      }}>
-        <ArrowRight style={{ width: '14px', height: '14px', color: '#FFFFFF' }} />
-      </div>
-    </button>
+      <Composer
+        compact
+        placeholder="Tell us your problem…"
+        onSubmit={(text) => {
+          /* Resolve through the shared response engine, then land on the
+             clarify beat. Intake's modality picker would be redundant —
+             they have already told us the problem. */
+          void runPreparedInput(text);
+          navigate('/mobile/case/consumer?stage=clarify');
+        }}
+      />
+    </div>
   );
 }
 
@@ -926,8 +944,8 @@ export function HomeArtboard() {
       <BottomNav active="home" />
       <HomeIndicator />
 
-      {/* ── Floating pill input — sits above bottom nav ── */}
-      <FloatingInput />
+      {/* ── Floating composer — real input + mic, above the bottom nav ── */}
+      <FloatingComposer />
 
       {/* ── Language bottom sheet ── */}
       {langSheetOpen && (

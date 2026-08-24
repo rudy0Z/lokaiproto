@@ -72,6 +72,12 @@ export function useVoiceCapture(options: UseVoiceCaptureOptions = {}): UseVoiceC
     return id;
   }, []);
 
+  /* Listening and transcribing are distinct, meaningful states — the user is
+     being heard, then what was heard is being turned into words they can
+     check. At 900/650ms neither registered before it was gone. Slower so
+     each beat is legible; skipToConfirm still short-circuits for anyone who
+     does not want to wait, and reduced-motion users get the same content
+     without the animated orb. */
   const startSample = useCallback(() => {
     clearTimers();
     setError(null);
@@ -81,15 +87,15 @@ export function useVoiceCapture(options: UseVoiceCaptureOptions = {}): UseVoiceC
       schedule(() => {
         setTranscript(sampleTranscript);
         setPhase('confirm');
-      }, 650);
-    }, 900);
+      }, 1100);
+    }, 1800);
   }, [clearTimers, schedule, sampleTranscript]);
 
   const simulateUnclear = useCallback(() => {
     clearTimers();
     setError(null);
     setPhase('listening');
-    schedule(() => setPhase('unclear'), 700);
+    schedule(() => setPhase('unclear'), 1400);
   }, [clearTimers, schedule]);
 
   const skipToConfirm = useCallback(() => {

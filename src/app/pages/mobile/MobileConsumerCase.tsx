@@ -2,7 +2,8 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
+import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE, VoiceOrb } from '../../components/shared';
+import { useVoiceCapture } from '../../hooks/useVoiceCapture';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
 import {
@@ -289,6 +290,7 @@ type IntakeModality = 'text' | 'voice' | 'notice';
 function IntakeView({ onNext }: { onNext: () => void }) {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<IntakeModality | null>(null);
+  const voice = useVoiceCapture({ initialPhase: 'idle' });
 
   const tiles: { id: IntakeModality; label: string; Icon: typeof FileText }[] = [
     { id: 'text', label: 'Prepared text', Icon: FileText },
@@ -296,16 +298,30 @@ function IntakeView({ onNext }: { onNext: () => void }) {
     { id: 'notice', label: 'Sample notice', Icon: Camera },
   ];
 
+  /*
+   * Voice expands here instead of navigating to /mobile/voice.
+   *
+   * Voice used to be a *place you went*: picking the tile left the case
+   * screen entirely. That framing is why the mic never felt like an input
+   * mode. The same shared useVoiceCapture state machine now runs inline, so
+   * speaking is a way of answering this question rather than a detour — and
+   * the transcript-confirm step still gates what becomes the matter input,
+   * which is the part that must not be lost.
+   */
   const handleSelect = (id: IntakeModality) => {
     setSelected(id);
     if (id === 'voice') {
-      navigate('/mobile/voice');
+      voice.startSample();
       return;
     }
+    voice.reset();
     if (id === 'notice') {
       navigate('/mobile/case/consumer?stage=packet&notice=offer');
     }
   };
+
+  const voiceActive = selected === 'voice' && voice.phase !== 'idle';
+  const canContinue = selected === 'text' || (selected === 'voice' && voice.phase === 'confirm');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -354,21 +370,107 @@ function IntakeView({ onNext }: { onNext: () => void }) {
         <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '0 0 10px' }}>
           Pick one prepared input to continue — no microphone, file, or network access is requested.
         </p>
-        <div style={{
-          minHeight: 86,
-          border: `1px solid ${C.border}`,
-          borderRadius: LAYOUT.radius.panel,
-          background: '#F8F5EE',
-          padding: 12,
-          fontFamily: SANS,
-          fontSize: TYPE.body.size,
-          color: C.ink,
-          lineHeight: 1.5,
-        }}>
-          I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a replacement.
-        </div>
+
+        {voiceActive ? (
+          <div style={{
+            border: `1px solid ${C.border}`,
+            borderRadius: LAYOUT.radius.panel,
+            background: '#F8F5EE',
+            padding: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+          }}>
+            {(voice.phase === 'listening' || voice.phase === 'transcribing') && (
+              <>
+                <VoiceOrb size={64} state={voice.phase === 'listening' ? 'listening' : 'processing'} />
+                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, margin: 0, textAlign: 'center' }}>
+                  {voice.phase === 'listening'
+                    ? 'Playing the prepared voice example…'
+                    : 'Turning it into text…'}
+                </p>
+                <button
+                  type="button"
+                  onClick={voice.skipToConfirm}
+                  style={{
+                    minHeight: 36, padding: '0 14px', borderRadius: LAYOUT.radius.control,
+                    border: `1px solid ${C.border}`, background: C.surface,
+                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
+                    color: C.navy, cursor: 'pointer',
+                  }}
+                >
+                  Skip
+                </button>
+              </>
+            )}
+
+            {voice.phase === 'confirm' && (
+              <div style={{ width: '100%' }}>
+                {/* The transcript is editable *before* it becomes the matter
+                    input — the verification gate applied to speech. Losing
+                    this would make voice just another way to be misheard. */}
+                <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: '0 0 6px' }}>
+                  Check this is what you meant, then continue.
+                </p>
+                <textarea
+                  value={voice.transcript}
+                  onChange={(e) => voice.setTranscript(e.target.value)}
+                  rows={3}
+                  aria-label="Voice transcript"
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    borderRadius: LAYOUT.radius.panel,
+                    border: `1px solid ${C.border}`, padding: 10,
+                    fontFamily: SANS, fontSize: TYPE.body.size, lineHeight: 1.5,
+                    color: C.ink, background: C.surface, resize: 'vertical',
+                  }}
+                />
+              </div>
+            )}
+
+            {voice.phase === 'unclear' && (
+              <div style={{ width: '100%', textAlign: 'center' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, fontWeight: 600, margin: '0 0 4px' }}>
+                  That sample was unclear
+                </p>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: '0 0 10px' }}>
+                  LokAI will not guess. Retry, or use the prepared text instead.
+                </p>
+                <button
+                  type="button"
+                  onClick={voice.startSample}
+                  style={{
+                    minHeight: 36, padding: '0 14px', borderRadius: LAYOUT.radius.control,
+                    border: `1px solid ${C.border}`, background: C.surface,
+                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
+                    color: C.navy, cursor: 'pointer',
+                  }}
+                >
+                  Retry sample
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{
+            minHeight: 86,
+            border: `1px solid ${C.border}`,
+            borderRadius: LAYOUT.radius.panel,
+            background: '#F8F5EE',
+            padding: 12,
+            fontFamily: SANS,
+            fontSize: TYPE.body.size,
+            color: C.ink,
+            lineHeight: 1.5,
+          }}>
+            I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a replacement.
+          </div>
+        )}
       </div>
-      <PrimaryButton onClick={onNext} disabled={selected !== 'text'}>Confirm prepared text</PrimaryButton>
+      <PrimaryButton onClick={onNext} disabled={!canContinue}>
+        {selected === 'voice' ? 'Confirm transcript' : 'Confirm prepared text'}
+      </PrimaryButton>
     </div>
   );
 }

@@ -78,11 +78,17 @@ export function VoiceActiveArtboard() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}>
         {phase === 'intent' && (
           <div>
+            {/* Lead with what the interaction is for, not with a caveat about
+                the prototype. The constraint is real and PRODUCT.md requires
+                disclosing it, so it stays — demoted to a quiet line under the
+                actions rather than occupying the hero. */}
             <h1 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, color: C.ink, margin: '0 0 10px', lineHeight: 1.15 }}>
-              Use a prepared voice note
+              Say what happened.
             </h1>
             <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 20px' }}>
-              No microphone permission is requested. This plays a scripted sample, shows an editable transcript, then feeds the same response engine as text.
+              Speaking is often easier than typing a legal problem — especially
+              in Hindi, Marathi, or Tamil. You will see the transcript and can
+              correct it before anything is used.
             </p>
             <button
               type="button"
@@ -107,6 +113,13 @@ export function VoiceActiveArtboard() {
             >
               Simulate unclear audio
             </button>
+            <p style={{
+              fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
+              lineHeight: 1.5, margin: '14px 0 0', textTransform: 'none', letterSpacing: 'normal',
+            }}>
+              Prototype: plays a scripted sample. No microphone permission is
+              requested and no audio leaves the device.
+            </p>
           </div>
         )}
 
