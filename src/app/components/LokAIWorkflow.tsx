@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
-import { C, MONO, SANS, SERIF, SHADOW } from './shared';
+import { C, LAYOUT, MONO, SANS, SERIF, SHADOW, TYPE } from './shared';
 import type {
   AuditEvent,
   CaseWorkflowState,
@@ -81,48 +81,44 @@ export function NumberTicker({ value, durationMs = 900, suffix = '' }: { value: 
   return <>{display}{suffix}</>;
 }
 
-/**
- * Grounding meter — the visible replacement for "confidence theater".
- * Colour shifts with how much of the assessment is source-backed; below 85
- * it reads amber to signal the verdict should be treated as provisional.
- */
-export function GroundingMeter({ score, grounded, total, note, live = false }: { score: number; grounded: number; total: number; note?: string; live?: boolean }) {
-  const tone = score >= 85 ? C.green : score >= 70 ? C.saffron : C.oxblood;
+/** Shows observable source coverage, never model confidence. */
+export function GroundingMeter({ grounded, total, note, live = false }: { grounded: number; total: number; note?: string; live?: boolean }) {
+  const ratio = total > 0 ? grounded / total : 0;
+  const pct = Math.round(ratio * 100);
+  const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.saffron : C.oxblood;
   return (
     <div style={{
-      background: '#FAF8F3',
+      background: C.surface2,
       border: `1px solid ${C.border}`,
-      borderRadius: 11,
+      borderRadius: LAYOUT.radius.control,
       padding: '11px 12px',
       marginBottom: 11,
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.inkSoft }}>
-          Grounding score
+        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.inkSoft }}>
+          Claims checked against sources
         </span>
-        <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: tone, lineHeight: 1, transition: 'color 0.5s ease' }}>
-          <NumberTicker value={score} suffix="%" />
+        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: tone, lineHeight: 1, transition: 'color 0.5s ease' }}>
+          {grounded} of {total}
         </span>
       </div>
-      <div style={{ height: 7, borderRadius: 999, background: '#EDE8DF', overflow: 'hidden' }}>
+      <div style={{ height: 7, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
         <div
           className="lokai-meter-fill"
           style={{
             height: '100%',
-            width: `${score}%`,
+            width: `${pct}%`,
             background: tone,
-            borderRadius: 999,
+            borderRadius: LAYOUT.radius.pill,
             transformOrigin: 'left center',
-            /* Live meters transition width/colour as the score changes; static
-               ones keep the original fill-in-on-mount animation. */
             ...(live
               ? { transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1), background 0.5s ease' }
               : { animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both' }),
           }}
         />
       </div>
-      <p style={{ fontFamily: SANS, fontSize: 10.5, color: C.muted, lineHeight: 1.45, margin: '7px 0 0' }}>
-        {note ?? `${grounded} of ${total} key claims map to a verified source. Not a model confidence score — it measures how much of this answer is backed by law LokAI can show you.`}
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.45, margin: '7px 0 0' }}>
+        {note ?? `${grounded} of ${total} key claims map to an illustrative source note. Expert review is still pending.`}
       </p>
     </div>
   );
@@ -152,7 +148,7 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       fontFamily: SANS,
-      fontSize: 10,
+      fontSize: TYPE.label.size,
       fontWeight: 700,
       letterSpacing: '0.08em',
       textTransform: 'uppercase',
@@ -171,7 +167,7 @@ export function LokAIProgressList({ items }: { items: string[] }) {
       style={{
         background: '#FFFFFF',
         border: `1px solid ${C.border}`,
-        borderRadius: 12,
+        borderRadius: LAYOUT.radius.panel,
         padding: 12,
         boxShadow: SHADOW.xs,
       }}
@@ -194,9 +190,9 @@ export function LokAIProgressList({ items }: { items: string[] }) {
             <span style={{
               width: 18,
               height: 18,
-              borderRadius: '50%',
+              borderRadius: LAYOUT.radius.full,
               border: `1px solid ${index === items.length - 1 ? C.saffron : C.borderStrong}`,
-              background: index === items.length - 1 ? '#FFF3E8' : '#F4F2EE',
+              background: index === items.length - 1 ? '#FFF3E8' : C.surface2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -204,10 +200,10 @@ export function LokAIProgressList({ items }: { items: string[] }) {
               {index < items.length - 1 ? (
                 <Check size={11} color={C.green} strokeWidth={2.4} />
               ) : (
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.saffron }} />
+                <span style={{ width: 5, height: 5, borderRadius: LAYOUT.radius.full, background: C.saffron }} />
               )}
             </span>
-            <span style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45 }}>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45 }}>
               {item}
             </span>
           </div>
@@ -221,12 +217,12 @@ export function SourceCoveragePill({ coverage }: { coverage: SourceCoverage }) {
   return (
     <span style={{
       fontFamily: SANS,
-      fontSize: 10,
+      fontSize: TYPE.label.size,
       fontWeight: 700,
       color: COVERAGE_COLOR[coverage],
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 999,
+      borderRadius: LAYOUT.radius.pill,
       padding: '3px 8px',
       whiteSpace: 'nowrap',
     }}>
@@ -236,32 +232,58 @@ export function SourceCoveragePill({ coverage }: { coverage: SourceCoverage }) {
 }
 
 export function SourceCard({ source, compact = false }: { source: WorkflowSource; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const plain = source.howUsed || source.excerpt;
+  const shortPlain = plain.length > 110 ? `${plain.slice(0, 108)}…` : plain;
+
   return (
     <div style={{
-      background: compact ? '#FFFFFF' : '#F4F2EE',
+      background: compact ? '#FFFFFF' : C.surface2,
       border: `1px solid ${C.border}`,
       borderLeft: `3px solid ${COVERAGE_COLOR[source.coverage]}`,
-      borderRadius: '0 10px 10px 0',
+      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
       padding: compact ? '10px 11px' : '12px 13px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: C.navy }}>
+        <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, fontWeight: 700, color: C.navy }}>
           {source.section}
         </span>
         <SourceCoveragePill coverage={source.coverage} />
       </div>
-      <p style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: C.ink, margin: '7px 0 4px', lineHeight: 1.35 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, margin: '7px 0 4px', lineHeight: 1.35 }}>
         {source.title}
       </p>
       {!compact && (
         <>
-          <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.5, margin: '0 0 6px' }}>
-            {source.excerpt}
+          <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: '0 0 6px' }}>
+            {expanded ? source.excerpt : shortPlain}
           </p>
-          <p style={{ fontFamily: SANS, fontSize: 11, color: C.muted, lineHeight: 1.5, margin: '0 0 5px' }}>
-            How LokAI used this: {source.howUsed}
-          </p>
-          <p style={{ fontFamily: MONO, fontSize: 10, color: C.muted, margin: 0 }}>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            style={{
+              fontFamily: SANS,
+              fontSize: TYPE.micro.size,
+              fontWeight: 700,
+              color: C.navy,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              marginBottom: 6,
+              textDecoration: 'underline',
+              textUnderlineOffset: 2,
+            }}
+          >
+            {expanded ? 'Hide original legal text' : 'Inspect original legal text'}
+          </button>
+          {expanded && (
+            <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '0 0 5px' }}>
+              How LokAI used this: {source.howUsed}
+            </p>
+          )}
+          <p style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted, margin: 0 }}>
             {source.jurisdiction} · {source.lastReviewed}
           </p>
         </>
@@ -307,7 +329,7 @@ export function LokAISourceDrawer({
         height: '100%',
         background: C.surface,
         borderLeft: `1px solid ${C.border}`,
-        boxShadow: '-18px 0 42px rgba(26,25,22,0.16)',
+        boxShadow: SHADOW.lg,
         display: 'flex',
         flexDirection: 'column',
       }}>
@@ -322,7 +344,7 @@ export function LokAISourceDrawer({
         }}>
           <div>
             <SmallLabel>Legal basis</SmallLabel>
-            <h2 style={{ fontFamily: SERIF, fontSize: 23, fontWeight: 400, color: C.ink, margin: 0 }}>
+            <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0 }}>
               {title}
             </h2>
           </div>
@@ -332,7 +354,7 @@ export function LokAISourceDrawer({
             style={{
               width: 40,
               height: 40,
-              borderRadius: 12,
+              borderRadius: LAYOUT.radius.panel,
               border: `1px solid ${C.border}`,
               background: '#FFFFFF',
               cursor: 'pointer',
@@ -365,11 +387,11 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
     <div style={{
       width: 24,
       height: 24,
-      borderRadius: '50%',
+      borderRadius: LAYOUT.radius.full,
       background: color,
       color: '#FFFFFF',
       fontFamily: MONO,
-      fontSize: 10,
+      fontSize: TYPE.label.size,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -433,7 +455,7 @@ export function WorkflowActionPlan({
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 12,
+      borderRadius: LAYOUT.radius.panel,
       padding: compact ? 12 : 14,
       boxShadow: SHADOW.xs,
     }}>
@@ -445,15 +467,15 @@ export function WorkflowActionPlan({
             <div style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 10 }}>
               <StepDot step={step} index={index} />
               <div>
-                <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
                   {step.title}
                 </p>
-                <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.48, margin: 0 }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.48, margin: 0 }}>
                   {step.description}
                 </p>
 
                 {step.status === 'blocked' && step.blockedReason && (
-                  <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.amber, lineHeight: 1.45, margin: '6px 0 0', fontWeight: 600 }}>
+                  <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.45, margin: '6px 0 0', fontWeight: 600 }}>
                     {step.blockedReason}
                   </p>
                 )}
@@ -464,9 +486,9 @@ export function WorkflowActionPlan({
                     <button
                       onClick={() => markDone(step.id)}
                       style={{
-                        minHeight: 34, borderRadius: 9, border: 'none',
+                        minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
                         background: C.navy, color: '#FFFFFF',
-                        fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                         padding: '0 12px', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}
@@ -476,10 +498,10 @@ export function WorkflowActionPlan({
                     <button
                       onClick={() => markBlocked(step.id)}
                       style={{
-                        minHeight: 34, borderRadius: 9,
+                        minHeight: 34, borderRadius: LAYOUT.radius.control,
                         border: `1px solid ${C.borderStrong}`,
                         background: '#FFFFFF', color: C.inkSoft,
-                        fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                         padding: '0 12px', cursor: 'pointer',
                       }}
                     >
@@ -493,9 +515,9 @@ export function WorkflowActionPlan({
                   <button
                     onClick={onPacket}
                     style={{
-                      marginTop: 8, minHeight: 36, borderRadius: 9,
+                      marginTop: 8, minHeight: 36, borderRadius: LAYOUT.radius.control,
                       border: `1px solid ${C.navy}`, background: '#FFFFFF', color: C.navy,
-                      fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                       padding: '0 11px', cursor: 'pointer',
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                     }}
@@ -516,18 +538,18 @@ export function WorkflowActionPlan({
                   background: '#FFF8F0',
                   border: `1px solid rgba(233,133,43,0.28)`,
                   borderLeft: `3px solid ${C.saffron}`,
-                  borderRadius: '0 11px 11px 0',
+                  borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
                   padding: '10px 12px',
                   animation: 'lokaiGateIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
                 }}
               >
-                <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 4px' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 4px' }}>
                   Plan adapted
                 </p>
-                <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
                   {reroute.title}
                 </p>
-                <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
                   {reroute.description}
                 </p>
               </div>
@@ -552,30 +574,30 @@ export function WorkflowTrustPanel({ workflow, onOpenSources }: { workflow: Case
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 12,
+      borderRadius: LAYOUT.radius.panel,
       padding: 13,
       boxShadow: SHADOW.xs,
     }}>
       <SmallLabel>Trust check</SmallLabel>
 
-      {/* Grounding score — leads the panel, replaces any single confidence % */}
-      <GroundingMeter score={t.groundingScore} grounded={t.groundedClaims} total={t.totalClaims} />
+      {/* Observable claim-to-source coverage; never a confidence percentage. */}
+      <GroundingMeter grounded={t.groundedClaims} total={t.totalClaims} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {/* Source coverage — colored pill, not plain text */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <span style={{ fontFamily: SANS, fontSize: 12, color: C.muted }}>Source coverage</span>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>What the source supports</span>
           <SourceCoveragePill coverage={t.sourceCoverage} />
         </div>
         {([
-          ['Fact completeness', factValue],
-          ['Jurisdiction', t.jurisdictionClarity],
-          ['Risk level', RISK_LABEL[t.riskLevel]],
-          ['Draft status', draftValue],
+          ['Facts needed', factValue],
+          ['Location rule', t.jurisdictionClarity],
+          ['Help needed', RISK_LABEL[t.riskLevel]],
+          ['Draft stage', draftValue],
         ] as [string, string][]).map(([label, value]) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: SANS, fontSize: 12, color: C.muted }}>{label}</span>
-            <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: C.ink, textTransform: label === 'Jurisdiction' ? 'capitalize' : 'none' }}>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>{label}</span>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, textTransform: label === 'Location rule' ? 'capitalize' : 'none' }}>
               {value}
             </span>
           </div>
@@ -588,12 +610,12 @@ export function WorkflowTrustPanel({ workflow, onOpenSources }: { workflow: Case
             marginTop: 12,
             width: '100%',
             minHeight: 40,
-            borderRadius: 10,
+            borderRadius: LAYOUT.radius.control,
             border: `1px solid ${C.border}`,
-            background: '#F4F2EE',
+            background: C.surface2,
             color: C.navy,
             fontFamily: SANS,
-            fontSize: 12,
+            fontSize: TYPE.caption.size,
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -610,25 +632,25 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 12,
+      borderRadius: LAYOUT.radius.panel,
       padding: compact ? 12 : 16,
       boxShadow: SHADOW.xs,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
         <div>
           <SmallLabel>Filing packet</SmallLabel>
-          <h3 style={{ fontFamily: SANS, fontSize: 14, fontWeight: 800, color: C.ink, margin: 0 }}>
+          <h3 style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 800, color: C.ink, margin: 0 }}>
             {packet.title}
           </h3>
         </div>
         <span style={{
           fontFamily: SANS,
-          fontSize: 10,
+          fontSize: TYPE.label.size,
           fontWeight: 700,
           color: C.amber,
           background: '#FFF3E8',
           border: '1px solid rgba(233,133,43,0.24)',
-          borderRadius: 999,
+          borderRadius: LAYOUT.radius.pill,
           padding: '4px 8px',
           whiteSpace: 'nowrap',
         }}>
@@ -640,13 +662,13 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
           <div key={field.id} style={{
             background: '#F8F5EE',
             border: `1px solid ${C.border}`,
-            borderRadius: 9,
+            borderRadius: LAYOUT.radius.control,
             padding: '8px 10px',
           }}>
-            <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
               {field.label}
             </p>
-            <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
               {field.value}
             </p>
           </div>
@@ -657,14 +679,14 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
           <SmallLabel>Evidence checklist</SmallLabel>
           <ul style={{ margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {packet.evidenceChecklist.map(item => (
-              <li key={item} style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45 }}>
+              <li key={item} style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45 }}>
                 {item}
               </li>
             ))}
           </ul>
         </div>
       )}
-      <p style={{ fontFamily: SANS, fontSize: 11, color: C.muted, lineHeight: 1.5, margin: '12px 0 0' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '12px 0 0' }}>
         {packet.reviewNotice}
       </p>
     </div>
@@ -680,7 +702,7 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
  */
 const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg: string; label: string; labelColor: string }> = {
   uploaded:    { border: C.green,   bg: '#F5F9F6', label: 'Uploaded',          labelColor: C.green },
-  missing:     { border: C.border,  bg: '#FAF8F3', label: 'Not uploaded yet',  labelColor: C.muted },
+  missing:     { border: C.border,  bg: C.surface2, label: 'Not uploaded yet',  labelColor: C.muted },
   conflicting: { border: C.saffron, bg: '#FFF8F0', label: 'Conflicts a fact',  labelColor: C.amber },
 };
 
@@ -696,7 +718,7 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 18,
+      borderRadius: LAYOUT.radius.turn,
       padding: 15,
       boxShadow: SHADOW.sm,
       display: 'flex',
@@ -704,14 +726,14 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
       gap: 10,
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <h3 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
+        <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
           Evidence locker
         </h3>
-        <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted }}>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted }}>
           {uploadedCount} of {items.length} uploaded
         </span>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
         What LokAI checked before trusting the facts below — including whether any two documents disagree.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -722,14 +744,14 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
               background: style.bg,
               border: `1px solid ${item.status === 'conflicting' ? 'rgba(233,133,43,0.32)' : C.border}`,
               borderLeft: `3px solid ${style.border}`,
-              borderRadius: '0 10px 10px 0',
+              borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
               padding: '9px 11px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <p style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: C.ink, margin: 0 }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink, margin: 0 }}>
                   {item.label}
                 </p>
-                <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: style.labelColor, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: style.labelColor, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   {style.label}
                 </span>
               </div>
@@ -737,9 +759,9 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
                 <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {item.extractedFacts.map(f => (
                     <span key={f.label} style={{
-                      fontFamily: SANS, fontSize: 11, color: C.inkSoft,
+                      fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft,
                       background: '#FFFFFF', border: `1px solid ${C.border}`,
-                      borderRadius: 999, padding: '2px 9px',
+                      borderRadius: LAYOUT.radius.pill, padding: '2px 9px',
                     }}>
                       {f.label}: <strong style={{ color: C.ink }}>{f.value}</strong>
                     </span>
@@ -747,7 +769,7 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
                 </div>
               )}
               {item.conflictNote && (
-                <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.amber, lineHeight: 1.5, margin: '7px 0 0' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.5, margin: '7px 0 0' }}>
                   {item.conflictNote}
                 </p>
               )}
@@ -762,9 +784,13 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
 export function VerificationScratchpad({
   facts,
   onConfirmed,
+  onFactConfirm,
+  onFactCorrect,
 }: {
   facts: VerificationFact[];
   onConfirmed: () => void;
+  onFactConfirm?: (id: string) => void;
+  onFactCorrect?: (id: string, value: string) => void;
 }) {
   const [items, setItems] = useState<VerificationFact[]>(() => facts.map(f => ({ ...f })));
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -772,24 +798,20 @@ export function VerificationScratchpad({
 
   const confirmedCount = items.filter(i => i.status === 'confirmed').length;
   const allConfirmed = confirmedCount === items.length;
-  // How many were already confirmed on arrival — the score should start at
-  // caseWorkflow's unverified 74 (amber, i.e. provisional) regardless of how
-  // many facts happen to be pre-confirmed, and only reach 88 when the user
-  // has resolved the ones LokAI flagged.
-  const [initialConfirmed] = useState(() => facts.filter(f => f.status === 'confirmed').length);
-  const toResolve = Math.max(1, items.length - initialConfirmed);
-  const resolved = Math.max(0, confirmedCount - initialConfirmed);
-  const liveScore = Math.round(74 + (88 - 74) * Math.min(1, resolved / toResolve));
 
-  const confirm = (id: string) =>
+  const confirm = (id: string) => {
     setItems(prev => prev.map(i => (i.id === id ? { ...i, status: 'confirmed' } : i)));
+    onFactConfirm?.(id);
+  };
 
   const startEdit = (item: VerificationFact) => { setEditingId(item.id); setDraft(item.value); };
 
   const saveEdit = (id: string) => {
+    const value = draft.trim() || items.find((i) => i.id === id)?.value || '';
     setItems(prev => prev.map(i =>
-      i.id === id ? { ...i, value: draft.trim() || i.value, status: 'confirmed' } : i));
+      i.id === id ? { ...i, value, status: 'confirmed' } : i));
     setEditingId(null);
+    onFactCorrect?.(id, value);
   };
 
   return (
@@ -797,44 +819,40 @@ export function VerificationScratchpad({
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
       borderTop: `3px solid ${C.navy}`,
-      borderRadius: '3px 12px 12px 12px',
+      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel}`,
       padding: 15,
       boxShadow: SHADOW.sm,
     }}>
       <style>{CSS}</style>
       <SmallLabel>Verify before LokAI builds your assessment</SmallLabel>
-      <h3 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 6px' }}>
+      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 6px' }}>
         Are these facts right?
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>
         LokAI pulled these from what you shared and your invoice. Confirm or fix each one — your
         guidance is only as accurate as these facts, so you own them, not the AI.
       </p>
 
-      {/* Live grounding meter — the whole thesis in one interaction. The score
-          is held down by the unconfirmed fact and climbs the moment the user
-          resolves it, so grounding visibly comes from *their* confirmation
-          rather than the model asserting confidence in itself. */}
+      {/* Live claim coverage — climbs as the user confirms facts, never a fabricated % */}
       <GroundingMeter
         live
-        score={liveScore}
         grounded={confirmedCount}
         total={items.length}
         note={allConfirmed
           ? 'These facts are yours now. The assessment is built on what you confirmed, not on what the AI guessed.'
-          : `Held below 85% until you resolve ${items.length - confirmedCount} flagged fact${items.length - confirmedCount === 1 ? '' : 's'}. This measures source-backing, not model confidence.`}
+          : `Confirm or fix ${items.length - confirmedCount} flagged fact${items.length - confirmedCount === 1 ? '' : 's'} before LokAI builds the assessment. Coverage is claim counts, not model confidence.`}
       />
 
       {/* Progress */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
-        <div style={{ flex: 1, height: 6, borderRadius: 999, background: '#EDE8DF', overflow: 'hidden' }}>
+        <div style={{ flex: 1, height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
           <div style={{
             height: '100%', width: `${(confirmedCount / items.length) * 100}%`,
-            background: allConfirmed ? C.green : C.saffron, borderRadius: 999,
+            background: allConfirmed ? C.green : C.saffron, borderRadius: LAYOUT.radius.pill,
             transition: 'width 0.25s cubic-bezier(0.22,1,0.36,1)',
           }} />
         </div>
-        <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
           {confirmedCount} of {items.length} confirmed
         </span>
       </div>
@@ -846,15 +864,15 @@ export function VerificationScratchpad({
           const needsReview = fact.status === 'needs_review';
           return (
             <div key={fact.id} style={{
-              background: needsReview ? '#FFF8F0' : '#FAF8F3',
+              background: needsReview ? '#FFF8F0' : C.surface2,
               border: `1px solid ${needsReview ? 'rgba(233,133,43,0.32)' : C.border}`,
               borderLeft: `3px solid ${needsReview ? C.saffron : C.green}`,
-              borderRadius: '0 10px 10px 0',
+              borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
               padding: '9px 11px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>
+                  <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>
                     {fact.label}
                   </p>
                   {isEditing ? (
@@ -866,13 +884,13 @@ export function VerificationScratchpad({
                       onKeyDown={e => { if (e.key === 'Enter') saveEdit(fact.id); }}
                       style={{
                         width: '100%', boxSizing: 'border-box',
-                        fontFamily: SANS, fontSize: 14, fontWeight: 600, color: C.ink,
-                        border: `1.5px solid ${C.navy}`, borderRadius: 7,
+                        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink,
+                        border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.control,
                         padding: '5px 8px', background: '#FFFFFF',
                       }}
                     />
                   ) : (
-                    <p style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {fact.value}
                     </p>
                   )}
@@ -886,10 +904,10 @@ export function VerificationScratchpad({
                     style={{
                       display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
                       background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted,
+                      fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted,
                     }}
                   >
-                    <Check size={14} color={C.green} strokeWidth={2.6} />
+                    <Check size={14} color={C.terracotta} strokeWidth={2.6} />
                     <Pencil size={12} color={C.muted} />
                   </button>
                 )}
@@ -899,7 +917,7 @@ export function VerificationScratchpad({
               {needsReview && !isEditing && (
                 <>
                   {fact.hint && (
-                    <p style={{ fontFamily: SANS, fontSize: 11, color: C.amber, lineHeight: 1.45, margin: '6px 0 8px' }}>
+                    <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.amber, lineHeight: 1.45, margin: '6px 0 8px' }}>
                       {fact.hint}
                     </p>
                   )}
@@ -907,9 +925,9 @@ export function VerificationScratchpad({
                     <button
                       onClick={() => confirm(fact.id)}
                       style={{
-                        minHeight: 32, borderRadius: 8, border: 'none',
+                        minHeight: 32, borderRadius: LAYOUT.radius.control, border: 'none',
                         background: C.navy, color: '#FFFFFF',
-                        fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                         padding: '0 12px', cursor: 'pointer',
                         display: 'inline-flex', alignItems: 'center', gap: 6,
                       }}
@@ -919,9 +937,9 @@ export function VerificationScratchpad({
                     <button
                       onClick={() => startEdit(fact)}
                       style={{
-                        minHeight: 32, borderRadius: 8,
+                        minHeight: 32, borderRadius: LAYOUT.radius.control,
                         border: `1px solid ${C.borderStrong}`, background: '#FFFFFF', color: C.inkSoft,
-                        fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                         padding: '0 12px', cursor: 'pointer',
                       }}
                     >
@@ -936,9 +954,9 @@ export function VerificationScratchpad({
                   <button
                     onClick={() => saveEdit(fact.id)}
                     style={{
-                      minHeight: 32, borderRadius: 8, border: 'none',
+                      minHeight: 32, borderRadius: LAYOUT.radius.control, border: 'none',
                       background: C.navy, color: '#FFFFFF',
-                      fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                       padding: '0 14px', cursor: 'pointer',
                     }}
                   >
@@ -947,9 +965,9 @@ export function VerificationScratchpad({
                   <button
                     onClick={() => setEditingId(null)}
                     style={{
-                      minHeight: 32, borderRadius: 8,
+                      minHeight: 32, borderRadius: LAYOUT.radius.control,
                       border: `1px solid ${C.borderStrong}`, background: '#FFFFFF', color: C.inkSoft,
-                      fontFamily: SANS, fontSize: 12, fontWeight: 700,
+                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
                       padding: '0 14px', cursor: 'pointer',
                     }}
                   >
@@ -968,10 +986,10 @@ export function VerificationScratchpad({
         disabled={!allConfirmed}
         style={{
           width: '100%', minHeight: 46, marginTop: 14,
-          borderRadius: 12, border: 'none',
+          borderRadius: LAYOUT.radius.panel, border: 'none',
           background: allConfirmed ? C.navy : C.border,
           color: allConfirmed ? '#FFFFFF' : C.muted,
-          fontFamily: SANS, fontSize: 14, fontWeight: 700,
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700,
           cursor: allConfirmed ? 'pointer' : 'not-allowed',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           transition: 'background 0.18s ease',
@@ -995,13 +1013,27 @@ export function ReviewGate({
   draftText,
   onCopy,
   onPrint,
+  onApprove,
+  approved = false,
 }: {
   draftText: string;
   onCopy?: () => void;
   onPrint?: () => void;
+  onApprove?: (approved: boolean) => void;
+  approved?: boolean;
 }) {
-  const [reviewed, setReviewed] = useState(false);
+  const [reviewed, setReviewed] = useState(approved);
   const [copied, setCopied] = useState(false);
+
+  React.useEffect(() => {
+    setReviewed(approved);
+  }, [approved]);
+
+  const toggleReviewed = () => {
+    const next = !reviewed;
+    setReviewed(next);
+    onApprove?.(next);
+  };
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(draftText).catch(() => {});
@@ -1017,7 +1049,7 @@ export function ReviewGate({
         background: '#FFFFFF',
         border: `1px solid ${C.border}`,
         borderTop: `3px solid ${C.oxblood}`,
-        borderRadius: '3px 12px 12px 12px',
+        borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel}`,
         padding: 15,
         boxShadow: SHADOW.sm,
         animation: 'lokaiGateIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
@@ -1028,10 +1060,10 @@ export function ReviewGate({
         <ShieldCheck size={16} color={C.oxblood} />
         <SmallLabel>Review before this leaves your hands</SmallLabel>
       </div>
-      <h3 style={{ fontFamily: SERIF, fontSize: 19, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 7px' }}>
+      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 7px' }}>
         LokAI won't send this for you.
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 13px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 13px' }}>
         A legal document carries weight, and an AI can misread a date or an amount. You stay
         in control — read each detail, then copy or print it yourself. A lawyer or trusted
         helper can confirm the wording before you use it.
@@ -1039,7 +1071,9 @@ export function ReviewGate({
 
       {/* Deliberate consent step — unlocks the export actions */}
       <button
-        onClick={() => setReviewed(r => !r)}
+        type="button"
+        className="lokai-pressable"
+        onClick={toggleReviewed}
         aria-pressed={reviewed}
         style={{
           width: '100%',
@@ -1047,19 +1081,18 @@ export function ReviewGate({
           alignItems: 'center',
           gap: 10,
           textAlign: 'left',
-          background: reviewed ? 'rgba(31,107,58,0.06)' : '#FAF8F3',
+          background: reviewed ? 'rgba(31,107,58,0.06)' : C.surface2,
           border: `1px solid ${reviewed ? 'rgba(31,107,58,0.4)' : C.border}`,
-          borderRadius: 11,
+          borderRadius: LAYOUT.radius.control,
           padding: '11px 12px',
           cursor: 'pointer',
           marginBottom: 11,
-          transition: 'background 0.16s ease, border-color 0.16s ease',
         }}
       >
         <span style={{
           width: 20,
           height: 20,
-          borderRadius: 6,
+          borderRadius: LAYOUT.radius.sm,
           flexShrink: 0,
           background: reviewed ? C.green : '#FFFFFF',
           border: `1.5px solid ${reviewed ? C.green : C.borderStrong}`,
@@ -1070,7 +1103,7 @@ export function ReviewGate({
         }}>
           {reviewed && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
         </span>
-        <span style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 700, color: C.ink }}>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink }}>
           I've read the details and I'm ready to send it myself.
         </span>
       </button>
@@ -1081,12 +1114,12 @@ export function ReviewGate({
           disabled={!reviewed}
           style={{
             minHeight: 44,
-            borderRadius: 11,
+            borderRadius: LAYOUT.radius.control,
             border: 'none',
             background: !reviewed ? C.border : copied ? C.green : C.navy,
             color: !reviewed ? C.muted : '#FFFFFF',
             fontFamily: SANS,
-            fontSize: 13,
+            fontSize: TYPE.small.size,
             fontWeight: 700,
             cursor: reviewed ? 'pointer' : 'not-allowed',
             display: 'flex',
@@ -1104,12 +1137,12 @@ export function ReviewGate({
           disabled={!reviewed}
           style={{
             minHeight: 44,
-            borderRadius: 11,
+            borderRadius: LAYOUT.radius.control,
             border: `1.5px solid ${!reviewed ? C.border : C.navy}`,
             background: '#FFFFFF',
             color: !reviewed ? C.muted : C.navy,
             fontFamily: SANS,
-            fontSize: 13,
+            fontSize: TYPE.small.size,
             fontWeight: 700,
             cursor: reviewed ? 'pointer' : 'not-allowed',
             display: 'flex',
@@ -1123,8 +1156,146 @@ export function ReviewGate({
         </button>
       </div>
 
-      <p style={{ fontFamily: SANS, fontSize: 10.5, color: C.muted, lineHeight: 1.5, margin: '11px 0 0', textAlign: 'center' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '11px 0 0', textAlign: 'center' }}>
         LokAI prepared this draft. You are the sender. No message leaves the app on its own.
+      </p>
+    </div>
+  );
+}
+
+const FIRST_ACTIONS = [
+  {
+    id: 'save',
+    title: 'Save or print the reviewed notice',
+    hint: 'Keep a copy you have read. LokAI does not file this for you.',
+  },
+  {
+    id: 'send',
+    title: 'Send it yourself',
+    hint: 'Email, registered post, or the seller’s support channel — in your name.',
+  },
+  {
+    id: 'remind',
+    title: 'Set a personal follow-up reminder',
+    hint: 'e.g. 15 days. This demo does not create a calendar event.',
+  },
+] as const;
+
+/** Peak-End exit beat — owned next actions after ReviewGate. */
+export function FirstActionChecklist({
+  onComplete,
+  compact = false,
+}: {
+  onComplete?: () => void;
+  compact?: boolean;
+}) {
+  const [checked, setChecked] = useState<Record<string, boolean>>({
+    save: false,
+    send: false,
+    remind: false,
+  });
+  const doneCount = Object.values(checked).filter(Boolean).length;
+  const allDone = doneCount === FIRST_ACTIONS.length;
+
+  const toggle = (id: string) => {
+    setChecked((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      const complete = FIRST_ACTIONS.every((a) => next[a.id]);
+      if (complete && !FIRST_ACTIONS.every((a) => prev[a.id])) {
+        onComplete?.();
+      }
+      return next;
+    });
+  };
+
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: `1px solid ${C.border}`,
+        borderTop: `3px solid ${C.terracotta}`,
+        borderRadius: LAYOUT.radius.card,
+        padding: compact ? 14 : 16,
+        boxShadow: SHADOW.sm,
+        marginTop: 12,
+      }}
+    >
+      <SmallLabel>After you leave LokAI</SmallLabel>
+      <h3 style={{
+        fontFamily: SERIF,
+        fontSize: compact ? 18 : 20,
+        fontWeight: 400,
+        color: C.ink,
+        lineHeight: 1.25,
+        margin: '0 0 6px',
+      }}>
+        Your first actions
+      </h3>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>
+        The product ends here. These three steps stay with you — mark them as you go.
+      </p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {FIRST_ACTIONS.map((action, i) => {
+          const on = checked[action.id];
+          return (
+            <li key={action.id}>
+              <button
+                type="button"
+                onClick={() => toggle(action.id)}
+                aria-pressed={on}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  textAlign: 'left',
+                  background: on ? 'rgba(169,79,45,0.08)' : C.surface2,
+                  border: `1px solid ${on ? 'rgba(169,79,45,0.35)' : C.border}`,
+                  borderRadius: LAYOUT.radius.control,
+                  padding: '11px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: LAYOUT.radius.sm,
+                  flexShrink: 0,
+                  background: on ? C.terracotta : '#FFFFFF',
+                  border: `1.5px solid ${on ? C.terracotta : C.borderStrong}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: SANS,
+                  fontSize: TYPE.micro.size,
+                  fontWeight: 800,
+                  color: on ? '#fff' : C.muted,
+                }}>
+                  {on ? <Check size={13} color="#FFFFFF" strokeWidth={3} /> : i + 1}
+                </span>
+                <span>
+                  <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, display: 'block' }}>
+                    {action.title}
+                  </span>
+                  <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.45, display: 'block', marginTop: 2 }}>
+                    {action.hint}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <p style={{
+        fontFamily: SANS,
+        fontSize: TYPE.micro.size,
+        color: allDone ? C.green : C.muted,
+        margin: '12px 0 0',
+        fontWeight: allDone ? 700 : 500,
+      }}>
+        {allDone
+          ? 'Exit checklist marked · you own the next steps outside LokAI'
+          : `${doneCount} of ${FIRST_ACTIONS.length} marked`}
       </p>
     </div>
   );
@@ -1136,27 +1307,27 @@ export function FailureStateCard({ failure }: { failure: FailureState }) {
       background: failure.riskLevel === 'human_required' ? '#FFF1EE' : '#FFFFFF',
       border: `1px solid ${failure.riskLevel === 'human_required' ? 'rgba(184,54,28,0.22)' : C.border}`,
       borderLeft: `3px solid ${failure.riskLevel === 'human_required' ? C.red : C.saffron}`,
-      borderRadius: '0 12px 12px 0',
+      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`,
       padding: 14,
       boxShadow: SHADOW.xs,
     }}>
       <SmallLabel>Safe recovery</SmallLabel>
-      <h3 style={{ fontFamily: SANS, fontSize: 15, fontWeight: 800, color: C.ink, margin: '0 0 6px' }}>
+      <h3 style={{ fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 800, color: C.ink, margin: '0 0 6px' }}>
         {failure.title}
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
         {failure.body}
       </p>
       <div style={{
         background: '#F8F5EE',
         border: `1px solid ${C.border}`,
-        borderRadius: 10,
+        borderRadius: LAYOUT.radius.control,
         padding: '9px 10px',
       }}>
-        <p style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: C.navy, margin: '0 0 3px' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.navy, margin: '0 0 3px' }}>
           {failure.nextAction}
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, lineHeight: 1.45, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.45, margin: 0 }}>
           {failure.safeFallback}
         </p>
       </div>
@@ -1178,7 +1349,7 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
       background: isRisky ? '#FFF1EE' : '#FFFFFF',
       border: `1px solid ${isRisky ? 'rgba(184,54,28,0.22)' : C.border}`,
       borderLeft: `4px solid ${isRisky ? C.red : C.green}`,
-      borderRadius: '4px 16px 16px 16px',
+      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.card}`,
       padding: 16,
       boxShadow: SHADOW.sm,
       display: 'flex',
@@ -1187,41 +1358,41 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
     }}>
       <span style={{
         alignSelf: 'flex-start',
-        fontFamily: SANS, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+        fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
         color: isRisky ? C.red : C.green,
         background: isRisky ? 'rgba(184,54,28,0.08)' : 'rgba(31,107,58,0.08)',
-        borderRadius: 999, padding: '3px 9px',
+        borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
       }}>
         {isRisky ? 'Verify before trusting' : 'Looks genuine'}
       </span>
-      <h3 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
+      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
         {assessment.title}
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
         {assessment.decodedSummary}
       </p>
-      <div style={{ background: isRisky ? '#FDF3F1' : '#F5F9F6', borderRadius: 10, padding: '10px 12px' }}>
-        <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: isRisky ? C.red : C.green, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ background: isRisky ? '#FDF3F1' : '#F5F9F6', borderRadius: LAYOUT.radius.control, padding: '10px 12px' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: isRisky ? C.red : C.green, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Why LokAI flagged this
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
           {assessment.riskExplanation}
         </p>
       </div>
       {assessment.extractedAmount && (
-        <p style={{ fontFamily: SANS, fontSize: 13, color: C.ink, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, margin: 0 }}>
           <strong>Offer:</strong> {assessment.extractedAmount}
         </p>
       )}
-      <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: 0 }}>
         {assessment.deadline}
       </p>
       {!isRisky && assessment.suggestedReply && onPrepareReply && (
         <button
           onClick={onPrepareReply}
           style={{
-            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
-            fontFamily: SANS, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 800, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4,
           }}
         >
@@ -1229,7 +1400,7 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
         </button>
       )}
       {isRisky && (
-        <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.muted, lineHeight: 1.5, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.5, margin: 0 }}>
           LokAI won't prepare a reply to this message. Do not send money or personal documents based on it.
         </p>
       )}
@@ -1243,7 +1414,7 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
       borderLeft: `3px solid ${C.oxblood}`,
-      borderRadius: '0 12px 12px 0',
+      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`,
       padding: 14,
       boxShadow: SHADOW.xs,
     }}>
@@ -1251,14 +1422,14 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
         <ShieldCheck size={17} color={C.oxblood} />
         <SmallLabel>Professional guidance recommended</SmallLabel>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
         {workflow.humanReviewSummary}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {['Issue summary', 'Evidence collected', 'Sources checked', 'Draft packet'].map(item => (
           <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Check size={13} color={C.green} />
-            <span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{item}</span>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.ink }}>{item}</span>
           </div>
         ))}
       </div>
@@ -1271,7 +1442,7 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 12,
+      borderRadius: LAYOUT.radius.panel,
       padding: 13,
       boxShadow: SHADOW.xs,
     }}>
@@ -1282,8 +1453,8 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
             <span style={{
               width: 22,
               height: 22,
-              borderRadius: '50%',
-              background: '#F4F2EE',
+              borderRadius: LAYOUT.radius.full,
+              background: C.surface2,
               border: `1px solid ${C.border}`,
               display: 'flex',
               alignItems: 'center',
@@ -1294,12 +1465,12 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                <p style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>
                   {event.label}
                 </p>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>{event.time}</span>
+                <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted }}>{event.time}</span>
               </div>
-              <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
                 {event.detail}
               </p>
             </div>
@@ -1316,7 +1487,7 @@ export function GuidancePreferences() {
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 12,
+      borderRadius: LAYOUT.radius.panel,
       padding: 13,
       boxShadow: SHADOW.xs,
     }}>
@@ -1324,11 +1495,11 @@ export function GuidancePreferences() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {items.map(item => (
           <div key={item} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <span style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft }}>{item}</span>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft }}>{item}</span>
             <span style={{
               width: 28,
               height: 16,
-              borderRadius: 999,
+              borderRadius: LAYOUT.radius.pill,
               background: '#EEF2F8',
               border: `1px solid ${C.border}`,
               position: 'relative',
@@ -1340,7 +1511,7 @@ export function GuidancePreferences() {
                 right: 2,
                 width: 10,
                 height: 10,
-                borderRadius: '50%',
+                borderRadius: LAYOUT.radius.full,
                 background: C.navy,
               }} />
             </span>
@@ -1358,11 +1529,11 @@ export function InlineLinkButton({ children, onClick }: { children: React.ReactN
       style={{
         minHeight: 40,
         border: `1px solid ${C.navy}`,
-        borderRadius: 10,
+        borderRadius: LAYOUT.radius.control,
         background: '#FFFFFF',
         color: C.navy,
         fontFamily: SANS,
-        fontSize: 12,
+        fontSize: TYPE.caption.size,
         fontWeight: 800,
         display: 'inline-flex',
         alignItems: 'center',

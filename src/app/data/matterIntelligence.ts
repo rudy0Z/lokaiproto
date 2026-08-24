@@ -40,18 +40,18 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
   deposit: {
     matterId: 'deposit',
     matterType: 'tenancy',
-    trustLevel: 'clear',
-    plainSummary: 'The landlord is past the return window and has not shown a written damage claim.',
-    missingFacts: ['Confirm whether the demand notice has already been sent.'],
+    trustLevel: 'source_limited',
+    plainSummary: 'The tenancy example needs a reviewed local source before LokAI can describe a filing route.',
+    missingFacts: ['Tenancy agreement', 'Payment proof', 'Reviewed local source and forum'],
     sources: [
       {
-        id: 'mrc-24',
+        id: 'tenancy-source-gap',
         title: 'Maharashtra Rent Control Act, 1999',
-        section: 'Section 24',
+        section: 'Exact provision not established',
         jurisdiction: 'Maharashtra',
-        excerpt: 'Protects tenants from unlawful withholding and harassment in tenancy disputes.',
-        coverage: 'direct',
-        howUsed: 'Used to explain why a deposit cannot be held without a documented reason.',
+        excerpt: 'This prepared prototype does not contain a reviewed provision establishing a deposit-return deadline.',
+        coverage: 'missing',
+        howUsed: 'Used to disclose the source gap and stop a legal conclusion.',
       },
       {
         id: 'cpa-35',
@@ -115,8 +115,8 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
     matterId: 'consumer',
     matterType: 'consumer',
     trustLevel: 'clear',
-    plainSummary: 'A defective product with seller refusal has a clear consumer complaint path.',
-    missingFacts: ['Purchase date or invoice date'],
+    plainSummary: 'A damaged mixer with written seller refusal can follow the prepared consumer-complaint example.',
+    missingFacts: [],
     sources: [
       {
         id: 'cpa-2-10',
@@ -125,7 +125,7 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
         jurisdiction: 'India',
         excerpt: 'Defines defect in goods.',
         coverage: 'direct',
-        howUsed: 'Used to classify the defective phone issue.',
+        howUsed: 'Used to classify the damaged mixer issue.',
       },
       {
         id: 'cpa-2-11',
@@ -147,13 +147,13 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
       },
     ],
     nextSteps: [
-      { id: 'consumer-step-1', title: 'Send written complaint', description: 'Ask seller or manufacturer for repair, replacement, or refund.', status: 'current' },
-      { id: 'consumer-step-2', title: 'Save proof', description: 'Keep invoice, warranty, defect photos, and seller replies.', status: 'waiting' },
-      { id: 'consumer-step-3', title: 'File if ignored', description: 'Use NCH or District Consumer Commission if no response arrives.', status: 'waiting' },
+      { id: 'consumer-step-1', title: 'Send written complaint', description: 'Ask seller or manufacturer for repair, replacement, or refund — send by registered post with AD and keep the receipt.', status: 'current' },
+      { id: 'consumer-step-2', title: 'Save proof', description: 'Keep invoice, WhatsApp or seller-chat screenshots, platform order or ticket ID, warranty, and defect photos.', status: 'waiting' },
+      { id: 'consumer-step-3', title: 'File if ignored', description: 'File on e-Daakhil, call National Consumer Helpline (1915), or approach the District Consumer Commission if no response arrives.', status: 'waiting' },
     ],
     dailyUpdate: {
-      title: 'Draft ready after one detail',
-      body: 'Add the purchase date and LokAI can prepare a clean complaint summary with evidence checklist.',
+      title: 'Prepared draft ready to review',
+      body: 'The purchase date, amount, damage, and seller refusal are present in the prepared example.',
       timestampLabel: 'Today · 8:55 AM',
     },
   },
@@ -166,7 +166,7 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
     sources: [
       {
         id: 'evidence-doc',
-        title: 'Indian Evidence Act, 1872',
+        title: 'Bharatiya Sakshya Adhiniyam, 2023',
         section: 'Documentary proof principles',
         jurisdiction: 'India',
         excerpt: 'Written records matter when claims are disputed.',
@@ -189,25 +189,25 @@ export const MATTER_INTELLIGENCE: Record<string, MatterIntelligence> = {
     matterId: 'boundary',
     matterType: 'boundary',
     trustLevel: 'human_review',
-    plainSummary: 'This is outside LokAI’s legal guidance scope.',
+    plainSummary: 'This sits outside the consumer-refund examples this prototype covers.',
     missingFacts: [],
     sources: [
       {
         id: 'lokai-boundary',
-        title: 'LokAI Knowledge Boundary',
-        section: 'Supported scope',
+        title: 'LokAI Prototype Boundary',
+        section: 'Consumer examples only',
         jurisdiction: 'System',
-        excerpt: 'LokAI supports Indian legal rights, notices, complaints, tenancy, RTI, and documents.',
+        excerpt: 'This prototype only covers consumer refund examples. RTI, tenancy, and employment are not built here.',
         coverage: 'direct',
-        howUsed: 'Used to redirect non-legal questions back to supported legal workflows.',
+        howUsed: 'Used to redirect questions back to the prepared consumer-refund demo.',
       },
     ],
     nextSteps: [
-      { id: 'boundary-step-1', title: 'Ask a legal question', description: 'Describe a notice, tenancy, RTI, consumer, or document issue.', status: 'current' },
+      { id: 'boundary-step-1', title: 'Open a consumer example', description: 'Ask about a damaged product, refused refund, or marketplace policy conflict.', status: 'current' },
     ],
     dailyUpdate: {
-      title: 'No legal matter detected',
-      body: 'Start with a legal issue or upload a notice to continue.',
+      title: 'Outside this prototype',
+      body: 'Start with the prepared consumer-refund example to continue.',
       timestampLabel: 'Demo',
     },
   },

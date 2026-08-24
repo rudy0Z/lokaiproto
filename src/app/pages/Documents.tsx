@@ -1,18 +1,21 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Plus, ExternalLink, Download } from 'lucide-react';
-import { SANS, C, GRAD, SHADOW } from '../components/shared';
+import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from '../components/shared';
+import { ScopedAskButton, ScopedAskSheet } from '../components/ai/Turn';
+import { useDemo } from '../context/DemoContext';
+import { toast } from 'sonner';
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const PAGE_CSS = `
   .docs-scroll::-webkit-scrollbar       { width: 5px; }
   .docs-scroll::-webkit-scrollbar-track { background: transparent; }
-  .docs-scroll::-webkit-scrollbar-thumb { background: #E0DDD5; border-radius: 3px; }
+  .docs-scroll::-webkit-scrollbar-thumb { background: #E7E0D4; border-radius: 3px; }
   .docs-scroll::-webkit-scrollbar-thumb:hover { background: ${C.saffron}; }
 
   .doc-card {
     background: #FFFFFF;
-    border: 1px solid #E8E4DC;
+    border: 1px solid #E7E0D4;
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05);
     overflow: hidden;
@@ -43,7 +46,7 @@ const PAGE_CSS = `
     color: ${C.muted};
     border: 1px solid ${C.border};
   }
-  .doc-footer-btn-secondary:hover { background: #F5F2EC; }
+  .doc-footer-btn-secondary:hover { background: #F8F5EE; }
 
   .filter-tab {
     font-family: ${SANS};
@@ -80,9 +83,9 @@ const DOCUMENTS: DocItem[] = [
   {
     id: 1,
     type: 'Demand Notice',
-    title: 'Consumer Demand Notice — Defective Phone',
+    title: 'Consumer Demand Notice — Damaged Mixer',
     status: 'Draft',
-    date: 'Created Mar 25, 2026',
+    date: 'Prepared Jul 22, 2026',
     linkedChat: 'Consumer refund case',
     linkedPath: '/desktop/document-draft',
     accentColor: C.saffron,
@@ -97,9 +100,9 @@ const DOCUMENTS: DocItem[] = [
   {
     id: 2,
     type: 'Evidence Summary',
-    title: 'Evidence Summary — Defective Phone',
+    title: 'Evidence Summary — Damaged Mixer',
     status: 'Completed',
-    date: 'Updated Mar 25, 2026',
+    date: 'Prepared Jul 22, 2026',
     linkedChat: 'Consumer refund case',
     linkedPath: '/desktop/chat/consumer',
     accentColor: C.navy,
@@ -114,9 +117,9 @@ const DOCUMENTS: DocItem[] = [
   {
     id: 3,
     type: 'Source Summary',
-    title: 'Sources Used — Consumer Protection Act',
+    title: 'Illustrative Sources — Expert Review Pending',
     status: 'Completed',
-    date: 'Checked Mar 25, 2026',
+    date: 'Prepared Jul 22, 2026',
     linkedChat: 'Consumer refund case',
     linkedPath: '/desktop/chat/consumer',
     accentColor: C.green,
@@ -133,7 +136,7 @@ const DOCUMENTS: DocItem[] = [
     type: 'Case History',
     title: 'Audit Trail — Consumer Refund Case',
     status: 'Completed',
-    date: 'Updated Mar 25, 2026',
+    date: 'Prepared Jul 22, 2026',
     linkedChat: 'Consumer refund case',
     linkedPath: '/desktop/chat/consumer',
     accentColor: C.navy,
@@ -149,8 +152,8 @@ const DOCUMENTS: DocItem[] = [
 
 // ─── Status Chip ──────────────────────────────────────────────────────────────
 const STATUS_STYLES: Record<DocStatus, React.CSSProperties> = {
-  'Draft':     { background: '#FFF3E8', color: '#E8832A' },
-  'Completed': { background: '#EEF2F8', color: '#132846' },
+  'Draft':     { background: '#FFF3E8', color: C.saffron },
+  'Completed': { background: '#EEF2F8', color: C.navy },
 };
 
 function StatusChip({ status }: { status: DocStatus }) {
@@ -158,8 +161,8 @@ function StatusChip({ status }: { status: DocStatus }) {
     <div style={{
       position: 'absolute', top: '10px', right: '10px', zIndex: 2,
       ...STATUS_STYLES[status],
-      fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-      borderRadius: '4px', padding: '3px 8px',
+      fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
+      borderRadius: LAYOUT.radius.xs, padding: '3px 8px',
       letterSpacing: '0.02em',
     }}>
       {status}
@@ -173,7 +176,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
   return (
     <div style={{
       position: 'relative', height: '140px',
-      background: '#F5F2EC',
+      background: C.bg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '14px',
     }}>
@@ -183,9 +186,9 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
       <div style={{
         width: '100%', height: '100%',
         background: '#FFFFFF',
-        borderRadius: '6px',
-        border: '1px solid #E8E4DC',
-        boxShadow: '0 2px 8px rgba(26,25,22,0.09)',
+        borderRadius: LAYOUT.radius.sm,
+        border: `1px solid ${C.border}`,
+        boxShadow: SHADOW.md,
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
       }}>
@@ -204,7 +207,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
                 <div key={i} style={{
                   width: line.w, height: '7px',
                   background: C.navy,
-                  borderRadius: '3px',
+                  borderRadius: LAYOUT.radius.xs,
                   marginBottom: '7px',
                   opacity: 0.75,
                 }} />
@@ -214,9 +217,9 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
               return (
                 <div key={i} style={{
                   width: line.w, height: '6px',
-                  borderBottom: '1.5px dashed #E8832A',
+                  borderBottom: `1.5px dashed ${C.saffron}`,
                   background: 'rgba(232,131,42,0.08)',
-                  borderRadius: '2px 2px 0 0',
+                  borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.xs} ${LAYOUT.radius.none} ${LAYOUT.radius.none}`,
                   marginBottom: '7px',
                 }} />
               );
@@ -226,7 +229,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
                 <div key={i} style={{
                   width: line.w, height: '4px',
                   background: '#D8D4CC',
-                  borderRadius: '2px',
+                  borderRadius: LAYOUT.radius.xs,
                   marginBottom: '7px',
                   opacity: 0.7,
                 }} />
@@ -237,7 +240,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
               <div key={i} style={{
                 width: line.w, height: '6px',
                 background: '#C8C4BC',
-                borderRadius: '3px',
+                borderRadius: LAYOUT.radius.xs,
                 marginBottom: '7px',
               }} />
             );
@@ -250,7 +253,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
 
 // ─── Document Card ────────────────────────────────────────────────────────────
 function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string) => void }) {
-  const borderColor = doc.status === 'Completed' ? '#C8D8F0' : '#E8E4DC';
+  const borderColor = doc.status === 'Completed' ? '#C8D8F0' : C.border;
 
   return (
     <div className="doc-card" style={{ border: `1px solid ${borderColor}` }}>
@@ -262,9 +265,9 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
         {/* Document type chip */}
         <div style={{
           display: 'inline-block',
-          fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-          color: '#8A8880', textTransform: 'uppercase', letterSpacing: '0.08em',
-          background: '#F4F2EE', borderRadius: '4px',
+          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
+          color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
+          background: C.surface2, borderRadius: LAYOUT.radius.xs,
           padding: '3px 8px', marginBottom: '9px',
         }}>
           {doc.type}
@@ -272,8 +275,8 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
 
         {/* Title — 2 lines max */}
         <h3 style={{
-          fontFamily: SANS, fontSize: '14px', fontWeight: 600,
-          color: '#1A1916', lineHeight: 1.4, margin: '0 0 7px',
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
+          color: C.ink, lineHeight: 1.4, margin: '0 0 7px',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -284,7 +287,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
 
         {/* Date */}
         <div style={{
-          fontFamily: SANS, fontSize: '12px', color: '#8A8880',
+          fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted,
           marginBottom: '7px',
         }}>
           {doc.date}
@@ -294,7 +297,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
         <div
           onClick={e => { e.stopPropagation(); onOpenChat(doc.linkedPath); }}
           style={{
-            fontFamily: SANS, fontSize: '11px', color: '#8A8880',
+            fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
             cursor: 'pointer',
           }}
         >
@@ -312,7 +315,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
       {/* Card footer */}
       <div style={{
         padding: '10px 16px',
-        borderTop: '1px solid #E8E4DC',
+        borderTop: `1px solid ${C.border}`,
         display: 'flex', gap: '8px',
       }}>
         <button
@@ -366,8 +369,8 @@ function FilterTabs({ active, onSelect }: { active: FilterTab; onSelect: (t: Fil
   return (
     <div style={{
       display: 'inline-flex',
-      background: '#EEEAE4',
-      borderRadius: '10px',
+      background: C.surface2,
+      borderRadius: LAYOUT.radius.control,
       padding: '4px',
       gap: '2px',
     }}>
@@ -392,10 +395,26 @@ function FilterTabs({ active, onSelect }: { active: FilterTab; onSelect: (t: Fil
 // ─── Case Files Page ──────────────────────────────────────────────────────────
 export default function Documents() {
   const navigate               = useNavigate();
+  const { scenario, facts, language, auditEvents, draftAllowed, draftApproved } = useDemo();
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
+  const [askOpen, setAskOpen] = useState(false);
+
+  const confirmedCount = facts.filter((f) => f.state === 'confirmed').length;
+  const matterDocs: DocItem[] = DOCUMENTS.map((doc) => ({
+    ...doc,
+    linkedChat: scenario.matterTitle,
+    status: doc.id === 1
+      ? (draftAllowed && draftApproved ? 'Completed' : 'Draft')
+      : doc.status,
+    title: doc.id === 1
+      ? `Consumer Demand Notice — ${scenario.matterTitle}`
+      : doc.id === 4
+        ? `Audit Trail — ${scenario.matterTitle}`
+        : doc.title,
+  }));
 
   // Filter documents based on active tab
-  const filtered = DOCUMENTS.filter(doc => {
+  const filtered = matterDocs.filter(doc => {
     if (activeTab === 'All')       return true;
     if (activeTab === 'Draft')     return doc.status === 'Draft';
     if (activeTab === 'Completed') return doc.status === 'Completed';
@@ -404,7 +423,7 @@ export default function Documents() {
 
   // Dynamic subtitle per filter
   const subtitle = (() => {
-    if (activeTab === 'All')       return `${filtered.length} case files`;
+    if (activeTab === 'All')       return `${filtered.length} case files · ${confirmedCount}/${facts.length} facts confirmed · ${language.toUpperCase()}`;
     if (activeTab === 'Draft')     return `${filtered.length} draft${filtered.length !== 1 ? 's' : ''}`;
     if (activeTab === 'Completed') return `${filtered.length} completed file${filtered.length !== 1 ? 's' : ''}`;
     return '';
@@ -421,7 +440,7 @@ export default function Documents() {
   return (
     <main style={{
       flex: 1, display: 'flex', flexDirection: 'column',
-      background: C.bg, overflow: 'hidden',
+      background: PLANE.reading, overflow: 'hidden',
     }}>
       <style>{PAGE_CSS}</style>
 
@@ -439,15 +458,20 @@ export default function Documents() {
             {/* Left: heading */}
             <div>
               <h1 style={{
-                fontFamily: SANS, fontSize: '16px', fontWeight: 600,
-                color: '#1A1916', margin: '0 0 5px',
+                fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600,
+                color: C.ink, margin: '0 0 5px',
               }}>
                 Case Files
               </h1>
               <p style={{
-                fontFamily: SANS, fontSize: '14px', color: '#8A8880', margin: 0,
+                fontFamily: SANS, fontSize: TYPE.body.size, color: C.muted, margin: 0,
               }}>
                 {subtitle}
+              </p>
+              <p style={{
+                fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: '6px 0 0',
+              }}>
+                {scenario.statusTitle} · {auditEvents.length} audit events
               </p>
             </div>
 
@@ -458,13 +482,15 @@ export default function Documents() {
               style={{
                 display: 'flex', alignItems: 'center', gap: '7px',
                 background: GRAD.buttonPrimary,
-                border: 'none', borderRadius: '10px',
-                fontFamily: SANS, fontSize: '14px', fontWeight: 600,
+                border: 'none', borderRadius: LAYOUT.radius.control,
+                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
                 color: '#FFFFFF', padding: '10px 22px',
                 cursor: 'pointer', flexShrink: 0,
                 boxShadow: SHADOW.sm,
                 transition: 'opacity 0.15s ease',
+                opacity: draftAllowed ? 1 : 0.55,
               }}
+              title={draftAllowed ? 'Open the demand-notice packet' : 'Draft blocked until facts and policy allow it'}
             >
               <Plus style={{ width: '15px', height: '15px' }} />
               Open Packet
@@ -500,7 +526,7 @@ export default function Documents() {
             }}>
               {/* Document icon ring */}
               <div style={{
-                width: '64px', height: '64px', borderRadius: '50%',
+                width: '64px', height: '64px', borderRadius: LAYOUT.radius.full,
                 background: '#FFFFFF', border: `1px solid ${C.border}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 marginBottom: '20px',
@@ -518,13 +544,13 @@ export default function Documents() {
                 </svg>
               </div>
               <p style={{
-                fontFamily: SANS, fontSize: '15px', fontWeight: 600,
-                color: '#1A1916', margin: '0 0 8px',
+                fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 600,
+                color: C.ink, margin: '0 0 8px',
               }}>
                 {emptyLabel}
               </p>
               <p style={{
-                fontFamily: SANS, fontSize: '13px', color: C.muted,
+                fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted,
                 margin: '0 0 24px', lineHeight: 1.6,
               }}>
                 Packets, source notes, evidence summaries, and case history will appear here.
@@ -532,9 +558,9 @@ export default function Documents() {
               <button
                 onClick={() => navigate('/desktop/chat')}
                 style={{
-                  fontFamily: SANS, fontSize: '13px', fontWeight: 500,
+                  fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500,
                   color: C.navy, background: 'transparent',
-                  border: `1px solid ${C.navy}`, borderRadius: '10px',
+                  border: `1px solid ${C.navy}`, borderRadius: LAYOUT.radius.control,
                   padding: '8px 20px', cursor: 'pointer',
                 }}
               >
@@ -545,6 +571,21 @@ export default function Documents() {
 
         </div>
       </div>
+      <ScopedAskButton label="Ask about a file" onClick={() => setAskOpen(true)} />
+      <ScopedAskSheet
+        open={askOpen}
+        onClose={() => setAskOpen(false)}
+        title="Ask about a case file"
+        suggestions={[
+          'What evidence is still missing?',
+          'Summarise the demand notice draft',
+          'Which claims are source-backed?',
+        ]}
+        onSubmit={(text) => {
+          toast.message('Prepared answer queued', { description: text.slice(0, 80) });
+          navigate('/desktop/chat/consumer', { state: { initialQuestion: text } });
+        }}
+      />
     </main>
   );
 }

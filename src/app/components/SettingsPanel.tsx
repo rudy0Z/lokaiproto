@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { X, ChevronRight } from 'lucide-react';
-import { SANS, C, GRAD, SHADOW } from './shared';
+import { X } from 'lucide-react';
+import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from './shared';
 import { useSidebar } from '../context/SidebarContext';
 
 import { useLanguage } from '../context/LanguageContext';
@@ -32,11 +32,11 @@ function LangGrid({
             key={lang.id}
             onClick={() => onSelect(lang.id)}
             style={{
-              fontFamily: SANS, fontSize: '13px', fontWeight: active ? 500 : 400,
-              color: active ? '#132846' : '#4A4840',
+              fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: active ? 500 : 400,
+              color: active ? C.navy : C.inkSoft,
               background: active ? 'linear-gradient(135deg, rgba(221,231,255,0.72), rgba(255,244,226,0.72))' : '#FFFFFF',
-              border: `1px solid ${active ? '#132846' : '#E8E4DC'}`,
-              borderRadius: '12px', padding: '11px 8px',
+              border: `1px solid ${active ? C.navy : C.border}`,
+              borderRadius: LAYOUT.radius.panel, padding: '11px 8px',
               cursor: 'pointer', textAlign: 'center',
               boxShadow: active ? '0 8px 18px rgba(16,42,76,0.08)' : 'none',
               transition: 'background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease',
@@ -54,8 +54,8 @@ function LangGrid({
 function SectionHeading({ label }: { label: string }) {
   return (
     <div style={{
-      fontFamily: SANS, fontSize: '10px', fontWeight: 500,
-      color: '#8A8880', textTransform: 'uppercase', letterSpacing: '0.1em',
+      fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 500,
+      color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em',
       padding: '20px 24px 10px',
     }}>
       {label}
@@ -75,23 +75,15 @@ export function SettingsPanel() {
 
   const accountRows = [
     {
-      label: 'My Documents',
+      label: 'Prototype guide',
       badge: null,
     },
     {
-      label: 'Subscription',
-      badge: (
-        <span style={{
-          fontFamily: SANS, fontSize: '11px', fontWeight: 400,
-          background: '#EEF2F8', color: '#132846',
-          borderRadius: '6px', padding: '3px 10px',
-        }}>
-          Free plan
-        </span>
-      ),
+      label: 'Plain-language legal terms',
+      badge: null,
     },
     {
-      label: 'Help and Support',
+      label: 'Accessibility',
       badge: null,
     },
   ];
@@ -117,13 +109,9 @@ export function SettingsPanel() {
         width: '336px',
         height: 'calc(100vh - 24px)',
         zIndex: 200,
-        background: [
-          'radial-gradient(ellipse 80% 36% at 50% 0%, rgba(221,231,255,0.62), transparent 72%)',
-          'radial-gradient(ellipse 70% 32% at 20% 100%, rgba(255,227,184,0.50), transparent 72%)',
-          '#FBF8F1',
-        ].join(', '),
+        background: PLANE.reading,
         border: '1px solid rgba(16,42,76,0.10)',
-        borderRadius: '24px',
+        borderRadius: LAYOUT.radius.plane,
         boxShadow: settingsOpen ? '0 28px 70px rgba(16,42,76,0.24)' : 'none',
         display: 'flex',
         flexDirection: 'column',
@@ -140,7 +128,7 @@ export function SettingsPanel() {
         }}>
           <div>
             <div style={{
-              fontFamily: SANS, fontSize: '20px', fontWeight: 700,
+              fontFamily: SANS, fontSize: TYPE.h3.size, fontWeight: 700,
               color: C.ink, marginBottom: '14px',
             }}>
               Settings
@@ -148,18 +136,18 @@ export function SettingsPanel() {
             {/* User info row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                width: '42px', height: '42px', borderRadius: '50%',
+                width: '42px', height: '42px', borderRadius: LAYOUT.radius.full,
                 background: GRAD.buttonPrimary, display: 'flex', alignItems: 'center',
                 justifyContent: 'center', flexShrink: 0,
                 boxShadow: SHADOW.sm,
               }}>
-                <span style={{ fontFamily: SANS, fontSize: '14px', color: '#FFFFFF', fontWeight: 800, lineHeight: 1 }}>P</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: '#FFFFFF', fontWeight: 800, lineHeight: 1 }}>P</span>
               </div>
               <div>
-                <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: C.ink }}>
+                <div style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink }}>
                   Priya Sharma
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8A8880', marginTop: '2px' }}>
+                <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginTop: '2px' }}>
                   Mumbai · Legal prototype
                 </div>
               </div>
@@ -169,9 +157,9 @@ export function SettingsPanel() {
             onClick={closeSettings}
             style={{
               background: '#FFFFFF', border: `1px solid ${C.border}`, cursor: 'pointer',
-              width: 34, height: 34, borderRadius: 12, color: '#8A8880', display: 'flex',
+              width: 34, height: 34, borderRadius: LAYOUT.radius.panel, color: C.muted, display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              boxShadow: '0 8px 20px rgba(26,25,22,0.07)',
+              boxShadow: SHADOW.md,
             }}
           >
             <X style={{ width: '20px', height: '20px' }} />
@@ -188,10 +176,10 @@ export function SettingsPanel() {
 
           {/* Language Preference */}
           <div style={{ padding: '0 24px 14px' }}>
-            <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 650, color: '#1A1916', marginBottom: '4px' }}>
+            <div style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 650, color: C.ink, marginBottom: '4px' }}>
               System Language
             </div>
-            <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8A8880', marginBottom: '12px', lineHeight: 1.5 }}>
+            <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginBottom: '12px', lineHeight: 1.5 }}>
               Sets menus, labels, and placeholders. Chat answers still adapt to the language you type.
             </div>
           </div>
@@ -199,20 +187,20 @@ export function SettingsPanel() {
 
           {/* Info card */}
           <div style={{
-            background: 'rgba(255,255,255,0.72)', borderRadius: '16px',
+            background: 'rgba(255,255,255,0.72)', borderRadius: LAYOUT.radius.card,
             border: `1px solid ${C.border}`,
             padding: '14px 16px', margin: '18px 24px 0',
             display: 'flex', alignItems: 'flex-start', gap: '12px',
             flexShrink: 0,
           }}>
             <div style={{
-              width: '24px', height: '24px', borderRadius: '50%',
+              width: '24px', height: '24px', borderRadius: LAYOUT.radius.full,
               background: GRAD.buttonPrimary,
               flexShrink: 0, marginTop: '1px',
             }} />
             <p style={{
-              fontFamily: SANS, fontSize: '13px', fontWeight: 400,
-              color: '#4A4840', lineHeight: 1.6, margin: 0,
+              fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400,
+              color: C.inkSoft, lineHeight: 1.6, margin: 0,
             }}>
               Chat responses automatically match the language you type or speak in.
             </p>
@@ -223,9 +211,9 @@ export function SettingsPanel() {
           </div>
 
           {/* ── Account ──────────────────────────────────────── */}
-          <SectionHeading label="Account" />
+          <SectionHeading label="Prototype" />
 
-          <div style={{ margin: '0 24px', border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,0.70)' }}>
+          <div style={{ margin: '0 24px', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.card, overflow: 'hidden', background: 'rgba(255,255,255,0.70)' }}>
             {accountRows.map((row) => (
               <div
                 key={row.label}
@@ -234,31 +222,31 @@ export function SettingsPanel() {
                   display: 'flex', alignItems: 'center',
                   justifyContent: 'space-between',
                   borderBottom: row.label === accountRows[accountRows.length - 1].label ? 'none' : '1px solid #F0ECE5',
-                  cursor: 'pointer',
+                  cursor: 'default',
                 }}
               >
-                <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 500, color: '#1A1916' }}>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 500, color: C.ink }}>
                   {row.label}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {row.badge}
-                  <ChevronRight style={{ width: '16px', height: '16px', color: '#8A8880' }} />
+                  <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted }}>Demo</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* ── Sign out ─────────────────────────────────────── */}
+          {/* ── Restart demo ──────────────────────────────────── */}
           <div style={{ padding: '24px', flexShrink: 0 }}>
-            <button style={{
-              fontFamily: SANS, fontSize: '14px', fontWeight: 600,
-              color: '#7A1E1E', background: 'rgba(122,30,30,0.06)',
-              border: '1px solid rgba(122,30,30,0.12)',
-              borderRadius: 12,
+            <button onClick={() => window.location.assign('#/desktop')} style={{
+              fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
+              color: C.navy, background: 'rgba(16,42,76,0.06)',
+              border: '1px solid rgba(16,42,76,0.12)',
+              borderRadius: LAYOUT.radius.panel,
               cursor: 'pointer', padding: '10px 14px', display: 'block',
               width: '100%',
             }}>
-              Sign out
+              Restart prepared demo
             </button>
           </div>
         </div>

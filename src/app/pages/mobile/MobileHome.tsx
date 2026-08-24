@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { SERIF, SANS, C, GRAD, SHADOW, BrandLogo } from '../../components/shared';
+import { BrandLogo, C, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 
@@ -19,7 +19,7 @@ export function StatusBar({ light = false }: { light?: boolean }) {
       height: '44px', display: 'flex', alignItems: 'flex-end',
       justifyContent: 'space-between', padding: '0 20px 6px', flexShrink: 0,
     }}>
-      <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: fg }}>9:41</span>
+      <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: fg }}>9:41</span>
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
         <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
           <rect x="0"   y="3"   width="3" height="9"    rx="1" fill={fg} />
@@ -68,12 +68,12 @@ export function TopNav({
         style={{
           display: 'flex', alignItems: 'center', gap: '5px',
           background: '#EEF2F8', border: `1px solid ${C.navy}`,
-          borderRadius: '999px', padding: '5px 12px',
+          borderRadius: LAYOUT.radius.pill, padding: '5px 12px',
           cursor: 'pointer',
           transition: 'background 0.15s ease',
         }}
       >
-        <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 500, color: C.navy }}>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500, color: C.navy }}>
           {langLabel}
         </span>
         {showDropdown && (
@@ -98,8 +98,8 @@ export function BottomNav({ active = 'home' }: { active?: string }) {
   return (
     <div style={{
       height: '64px', background: '#FFFFFF',
-      borderTop: '1px solid #E8E4DC',
-      boxShadow: '0 -4px 16px rgba(26,25,22,0.06)',
+      borderTop: `1px solid ${C.border}`,
+      boxShadow: SHADOW.sm,
       display: 'flex', alignItems: 'stretch', flexShrink: 0,
       paddingBottom: '8px',
     }}>
@@ -117,19 +117,19 @@ export function BottomNav({ active = 'home' }: { active?: string }) {
           }}>
             {/* Active indicator bar */}
             <div style={{
-              height: '3px', width: '20px', borderRadius: '2px',
+              height: '3px', width: '20px', borderRadius: LAYOUT.radius.xs,
               background: isActive ? C.saffron : 'transparent',
               marginBottom: '6px',
               flexShrink: 0,
             }} />
             <tab.Icon style={{
               width: '22px', height: '22px',
-              color: isActive ? C.navy : '#8A8880',
+              color: isActive ? C.navy : C.muted,
               strokeWidth: isActive ? 2.2 : 1.5,
             }} />
             <span style={{
-              fontFamily: SANS, fontSize: '11px', fontWeight: isActive ? 600 : 400,
-              color: isActive ? C.navy : '#8A8880',
+              fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: isActive ? 600 : 400,
+              color: isActive ? C.navy : C.muted,
             }}>
               {tab.label}
             </span>
@@ -149,7 +149,7 @@ export function HomeIndicator({ light = false }: { light?: boolean }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
       <div style={{
-        width: '134px', height: '5px', borderRadius: '3px',
+        width: '134px', height: '5px', borderRadius: LAYOUT.radius.xs,
         background: light ? 'rgba(255,255,255,0.3)' : C.ink,
         opacity: light ? 1 : 0.12,
       }} />
@@ -169,10 +169,7 @@ export function MobileRouteCanvas({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       minHeight: '100vh',
-      background: [
-        'radial-gradient(ellipse 120% 48% at 50% 0%, rgba(221,231,255,0.44), transparent 70%)',
-        'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
-      ].join(', '),
+      background: PLANE.reading,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -191,7 +188,7 @@ export function Breadcrumb({ path }: { path: string }) {
       padding: '10px 16px', background: 'transparent',
       flexShrink: 0,
     }}>
-      <span style={{ fontFamily: SANS, fontSize: '12px', color: C.muted }}>{path}</span>
+      <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>{path}</span>
     </div>
   );
 }
@@ -201,11 +198,11 @@ export function MobileInputDock({ placeholder = 'Tell us your problem...' }: { p
   return (
     <div style={{
       flexShrink: 0, background: '#FFFFFF',
-      borderTop: `1px solid #E8E4DC`, padding: '12px 16px',
+      borderTop: `1px solid ${C.border}`, padding: '12px 16px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{
-          width: '44px', height: '44px', borderRadius: '50%',
+          width: '44px', height: '44px', borderRadius: LAYOUT.radius.full,
           background: C.bgRaised, border: `2px solid ${C.border}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, cursor: 'pointer',
@@ -216,7 +213,7 @@ export function MobileInputDock({ placeholder = 'Tell us your problem...' }: { p
             <line x1="8" y1="13.5" x2="8" y2="15.5" stroke={C.muted} strokeWidth="1.1" strokeLinecap="round" />
           </svg>
         </div>
-        <span style={{ flex: 1, fontFamily: SANS, fontSize: '14px', color: '#8A8880' }}>{placeholder}</span>
+        <span style={{ flex: 1, fontFamily: SANS, fontSize: TYPE.body.size, color: C.muted }}>{placeholder}</span>
       </div>
     </div>
   );
@@ -255,17 +252,17 @@ export function LanguageBottomSheet({ selected, onSelect, onClose }: {
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(26,25,22,0.5)' }} />
       <div style={{
         position: 'relative', zIndex: 1, background: C.surface,
-        borderRadius: '20px 20px 0 0', boxShadow: SHADOW.float,
+        borderRadius: `${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.none} ${LAYOUT.radius.none}`, boxShadow: SHADOW.float,
         display: 'flex', flexDirection: 'column', maxHeight: '520px',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
-          <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: C.border }} />
+          <div style={{ width: '36px', height: '4px', borderRadius: LAYOUT.radius.xs, background: C.border }} />
         </div>
         <div style={{ padding: '20px 20px 14px' }}>
-          <h2 style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 400, color: C.ink, margin: '0 0 6px' }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: '0 0 6px' }}>
             Choose language
           </h2>
-          <p style={{ fontFamily: SANS, fontSize: '13px', color: C.muted, margin: 0 }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: 0 }}>
             Responses will adapt to your selection
           </p>
         </div>
@@ -278,22 +275,22 @@ export function LanguageBottomSheet({ selected, onSelect, onClose }: {
                 padding: '12px 8px',
                 background: isSel ? '#EEF2F8' : C.bg,
                 border: isSel ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
-                borderRadius: '10px', cursor: 'pointer', position: 'relative',
+                borderRadius: LAYOUT.radius.control, cursor: 'pointer', position: 'relative',
                 transition: 'background 0.15s ease, border-color 0.15s ease',
               }}>
                 {isSel && (
-                  <div style={{ position: 'absolute', top: '5px', right: '5px', width: '14px', height: '14px', borderRadius: '50%', background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ position: 'absolute', top: '5px', right: '5px', width: '14px', height: '14px', borderRadius: LAYOUT.radius.full, background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Check style={{ width: '8px', height: '8px', color: 'white', strokeWidth: 3 }} />
                   </div>
                 )}
-                <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: isSel ? 600 : 500, color: isSel ? C.navy : C.ink }}>{lang.name}</span>
-                <span style={{ fontFamily: SANS, fontSize: '10px', color: isSel ? C.navy : C.muted }}>{lang.en}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: isSel ? 600 : 500, color: isSel ? C.navy : C.ink }}>{lang.name}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, color: isSel ? C.navy : C.muted }}>{lang.en}</span>
               </button>
             );
           })}
         </div>
         <div style={{ height: '60px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <button onClick={onClose} style={{ fontFamily: SANS, fontSize: '14px', color: C.textSoft, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 24px' }}>
+          <button onClick={onClose} style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.textSoft, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 24px' }}>
             Close
           </button>
         </div>
@@ -312,8 +309,8 @@ function GreetingSection() {
     <div style={{ padding: '28px 20px 16px' }}>
       {/* "Good morning," italic + "Priya" upright bold — DM Serif 26px */}
       <p style={{
-        fontFamily: SERIF, fontSize: '26px', fontWeight: 400,
-        color: '#1A1916', margin: '0 0 7px', lineHeight: 1.2,
+        fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
+        color: C.ink, margin: '0 0 7px', lineHeight: 1.2,
         letterSpacing: '-0.3px',
       }}>
         <span>Good morning, </span>
@@ -321,7 +318,7 @@ function GreetingSection() {
       </p>
       {/* Date + location — 13px #8A8880 */}
       <p style={{
-        fontFamily: SANS, fontSize: '13px', color: '#8A8880',
+        fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted,
         margin: 0, lineHeight: 1.5,
       }}>
         Saturday, 25 March · Mumbai
@@ -356,14 +353,14 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
       onClick={() => navigate(`/mobile/case/consumer?stage=${nextStep?.id || 'intake'}`)}
       style={{
         margin: '0 20px 20px',
-        borderRadius: '20px',
+        borderRadius: LAYOUT.radius.card,
         padding: '16px 18px',
         background: [
           'radial-gradient(ellipse 80% 90% at 0% 100%, rgba(255,227,184,0.52), transparent 68%)',
           '#FFFFFF',
         ].join(', '),
         border: `1.5px solid ${C.navy}`,
-        boxShadow: '0 8px 24px rgba(16,42,76,0.10)',
+        boxShadow: SHADOW.md,
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
@@ -372,15 +369,15 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
             Case in progress
           </p>
-          <p style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {title}
           </p>
         </div>
         <div style={{
-          width: 32, height: 32, borderRadius: '50%',
+          width: 32, height: 32, borderRadius: LAYOUT.radius.full,
           background: isBlocked ? 'rgba(184,54,28,0.08)' : '#EEF2F8',
           border: `1px solid ${isBlocked ? C.red : C.navy}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -399,7 +396,7 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
             <React.Fragment key={step.id}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 <div style={{
-                  width: 22, height: 22, borderRadius: '50%',
+                  width: 22, height: 22, borderRadius: LAYOUT.radius.full,
                   background: done ? C.navy : blocked ? C.red : current ? 'rgba(16,42,76,0.12)' : '#F0EDE8',
                   border: `1.5px solid ${done ? C.navy : blocked ? C.red : current ? C.navy : C.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -413,7 +410,7 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
                   )}
                 </div>
                 <span style={{
-                  fontFamily: SANS, fontSize: 9, fontWeight: current || done ? 600 : 400,
+                  fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: current || done ? 600 : 400,
                   color: done ? C.navy : current ? C.ink : C.muted,
                   whiteSpace: 'nowrap',
                 }}>
@@ -422,8 +419,8 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
               </div>
               {i < CASE_STEPS.length - 1 && (
                 <div style={{
-                  flex: 1, height: 1.5, borderRadius: 1,
-                  background: done ? C.navy : '#E0DDD6',
+                  flex: 1, height: 1.5, borderRadius: LAYOUT.radius.xs,
+                  background: done ? C.navy : C.border,
                   marginBottom: 16,
                   transition: 'background 0.3s ease',
                 }} />
@@ -435,7 +432,7 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
 
       {/* Blocked warning */}
       {isBlocked && (
-        <p style={{ fontFamily: SANS, fontSize: 11, color: C.red, margin: '10px 0 0', lineHeight: 1.4 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.red, margin: '10px 0 0', lineHeight: 1.4 }}>
           ⚠ A detail is needed before LokAI can continue. Tap to resolve.
         </p>
       )}
@@ -448,67 +445,69 @@ function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
 // see tappable prompts in their own script, lowering the barrier to type.
 const LANG_CHIPS: Record<string, { label: string; question: string }[]> = {
   en: [
-    { label: 'My landlord kept my deposit',  question: 'My landlord has not returned my security deposit after I moved out.' },
-    { label: 'I got a legal notice',          question: 'I received a legal notice and need to understand what it means.' },
-    { label: 'Seller refused my refund',      question: 'I bought a defective product and the seller is refusing a refund.' },
-    { label: 'File an RTI',                   question: 'How do I file an RTI application to get government records?' },
+    { label: 'Damaged mixer, seller refused', question: 'I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a refund. What can I do?' },
+    { label: 'Marketplace policy overrides?', question: 'The marketplace says its private return policy overrides my rights.' },
+    { label: 'Purchase from Jan 2022',        question: 'I bought a damaged mixer in January 2022. The seller still refuses a refund. Can I file a consumer complaint now?' },
+    { label: 'Seller refused my refund',      question: 'The seller refused my refund. Help me file a complaint.' },
   ],
   hi: [
-    { label: 'मकान मालिक ने जमा रोका',   question: 'मेरे मकान मालिक ने सिक्योरिटी डिपॉज़िट वापस नहीं किया।' },
-    { label: 'कानूनी नोटिस मिला',          question: 'मुझे एक कानूनी नोटिस मिला है, इसे समझने में मदद चाहिए।' },
-    { label: 'रिफंड से इनकार',              question: 'विक्रेता ने दोषपूर्ण उत्पाद का रिफंड देने से मना किया।' },
-    { label: 'RTI कैसे दर्ज करें',           question: 'मुझे RTI दाखिल करने की जानकारी चाहिए।' },
+    { label: 'खराब मिक्सर, रिफंड मना',       question: 'मैंने ₹8,999 का मिक्सर खरीदा। खराब पहुँचा और विक्रेता ने रिफंड से मना कर दिया। मैं क्या करूँ?' },
+    { label: 'मार्केटप्लेस नीति हावी?',      question: 'मार्केटप्लेस कहता है उसकी निजी रिटर्न नीति मेरे अधिकारों पर हावी है।' },
+    { label: 'जनवरी 2022 की खरीद',           question: 'मैंने जनवरी 2022 में खराब मिक्सर खरीदा। विक्रेता अभी भी रिफंड नहीं दे रहा। क्या अब शिकायत दर्ज कर सकता हूँ?' },
+    { label: 'रिफंड से इनकार',                question: 'विक्रेता ने मेरे रिफंड से मना कर दिया। शिकायत दर्ज करने में मदद करें।' },
   ],
   mr: [
-    { label: 'ठेव रोखली',                   question: 'मकान मालकाने माझी सुरक्षा ठेव परत केली नाही।' },
-    { label: 'नोटिस मिळाली',                 question: 'मला कायदेशीर नोटिस मिळाली आहे, त्याचा अर्थ समजून घ्यायचा आहे।' },
-    { label: 'परतावा नाकारला',               question: 'विक्रेत्याने दोषपूर्ण वस्तूचा परतावा देण्यास नकार दिला।' },
-    { label: 'RTI अर्ज',                     question: 'RTI अर्ज कसा करायचा?' },
+    { label: 'खराब मिक्सर, परतावा नाही',     question: 'मी ₹8,999 चा मिक्सर विकत घेतला. तो खराब आला आणि विक्रेत्याने परतावा नाकारला. मी काय करू?' },
+    { label: 'मार्केटप्लेस धोरण वरचढ?',      question: 'मार्केटप्लेस म्हणतो त्यांचे खाजगी रिटर्न धोरण माझ्या हक्कांवर वरचढ आहे.' },
+    { label: 'जानेवारी 2022 ची खरेदी',       question: 'मी जानेवारी 2022 मध्ये खराब मिक्सर विकत घेतला. विक्रेता अजून परतावा देत नाही. आता तक्रार दाखल करता येईल का?' },
+    { label: 'परतावा नाकारला',               question: 'विक्रेत्याने माझा परतावा नाकारला. तक्रार दाखल करण्यात मदत करा.' },
   ],
   ta: [
-    { label: 'டெபாசிட் திரும்பவில்லை',      question: 'என் வீட்டு உரிமையாளர் பாதுகாப்பு வைப்பை திரும்பப் தரவில்லை.' },
-    { label: 'சட்ட நோட்டீஸ் வந்தது',        question: 'எனக்கு சட்ட நோட்டீஸ் வந்துள்ளது, அதை புரிந்துகொள்ள உதவி வேண்டும்.' },
-    { label: 'Refund மறுத்தார்',              question: 'கோளாறு பொருளுக்கு seller refund தர மறுக்கிறார்.' },
-    { label: 'RTI எப்படி?',                  question: 'RTI விண்ணப்பம் எப்படி செய்வது?' },
+    { label: 'சேத மிக்சர், refund மறுப்பு',  question: 'நான் ₹8,999க்கு மிக்சர் வாங்கினேன். சேதத்துடன் வந்தது; விற்பனையாளர் refund மறுத்தார். நான் என்ன செய்வது?' },
+    { label: 'மார்கெட் கொள்கை மேலோங்கும்?', question: 'மார்கெட் பிளேஸ் தன் தனி ரிட்டர்ன் கொள்கை என் உரிமைகளை மீறும் என்கிறது.' },
+    { label: 'ஜனவரி 2022 வாங்குதல்',         question: 'ஜனவரி 2022இல் சேதமடைந்த மிக்சர் வாங்கினேன். விற்பனையாளர் இன்னும் refund தரவில்லை. இப்போது புகார் செய்யலாமா?' },
+    { label: 'Refund மறுத்தார்',              question: 'விற்பனையாளர் என் refund மறுத்தார். புகார் தாக்கல் செய்ய உதவுங்கள்.' },
   ],
   te: [
-    { label: 'డిపాజిట్ తిరిగి రాలేదు',      question: 'ఇంటి యజమాని నా సెక్యూరిటీ డిపాజిట్ తిరిగి ఇవ్వలేదు.' },
-    { label: 'చట్టపరమైన నోటీసు వచ్చింది',   question: 'నాకు చట్టపరమైన నోటీసు వచ్చింది దాన్ని అర్థం చేసుకోవాలి.' },
-    { label: 'రిఫండ్ నిరాకరణ',               question: 'లోపభూయిష్ట వస్తువుకు విక్రేత రిఫండ్ ఇవ్వడానికి నిరాకరించాడు.' },
-    { label: 'RTI ఎలా దాఖలు చేయాలి',        question: 'RTI అర్జీ ఎలా దాఖలు చేయాలి?' },
+    { label: 'పాడైన మిక్సర్, రిఫండ్ నిరాకరణ', question: 'నేను ₹8,999కి మిక్సర్ కొన్నాను. పాడై వచ్చింది; విక్రేత రిఫండ్ ఇవ్వలేదు. నేను ఏమి చేయాలి?' },
+    { label: 'మార్కెట్ పాలసీ అధిగమిస్తుందా?', question: 'మార్కెట్‌ప్లేస్ తన ప్రైవేట్ రిటర్న్ పాలసీ నా హక్కులను అధిగమిస్తుందని చెబుతోంది.' },
+    { label: 'జనవరి 2022 కొనుగోలు',          question: 'జనవరి 2022లో పాడైన మిక్సర్ కొన్నాను. విక్రేత ఇంకా రిఫండ్ ఇవ్వడం లేదు. ఇప్పుడు ఫిర్యాదు చేయవచ్చా?' },
+    { label: 'రిఫండ్ నిరాకరణ',               question: 'విక్రేత నా రిఫండ్ నిరాకరించాడు. ఫిర్యాదు దాఖలు చేయడంలో సహాయం చేయండి.' },
   ],
   bn: [
-    { label: 'ডিপোজিট ফেরত দেয়নি',          question: 'বাড়ির মালিক আমার সিকিউরিটি ডিপোজিট ফেরত দেননি।' },
-    { label: 'আইনি নোটিশ পেয়েছি',            question: 'আমি একটি আইনি নোটিশ পেয়েছি, এর অর্থ বুঝতে সাহায্য দরকার।' },
-    { label: 'রিফান্ড অস্বীকার',              question: 'বিক্রেতা ত্রুটিপূর্ণ পণ্যের রিফান্ড দিতে অস্বীকার করেছে।' },
-    { label: 'RTI কীভাবে করবেন',              question: 'RTI আবেদন কীভাবে করতে হয়?' },
+    { label: 'ভাঙা মিক্সার, রিফান্ড না',     question: 'আমি ₹8,999-এ মিক্সার কিনেছি। ভাঙা অবস্থায় এসেছে আর বিক্রেতা রিফান্ড দিতে রাজি নয়। আমি কী করব?' },
+    { label: 'মার্কেটপ্লেস নীতি চাপায়?',     question: 'মার্কেটপ্লেস বলে তাদের ব্যক্তিগত রিটার্ন নীতি আমার অধিকারের উপর চাপা দেয়।' },
+    { label: 'জানুয়ারি ২০২২ কেনা',          question: 'জানুয়ারি ২০২২-এ ভাঙা মিক্সার কিনেছি। বিক্রেতা এখনও রিফান্ড দিচ্ছে না। এখন অভিযোগ করা যাবে?' },
+    { label: 'রিফান্ড অস্বীকার',              question: 'বিক্রেতা আমার রিফান্ড দিতে অস্বীকার করেছে। অভিযোগ দায়ের করতে সাহায্য করুন।' },
   ],
 };
 
 function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: string) => void }) {
+  useLokaiSharedStyles();
   const chips = LANG_CHIPS[lang] ?? LANG_CHIPS['en'];
   return (
     <div style={{ padding: '0 20px 20px' }}>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
         Quick start
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {chips.map(chip => (
           <button
             key={chip.label}
+            type="button"
+            className="lokai-chip"
             onClick={() => onSelect(chip.question)}
             style={{
               fontFamily: SANS,
-              fontSize: 13,
+              fontSize: TYPE.small.size,
               fontWeight: 500,
               color: C.navy,
               background: '#FFFFFF',
               border: `1px solid ${C.border}`,
-              borderRadius: '999px',
+              borderRadius: LAYOUT.radius.pill,
               padding: '8px 14px',
               cursor: 'pointer',
               lineHeight: 1.3,
-              transition: 'border-color 0.15s ease, background 0.15s ease',
             }}
           >
             {chip.label}
@@ -525,7 +524,7 @@ function LegalSignalBand() {
   return (
     <div style={{
       margin: '0 20px 24px',
-      borderRadius: '24px',
+      borderRadius: LAYOUT.radius.plane,
       padding: '18px 18px 16px',
       background: [
         'radial-gradient(ellipse 90% 80% at 50% 0%, rgba(221,231,255,0.92), transparent 66%)',
@@ -533,7 +532,7 @@ function LegalSignalBand() {
         '#FFFFFF',
       ].join(', '),
       border: `1px solid ${C.border}`,
-      boxShadow: '0 12px 32px rgba(26,25,22,0.08)',
+      boxShadow: SHADOW.xs,
       position: 'relative',
       overflow: 'hidden',
     }}>
@@ -546,19 +545,19 @@ function LegalSignalBand() {
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           height: '24px', padding: '0 10px',
-          borderRadius: '999px',
+          borderRadius: LAYOUT.radius.pill,
           background: 'rgba(255,255,255,0.70)',
           border: '1px solid rgba(16,42,76,0.10)',
-          fontFamily: SANS, fontSize: '10px', fontWeight: 700,
+          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700,
           letterSpacing: '0.08em', textTransform: 'uppercase' as const,
           color: C.navy,
         }}>
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: C.saffron }} />
+          <span style={{ width: 5, height: 5, borderRadius: LAYOUT.radius.full, background: C.saffron }} />
           Verified source trail
         </div>
         <p style={{
           fontFamily: SERIF,
-          fontSize: '28px',
+          fontSize: TYPE.editorial.size,
           lineHeight: 1.08,
           letterSpacing: '-0.4px',
           color: C.ink,
@@ -570,11 +569,11 @@ function LegalSignalBand() {
           {['हिन्दी', 'मराठी', 'தமிழ்', 'বাংলা'].map(label => (
             <span key={label} style={{
               fontFamily: SANS,
-              fontSize: '11px',
+              fontSize: TYPE.micro.size,
               color: C.inkSoft,
               background: 'rgba(255,255,255,0.62)',
               border: `1px solid ${C.border}`,
-              borderRadius: '999px',
+              borderRadius: LAYOUT.radius.pill,
               padding: '4px 9px',
             }}>
               {label}
@@ -597,7 +596,7 @@ function ConsumerCaseStart() {
         minHeight: 112,
         background: '#FFFFFF',
         border: `1px solid ${C.border}`,
-        borderRadius: 18,
+        borderRadius: LAYOUT.radius.turn,
         boxShadow: SHADOW.sm,
         padding: 16,
         cursor: 'pointer',
@@ -611,7 +610,7 @@ function ConsumerCaseStart() {
       <div style={{
         width: 46,
         height: 46,
-        borderRadius: 14,
+        borderRadius: LAYOUT.radius.panel,
         background: '#EEF2F8',
         border: `1px solid ${C.border}`,
         display: 'flex',
@@ -624,7 +623,7 @@ function ConsumerCaseStart() {
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
           fontFamily: SANS,
-          fontSize: 11,
+          fontSize: TYPE.micro.size,
           fontWeight: 700,
           color: C.muted,
           textTransform: 'uppercase',
@@ -633,10 +632,10 @@ function ConsumerCaseStart() {
         }}>
           Guided case
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: C.ink, margin: '0 0 5px' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 700, color: C.ink, margin: '0 0 5px' }}>
           Start Consumer Refund Case
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
           Step-by-step help for a defective product or refund refusal.
         </p>
       </div>
@@ -653,12 +652,12 @@ function SectionHead({ title, action, onAction }: { title: string; action?: stri
       justifyContent: 'space-between', marginBottom: '12px',
     }}>
       <span style={{
-        fontFamily: SERIF, fontSize: '22px', fontWeight: 400, color: '#1A1916',
+        fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink,
         letterSpacing: '-0.15px',
       }}>{title}</span>
       {action && (
         <button onClick={onAction} style={{
-          fontFamily: SANS, fontSize: '13px', color: C.navy,
+          fontFamily: SANS, fontSize: TYPE.small.size, color: C.navy,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}>
           {action} →
@@ -706,7 +705,7 @@ function PastMattersList({ items }: { items: ConversationRowItem[] }) {
   return (
     <div style={{ marginBottom: '24px' }}>
       <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
-      <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '0 16px', border: '1px solid #E8E4DC' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: LAYOUT.radius.card, padding: '0 16px', border: `1px solid ${C.border}` }}>
         {items.map((conv, i) => {
           // Route to the matter that was actually tapped. Only 'consumer' has a
           // built journey; every other id lands on the designed unsupported-matter
@@ -728,26 +727,26 @@ function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; 
     <div style={{
       height: '64px',
       display: 'flex', alignItems: 'center', gap: '12px',
-      borderBottom: isLast ? 'none' : '1px solid #E8E4DC',
+      borderBottom: isLast ? 'none' : `1px solid ${C.border}`,
       cursor: 'pointer',
     }}>
       {/* Colored dot */}
       <div style={{
-        width: '10px', height: '10px', borderRadius: '50%',
+        width: '10px', height: '10px', borderRadius: LAYOUT.radius.full,
         background: conv.dotColor, flexShrink: 0,
       }} />
 
       {/* Text column */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: SANS, fontSize: '14px', fontWeight: 600,
-          color: '#1A1916', lineHeight: 1.3,
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
+          color: C.ink, lineHeight: 1.3,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
           {conv.title}
         </div>
         <div style={{
-          fontFamily: SANS, fontSize: '11px', color: '#8A8880',
+          fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
           marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
           {conv.time} · {conv.lang}
@@ -758,7 +757,7 @@ function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; 
       <button
         onClick={onOpen}
         style={{
-          fontFamily: SANS, fontSize: '16px', color: '#C8C4BC', flexShrink: 0, lineHeight: 1,
+          fontFamily: SANS, fontSize: TYPE.h4.size, color: '#C8C4BC', flexShrink: 0, lineHeight: 1,
           border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
         }}
       >
@@ -782,8 +781,8 @@ function FloatingInput() {
       height: '56px',
       background: '#FFFFFF',
       border: `1.5px solid ${C.navy}`,
-      borderRadius: '999px',
-      boxShadow: `0 12px 30px rgba(26,25,22,0.16), 0 0 0 4px rgba(16,42,76,0.06)`,
+      borderRadius: LAYOUT.radius.pill,
+      boxShadow: SHADOW.xs,
       display: 'flex', alignItems: 'center',
       padding: '0 10px',
       gap: '8px',
@@ -793,7 +792,7 @@ function FloatingInput() {
     }}>
       {/* Voice orb — 36px, navy mic */}
       <div style={{
-        width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+        width: '36px', height: '36px', borderRadius: LAYOUT.radius.full, flexShrink: 0,
         background: '#EEF2F8',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer',
@@ -806,13 +805,13 @@ function FloatingInput() {
       </div>
 
       {/* Placeholder */}
-      <span style={{ flex: 1, fontFamily: SANS, fontSize: '14px', color: '#8A8880' }}>
+      <span style={{ flex: 1, fontFamily: SANS, fontSize: TYPE.body.size, color: C.muted }}>
         Tell us your problem...
       </span>
 
       {/* Send arrow — 36px gradient circle */}
       <div style={{
-        width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+        width: '36px', height: '36px', borderRadius: LAYOUT.radius.full, flexShrink: 0,
         background: GRAD.buttonPrimary,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer',
@@ -873,7 +872,7 @@ export function HomeArtboard() {
       {/* ── Scrollable body — content ends 136px from bottom for floating input ── */}
       <div style={{
         flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        background: '#F5F2EC', scrollbarWidth: 'none',
+        background: C.bg, scrollbarWidth: 'none',
       } as React.CSSProperties}>
 
         {/* Greeting */}

@@ -1,19 +1,12 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Gujarati:wght@400;500;600&family=Noto+Sans+Gurmukhi:wght@400;500;600&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Oriya:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&display=swap');
+﻿@import '@fontsource/fraunces/latin-300.css';
+@import '@fontsource/fraunces/latin-400.css';
+@import '@fontsource/fraunces/latin-600.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
+@import '@fontsource/jetbrains-mono/latin-600.css';
 
-:root {
-  --font-ui: 'Anek Latin', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
-  --font-deva: 'Noto Sans Devanagari', 'Nirmala UI', sans-serif;
-  --font-tamil: 'Noto Sans Tamil', 'Nirmala UI', sans-serif;
-  --font-bengali: 'Noto Sans Bengali', 'Nirmala UI', sans-serif;
-  --font-telugu: 'Noto Sans Telugu', 'Nirmala UI', sans-serif;
-  --font-gujarati: 'Noto Sans Gujarati', 'Nirmala UI', sans-serif;
-  --font-gurmukhi: 'Noto Sans Gurmukhi', 'Nirmala UI', sans-serif;
-  --font-kannada: 'Noto Sans Kannada', 'Nirmala UI', sans-serif;
-  --font-malayalam: 'Noto Sans Malayalam', 'Nirmala UI', sans-serif;
-  --font-odia: 'Noto Sans Oriya', 'Nirmala UI', sans-serif;
-
-  /* Compatibility aliases for the archived screens outside the new route tree. */
-  --font-editorial: var(--font-ui);
-  --font-sans: var(--font-ui);
-}
+/* Font custom properties are owned by index.css (:root). This file only loads faces. */

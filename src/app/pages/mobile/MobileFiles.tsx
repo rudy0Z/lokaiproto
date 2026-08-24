@@ -1,45 +1,17 @@
 ﻿import React from 'react';
 import { ArrowRight, FileText, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { C, SANS, SERIF, SHADOW } from '../../components/shared';
+import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
 import { StatusBar, TopNav, BottomNav, HomeIndicator, MobileRouteCanvas } from './MobileHome';
-import { MATTER_INTELLIGENCE } from '../../data/matterIntelligence';
+import { useDemo } from '../../context/DemoContext';
 import { ARTBOARD } from '../../embed';
 
-const FILE_ITEMS = [
-  {
-    id: 'deposit-notice',
-    title: 'Demand notice draft',
-    meta: 'Security Deposit · Ready',
-    route: '/mobile/case/consumer?stage=audit',
-    matterId: 'deposit',
-  },
-  {
-    id: 'rti-appeal',
-    title: 'First appeal checklist',
-    meta: 'BMC RTI · 1 detail needed',
-    route: '/mobile/case/consumer?stage=audit',
-    matterId: 'rti',
-  },
-  {
-    id: 'consumer-summary',
-    title: 'Complaint summary',
-    meta: 'Consumer · Draft ready after invoice date',
-    route: '/mobile/case/consumer?stage=packet',
-    matterId: 'consumer',
-  },
-  {
-    id: 'notice-source',
-    title: 'Notice source summary',
-    meta: 'Notice reply · Source limited',
-    route: '/mobile/case/consumer?failure=ocr_unreadable',
-    matterId: 'notice',
-  },
-];
-
-function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
+function FileRow({
+  item,
+}: {
+  item: { id: string; title: string; meta: string; route: string; detail: string };
+}) {
   const navigate = useNavigate();
-  const intelligence = MATTER_INTELLIGENCE[item.matterId];
   return (
     <button
       onClick={() => navigate(item.route)}
@@ -48,7 +20,7 @@ function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
         minHeight: '76px',
         background: '#FFFFFF',
         border: `1px solid ${C.border}`,
-        borderRadius: 16,
+        borderRadius: LAYOUT.radius.card,
         boxShadow: SHADOW.xs,
         display: 'grid',
         gridTemplateColumns: '42px 1fr 20px',
@@ -62,8 +34,8 @@ function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
       <div style={{
         width: 42,
         height: 42,
-        borderRadius: 12,
-        background: '#F4F2EE',
+        borderRadius: LAYOUT.radius.panel,
+        background: C.surface2,
         border: `1px solid ${C.border}`,
         display: 'flex',
         alignItems: 'center',
@@ -74,7 +46,7 @@ function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
       <div style={{ minWidth: 0 }}>
         <p style={{
           fontFamily: SANS,
-          fontSize: 14,
+          fontSize: TYPE.body.size,
           fontWeight: 700,
           color: C.ink,
           margin: '0 0 4px',
@@ -84,11 +56,11 @@ function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
         }}>
           {item.title}
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, margin: '0 0 5px' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: '0 0 5px' }}>
           {item.meta}
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 11, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
-          {intelligence.dailyUpdate.title}
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+          {item.detail}
         </p>
       </div>
       <ArrowRight size={16} color={C.muted} />
@@ -98,13 +70,48 @@ function FileRow({ item }: { item: typeof FILE_ITEMS[0] }) {
 
 function FilesArtboard() {
   const navigate = useNavigate();
+  const { scenario, facts, draftAllowed, draftApproved, language, auditEvents } = useDemo();
+  const confirmed = facts.filter((f) => f.state === 'confirmed').length;
+
+  const fileItems = [
+    {
+      id: 'consumer-summary',
+      title: `${scenario.matterTitle} summary`,
+      meta: `${scenario.label} · ${language.toUpperCase()}`,
+      route: '/mobile/case/consumer?stage=packet',
+      detail: scenario.statusTitle,
+    },
+    {
+      id: 'consumer-evidence',
+      title: 'Invoice and damage evidence',
+      meta: `${confirmed}/${facts.length} facts · Ready to review`,
+      route: '/mobile/case/consumer?stage=verify',
+      detail: facts.map((f) => f.label).slice(0, 3).join(' · '),
+    },
+    {
+      id: 'consumer-sources',
+      title: 'Source basis',
+      meta: scenario.sources[0]?.reviewLabel ?? 'Illustrative · expert review pending',
+      route: '/mobile/case/consumer?stage=retrieve',
+      detail: scenario.sources[0]?.title ?? 'Consumer Protection Act, 2019',
+    },
+    {
+      id: 'consumer-draft',
+      title: 'Demand notice draft',
+      meta: draftAllowed
+        ? (draftApproved ? 'Approved for copy/print' : 'Ready to review')
+        : 'Held — policy blocks draft',
+      route: draftAllowed ? '/mobile/case/consumer?stage=packet' : '/mobile/case/consumer?stage=answer',
+      detail: draftAllowed
+        ? `${auditEvents.length} audit events on this matter`
+        : scenario.statusBody,
+    },
+  ];
+
   return (
     <div style={{
       ...ARTBOARD,
-      background: [
-        'radial-gradient(ellipse 110% 42% at 50% 0%, rgba(221,231,255,0.48), transparent 70%)',
-        'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
-      ].join(', '),
+      background: PLANE.reading,
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
@@ -117,7 +124,7 @@ function FilesArtboard() {
         <div style={{ marginBottom: 20 }}>
           <h1 style={{
             fontFamily: SERIF,
-            fontSize: 30,
+            fontSize: TYPE.editorial.size,
             fontWeight: 400,
             color: C.ink,
             lineHeight: 1.08,
@@ -126,17 +133,17 @@ function FilesArtboard() {
           }}>
             Drafts and files
           </h1>
-          <p style={{ fontFamily: SANS, fontSize: 13, color: C.muted, lineHeight: 1.55, margin: 0 }}>
-            Your notices, drafts, summaries, and source notes stay together by matter.
+          <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, lineHeight: 1.55, margin: 0 }}>
+            Everything for {scenario.matterTitle} stays on one matter — facts, sources, and drafts.
           </p>
         </div>
 
         <button
-          onClick={() => navigate('/mobile/case/consumer?failure=ocr_unreadable')}
+          onClick={() => navigate('/mobile/case/consumer?stage=intake')}
           style={{
             width: '100%',
             minHeight: 54,
-            borderRadius: 16,
+            borderRadius: LAYOUT.radius.card,
             border: `1px dashed ${C.borderStrong}`,
             background: 'rgba(255,255,255,0.62)',
             display: 'flex',
@@ -144,7 +151,7 @@ function FilesArtboard() {
             justifyContent: 'center',
             gap: 8,
             fontFamily: SANS,
-            fontSize: 13,
+            fontSize: TYPE.small.size,
             fontWeight: 700,
             color: C.navy,
             cursor: 'pointer',
@@ -152,15 +159,15 @@ function FilesArtboard() {
           }}
         >
           <Upload size={16} />
-          Upload notice or evidence
+          Use sample notice
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {FILE_ITEMS.map(item => <FileRow key={item.id} item={item} />)}
+          {fileItems.map(item => <FileRow key={item.id} item={item} />)}
         </div>
 
-        <p style={{ fontFamily: SANS, fontSize: 11, color: C.muted, lineHeight: 1.55, textAlign: 'center', margin: '18px 18px 0' }}>
-          LokAI stores drafts locally. Review before filing.
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.55, textAlign: 'center', margin: '18px 18px 0' }}>
+          Prepared examples only · nothing is uploaded or sent. Review every draft before use.
         </p>
       </div>
 

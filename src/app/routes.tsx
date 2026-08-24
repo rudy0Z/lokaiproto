@@ -1,32 +1,15 @@
 import { createHashRouter, Navigate } from 'react-router';
+import type { ComponentType } from 'react';
 import CaptureLayout             from './CaptureLayout';
 
 // Shells
 import DesktopShell              from './shells/DesktopShell';
 import MobileShell               from './shells/MobileShell';
 
-// Desktop pages
-import Home                      from './pages/Home';
-import Chat                      from './pages/Chat';
-import Notice                    from './pages/Notice';
-import Draft                     from './pages/Draft';
-import Documents                 from './pages/Documents';
-
-// Mobile pages
-import MobileLogin               from './pages/mobile/MobileLogin';
-import MobileOnboarding1         from './pages/mobile/MobileOnboarding1';
-import MobileOnboarding2         from './pages/mobile/MobileOnboarding2';
-import MobileOnboarding3         from './pages/mobile/MobileOnboarding3';
-import MobileOnboarding4         from './pages/mobile/MobileOnboarding4';
-import MobileHome                from './pages/mobile/MobileHome';
-import MobileChat                from './pages/mobile/MobileChat';
-import MobileChatTamil           from './pages/mobile/MobileChatTamil';
-import MobileChatMarathi         from './pages/mobile/MobileChatMarathi';
-import MobileChatBoundary        from './pages/mobile/MobileChatBoundary';
-import MobileVoiceActive         from './pages/mobile/MobileVoiceActive';
-import MobileProfile             from './pages/mobile/MobileProfile';
-import MobileConsumerCase        from './pages/mobile/MobileConsumerCase';
-import MobileFiles               from './pages/mobile/MobileFiles';
+const lazyPage = (importer: () => Promise<{ default: ComponentType }>) => async () => {
+  const module = await importer();
+  return { Component: module.default };
+};
 
 /*
  * Hash router, not browser router — deliberately.
@@ -48,19 +31,17 @@ export const router = createHashRouter([
           { index: true, element: <Navigate to="/desktop/dashboard" replace /> },
 
           // Dashboard
-          { path: 'dashboard',          Component: Home            },
+          { path: 'dashboard',          lazy: lazyPage(() => import('./pages/Home')) },
 
-          // Chat variants
-          { path: 'chat',               Component: Chat            }, // Active/new conversation fallback
-          { path: 'chat/deposit',       Component: Chat            }, // English + Marathi
-          { path: 'chat/rti',           Component: Chat            }, // English + Hindi
-          { path: 'chat/consumer',      Component: Chat            }, // Consumer demo
-          { path: 'chat/:chatId',       Component: Chat            }, // Dynamic conversations
+          // Focused consumer conversation
+          { path: 'chat',               lazy: lazyPage(() => import('./pages/Chat')) }, // Active/new conversation fallback
+          { path: 'chat/consumer',      lazy: lazyPage(() => import('./pages/Chat')) }, // Consumer demo
+          { path: 'chat/:chatId',       lazy: lazyPage(() => import('./pages/Chat')) }, // Dynamic conversations
 
           // Tools
-          { path: 'notice-interpreter', Component: Notice          }, // English + Marathi
-          { path: 'document-draft',     Component: Draft           }, // English + Hindi header
-          { path: 'documents',          Component: Documents       }, // My Documents
+          { path: 'notice-interpreter', lazy: lazyPage(() => import('./pages/Notice')) },
+          { path: 'document-draft',     lazy: lazyPage(() => import('./pages/Draft')) },
+          { path: 'documents',          lazy: lazyPage(() => import('./pages/Documents')) },
         ],
       },
 
@@ -71,27 +52,17 @@ export const router = createHashRouter([
         children: [
           { index: true, element: <Navigate to="/mobile/home" replace /> },
 
-          // Auth & onboarding
-          { path: 'login',              Component: MobileLogin       },
-          { path: 'onboarding/1',       Component: MobileOnboarding1 },
-          { path: 'onboarding/2',       Component: MobileOnboarding2 },
-          { path: 'onboarding/3',       Component: MobileOnboarding3 },
-          { path: 'onboarding/4',       Component: MobileOnboarding4 },
-
           // Main screens
-          { path: 'home',               Component: MobileHome          },
-          { path: 'chat/hindi',         Component: MobileChat          },
-          { path: 'chat/tamil',         Component: MobileChatTamil     },
-          { path: 'chat/marathi',       Component: MobileChatMarathi   },
-          { path: 'chat/out-of-scope',  Component: MobileChatBoundary  },
-          { path: 'voice',              Component: MobileVoiceActive      },
-          { path: 'profile',            Component: MobileProfile           },
+          { path: 'home',               lazy: lazyPage(() => import('./pages/mobile/MobileHome')) },
+          { path: 'chat/:language',      element: <Navigate to="/mobile/case/consumer" replace /> },
+          { path: 'voice',              lazy: lazyPage(() => import('./pages/mobile/MobileVoiceActive')) },
+          { path: 'profile',            lazy: lazyPage(() => import('./pages/mobile/MobileProfile')) },
           { path: 'case',               element: <Navigate to="/mobile/case/consumer" replace /> },
           // :matterId — 'consumer' is the fully built journey; every other id
           // renders the designed unsupported-matter boundary rather than
           // silently showing the consumer case under someone else's title.
-          { path: 'case/:matterId',     Component: MobileConsumerCase      },
-          { path: 'files',              Component: MobileFiles             }, // Document files browser
+          { path: 'case/:matterId',     lazy: lazyPage(() => import('./pages/mobile/MobileConsumerCase')) },
+          { path: 'files',              lazy: lazyPage(() => import('./pages/mobile/MobileFiles')) },
         ],
       },
 

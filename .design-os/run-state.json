@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 2,
+  "systemVersion": "4.0.0",
+  "route": "redesign",
+  "classification": {
+    "tier": "T2",
+    "type": "redesign",
+    "entry": "existing",
+    "style": "default",
+    "modifiers": [
+      "ai"
+    ],
+    "packs": [
+      "core",
+      "agentic-ai"
+    ],
+    "risk": "regulated"
+  },
+  "dynamicReentry": true,
+  "verdict": "SHIP",
+  "createdAt": "2026-07-22T14:03:03.321Z",
+  "updatedAt": "2026-07-22T14:36:03.031Z",
+  "phases": [
+    {
+      "id": "diagnose",
+      "name": "Diagnose",
+      "mode": "deep",
+      "gateMode": "soft",
+      "skills": [
+        "design-os-redesign-existing-projects",
+        "design-os-design-review"
+      ],
+      "artifact": "00-existing-audit.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Current split, preservation constraints, legal risks, and re-entry phases 2-7 are evidenced in the audit.",
+        "checkedAt": "2026-07-22T14:04:03.700Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "2",
+      "name": "Architect",
+      "mode": "targeted",
+      "gateMode": "hard",
+      "skills": [
+        "design-os-information-architecture",
+        "design-os-scope-discipline"
+      ],
+      "artifact": "02-blueprint.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — One shared scenario model, focused scope, adaptive navigation, and build order are explicit.",
+        "checkedAt": "2026-07-22T14:04:39.094Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "3",
+      "name": "Direct",
+      "mode": "targeted",
+      "gateMode": "soft",
+      "skills": [
+        "design-os-design-taste-frontend"
+      ],
+      "artifact": "03-direction.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Preserved editorial identity, source-backed answer signature, and rejected visual defaults are explicit.",
+        "checkedAt": "2026-07-22T14:05:08.844Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "4",
+      "name": "Systemize",
+      "mode": "targeted",
+      "gateMode": "hard",
+      "skills": [
+        "design-os-design-tokens",
+        "design-os-color-craft",
+        "design-os-interface-design",
+        "design-os-component-catalog"
+      ],
+      "artifact": "04-design-system.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — DTCG tokens, components, states, mappings, and legal-content labeling rules are defined.",
+        "checkedAt": "2026-07-22T14:06:17.911Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "5",
+      "name": "Write",
+      "mode": "targeted",
+      "gateMode": "soft",
+      "skills": [
+        "design-os-content-copy"
+      ],
+      "artifact": "05-copy-deck.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — User-facing copy is plain, bounded, and complete for every scripted state.",
+        "checkedAt": "2026-07-22T14:06:47.201Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "6",
+      "name": "Interactions",
+      "mode": "targeted",
+      "gateMode": "hard",
+      "skills": [
+        "design-os-interface-design",
+        "design-os-emil-design-eng",
+        "design-os-ai-product"
+      ],
+      "artifact": "06-interaction-spec.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Deterministic transitions, policy outcomes, no-permission behavior, and failures are implementation-ready.",
+        "checkedAt": "2026-07-22T14:07:15.776Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge",
+      "mode": "targeted",
+      "gateMode": "soft",
+      "skills": [
+        "design-os-build-translator"
+      ],
+      "artifact": "MASTER-SPEC.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Product, experience, visual, content, interaction, and build contracts are coherent.",
+        "checkedAt": "2026-07-22T14:08:24.348Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "7",
+      "name": "Build",
+      "mode": "targeted",
+      "gateMode": "soft",
+      "skills": [
+        "design-os-design-review",
+        "design-os-component-catalog"
+      ],
+      "artifact": "07-implementation",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Shared deterministic scenarios, adaptive navigation, legal-term explanations, capability removal, and verification script are implemented; production build passes.",
+        "checkedAt": "2026-07-22T14:30:44.908Z",
+        "verdict": null,
+        "validationErrors": []
+      }
+    },
+    {
+      "id": "9",
+      "name": "Verify",
+      "mode": "deep",
+      "gateMode": "absolute",
+      "skills": [
+        "design-os-design-review",
+        "design-os-webapp-testing",
+        "design-os-ai-product",
+        "design-os-accessibility"
+      ],
+      "artifact": "09-audit-report.md",
+      "status": "completed",
+      "gate": {
+        "result": "pass",
+        "notes": "PASS — Build, deterministic safety scan, production dependency audit, responsive screenshots, accessibility checks, and red-team scenes are evidenced.",
+        "checkedAt": "2026-07-22T14:36:03.030Z",
+        "verdict": "SHIP",
+        "validationErrors": []
+      }
+    }
+  ]
+}

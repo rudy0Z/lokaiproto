@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { useNavigate } from 'react-router';
-import { SERIF, SANS, C } from '../components/shared';
+import { C, LAYOUT, SANS, SERIF, TYPE } from '../components/shared';
 import { HomeArtboard }             from './mobile/MobileHome';
 import { ChatArtboard }             from './mobile/MobileChat';
 import { VoiceArtboard }            from './mobile/MobileVoiceActive';
@@ -41,7 +41,7 @@ function ScaledFrame({ scale, width, height, label, route, children }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
       <span style={{
-        fontFamily: SANS, fontSize: '11px', fontWeight: 500,
+        fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 500,
         color: '#AAAAAA', letterSpacing: '0.04em', textTransform: 'uppercase',
       }}>
         {label}
@@ -72,14 +72,14 @@ function ScaledFrame({ scale, width, height, label, route, children }: {
           }}
         >
           <div style={{
-            background: 'rgba(255,255,255,0.92)', borderRadius: '6px', padding: '8px 18px',
-            fontFamily: SANS, fontSize: '12px', fontWeight: 500, color: C.navy,
+            background: 'rgba(255,255,255,0.92)', borderRadius: LAYOUT.radius.sm, padding: '8px 18px',
+            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 500, color: C.navy,
           }}>
             Open full screen →
           </div>
         </div>
       </div>
-      <span style={{ fontFamily: SANS, fontSize: '10px', color: '#555', letterSpacing: '0.03em' }}>
+      <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, color: '#555', letterSpacing: '0.03em' }}>
         {width} × {height}
       </span>
     </div>
@@ -115,12 +115,12 @@ export default function MobileCanvas() {
         {/* Canvas header */}
         <div style={{ marginBottom: '48px' }}>
           <h1 style={{
-            fontFamily: SERIF, fontSize: '24px', color: 'white',
+            fontFamily: SERIF, fontSize: TYPE.editorial.size, color: 'white',
             margin: '0 0 8px', letterSpacing: '-0.2px',
           }}>
             LokAI · Mobile App
           </h1>
-          <p style={{ fontFamily: SANS, fontSize: '13px', color: '#777', margin: 0 }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: '#777', margin: 0 }}>
             8 screens · iPhone 14 (390 × 844) · Click any artboard to view full screen
           </p>
         </div>
@@ -131,17 +131,17 @@ export default function MobileCanvas() {
             <div key={i} style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '6px', padding: '6px 12px',
+              borderRadius: LAYOUT.radius.sm, padding: '6px 12px',
             }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: C.navy }} />
-              <span style={{ fontFamily: SANS, fontSize: '11px', color: '#AAA' }}>{page.label}</span>
+              <div style={{ width: '8px', height: '8px', borderRadius: LAYOUT.radius.xs, background: C.navy }} />
+              <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: '#AAA' }}>{page.label}</span>
             </div>
           ))}
         </div>
 
         {/* ── Citizen Experience (Prompt 2) ─────────────────── */}
         <div style={{
-          fontFamily: SANS, fontSize: '11px', color: '#555',
+          fontFamily: SANS, fontSize: TYPE.micro.size, color: '#555',
           textTransform: 'uppercase', letterSpacing: '0.06em',
           marginBottom: '24px',
         }}>
@@ -161,7 +161,7 @@ export default function MobileCanvas() {
         {/* Separator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '48px' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-          <span style={{ fontFamily: SANS, fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Secondary screens
           </span>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
@@ -182,7 +182,7 @@ export default function MobileCanvas() {
         {/* Separator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '48px' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
-          <span style={{ fontFamily: SANS, fontSize: '11px', color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Error states
           </span>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
@@ -203,7 +203,7 @@ export default function MobileCanvas() {
           borderTop: '1px solid rgba(255,255,255,0.06)',
         }}>
           <div style={{
-            fontFamily: SANS, fontSize: '11px', color: '#555',
+            fontFamily: SANS, fontSize: TYPE.micro.size, color: '#555',
             marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
             Desktop surfaces
@@ -219,14 +219,14 @@ export default function MobileCanvas() {
                 style={{
                   display: 'flex', flexDirection: 'column', gap: '4px',
                   background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px', padding: '14px 18px',
+                  borderRadius: LAYOUT.radius.control, padding: '14px 18px',
                   textDecoration: 'none',
                 }}
               >
-                <span style={{ fontFamily: SANS, fontSize: '13px', color: '#CCC', fontWeight: 500 }}>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: '#CCC', fontWeight: 500 }}>
                   {s.label} →
                 </span>
-                <span style={{ fontFamily: SANS, fontSize: '11px', color: '#666' }}>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: '#666' }}>
                   {s.desc}
                 </span>
               </a>
@@ -237,7 +237,7 @@ export default function MobileCanvas() {
         {/* Design tokens */}
         <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{
-            fontFamily: SANS, fontSize: '11px', color: '#555',
+            fontFamily: SANS, fontSize: TYPE.micro.size, color: '#555',
             marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
             Design system tokens
@@ -253,14 +253,14 @@ export default function MobileCanvas() {
             ].map(token => (
               <div key={token.label} style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
-                background: 'rgba(255,255,255,0.04)', borderRadius: '6px', padding: '6px 10px',
+                background: 'rgba(255,255,255,0.04)', borderRadius: LAYOUT.radius.sm, padding: '6px 10px',
               }}>
                 <div style={{
-                  width: '14px', height: '14px', borderRadius: '3px',
+                  width: '14px', height: '14px', borderRadius: LAYOUT.radius.xs,
                   background: token.hex, border: '1px solid rgba(255,255,255,0.12)', flexShrink: 0,
                 }} />
-                <span style={{ fontFamily: SANS, fontSize: '11px', color: '#888' }}>{token.label}</span>
-                <span style={{ fontFamily: SANS, fontSize: '10px', color: '#555' }}>{token.hex}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: '#888' }}>{token.label}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, color: '#555' }}>{token.hex}</span>
               </div>
             ))}
           </div>

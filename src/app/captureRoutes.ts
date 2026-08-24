@@ -21,9 +21,8 @@ export const CAPTURE_ROUTE_GROUPS: CaptureRouteGroup[] = [
     title: 'Desktop',
     items: [
       { label: 'Dashboard', path: '/desktop/dashboard' },
-      { label: 'Chat · Deposit', path: '/desktop/chat/deposit' },
-      { label: 'Chat · RTI', path: '/desktop/chat/rti' },
-      { label: 'Chat · Boundary', path: '/desktop/chat/boundary' },
+      { label: 'Chat · Consumer', path: '/desktop/chat/consumer' },
+      { label: 'Chat · Boundary', path: '/desktop/chat/out-of-scope' },
       { label: 'Notice Interpreter', path: '/desktop/notice-interpreter' },
       { label: 'Document Draft', path: '/desktop/document-draft' },
       { label: 'Documents', path: '/desktop/documents' },

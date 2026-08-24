@@ -9,9 +9,9 @@ import { LAYOUT } from '../components/shared';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/desktop/dashboard':          'Dashboard — LokAI',
-  '/desktop/chat':               'Ask a Question — LokAI',
+  '/desktop/chat':               'Consumer Guide — LokAI',
   '/desktop/documents':          'Case Files — LokAI',
-  '/desktop/notice-interpreter': 'Notice Upload — LokAI',
+  '/desktop/notice-interpreter': 'Sample Notice — LokAI',
   '/desktop/document-draft':     'Demand Notice — LokAI',
 };
 

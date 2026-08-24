@@ -1,7 +1,7 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { C, SANS, SERIF, SHADOW } from '../../components/shared';
+import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
 import {
@@ -14,6 +14,7 @@ import {
   LokAISourceDrawer,
   NoticeAssessmentCard,
   ReviewGate,
+  FirstActionChecklist,
   SourceCard,
   VerificationScratchpad,
   WorkflowActionPlan,
@@ -32,6 +33,13 @@ import {
   type WorkflowStage,
 } from '../../data/caseWorkflow';
 import { ARTBOARD } from '../../embed';
+import { LegalText } from '../../components/demo/LegalTerms';
+import { GuardrailGallery } from '../../components/demo/GuardrailGallery';
+import { useDemo } from '../../context/DemoContext';
+import { turnAsLokAIResponse } from '../../demo/responseEngine';
+import type { ResponseTurn } from '../../data/responseTurns';
+import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
+import { TurnStatus } from '../../components/ai/Turn';
 
 const CASE_CSS = `
   .mobile-case-scroll::-webkit-scrollbar { width: 0; height: 0; }
@@ -70,6 +78,47 @@ function nextStage(stage: WorkflowStage) {
   return flow[Math.min(index + 1, flow.length - 1)];
 }
 
+/** Main journey steps for Goal Gradient rail (excludes failure / human-review). */
+const JOURNEY_STEPS: WorkflowStage[] = ['intake', 'clarify', 'verify', 'assess', 'plan', 'packet'];
+
+const STAGE_STEP_LABEL: Partial<Record<WorkflowStage, string>> = {
+  intake: 'Describe the issue',
+  clarify: 'Answer one question',
+  verify: 'Confirming facts',
+  assess: 'Review assessment',
+  plan: 'Action plan',
+  packet: 'Review demand notice',
+  audit: 'Audit trail',
+  escalation: 'Human review',
+  failure: 'Safe recovery',
+};
+
+function journeyProgress(stage: WorkflowStage): { n: number; m: number; label: string } | null {
+  const idx = JOURNEY_STEPS.indexOf(stage);
+  if (idx < 0) return null;
+  return {
+    n: idx + 1,
+    m: JOURNEY_STEPS.length,
+    label: STAGE_STEP_LABEL[stage] ?? stage,
+  };
+}
+
+function primaryCtaLabel(stage: WorkflowStage, blocksNext: boolean, isVerifyStage: boolean): string {
+  if (isVerifyStage) return 'Confirm these facts';
+  if (blocksNext && stage === 'packet') return 'Approve the plan above';
+  if (blocksNext) return 'Approve the plan above';
+  switch (stage) {
+    case 'intake': return 'Continue to clarify';
+    case 'clarify': return 'Confirm these facts';
+    case 'verify': return 'See the assessment';
+    case 'assess': return 'See action plan';
+    case 'plan': return 'Review demand notice';
+    case 'packet': return 'Finish with next actions';
+    case 'audit': return 'Done';
+    default: return 'Continue';
+  }
+}
+
 // ─── AI Disclaimer Banner — always visible, calm, not alarming ─────────────────────
 // Decision: We want users to trust the AI but understand it can miss details.
 // We show this always — not only in error states — so it’s educational, not alarming.
@@ -80,23 +129,30 @@ function AIDisclaimerBanner() {
       padding: '10px 14px',
       background: '#FFF8F0',
       border: '1px solid rgba(233,133,43,0.22)',
-      borderLeft: `3px solid ${C.saffron}`,
-      borderRadius: '0 10px 10px 0',
+      borderRadius: LAYOUT.radius.panel,
     }}>
       <p style={{
-        fontFamily: SANS, fontSize: 11, fontWeight: 600,
+        fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
         color: C.amber, margin: '0 0 3px',
       }}>
-        AI — verify before acting
+        Check before you use this
       </p>
-      <p style={{ fontFamily: SANS, fontSize: 11, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
-        LokAI identifies likely next steps from facts you share. Always confirm with an original document or lawyer before filing.
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+        This is a prepared example, not legal advice. Check every fact and source note before using a draft.
       </p>
     </div>
   );
 }
 
-function HeaderBar({ stageLabel, matterLabel = 'Consumer refund case' }: { stageLabel: string; matterLabel?: string }) {
+function HeaderBar({
+  stageLabel,
+  matterLabel = 'Consumer refund case',
+  stepRail,
+}: {
+  stageLabel: string;
+  matterLabel?: string;
+  stepRail?: { n: number; m: number; label: string } | null;
+}) {
   const navigate = useNavigate();
   return (
     <div style={{
@@ -113,7 +169,7 @@ function HeaderBar({ stageLabel, matterLabel = 'Consumer refund case' }: { stage
         style={{
           width: 40,
           height: 40,
-          borderRadius: 12,
+          borderRadius: LAYOUT.radius.panel,
           border: `1px solid ${C.border}`,
           background: '#FFFFFF',
           display: 'flex',
@@ -125,34 +181,48 @@ function HeaderBar({ stageLabel, matterLabel = 'Consumer refund case' }: { stage
       >
         <ArrowLeft size={17} color={C.inkSoft} />
       </button>
-      <div style={{ minWidth: 0 }}>
-        <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
           {matterLabel}
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {stageLabel}
         </p>
+        {stepRail && (
+          <p style={{
+            fontFamily: SANS,
+            fontSize: TYPE.micro.size,
+            fontWeight: 600,
+            color: C.navy,
+            margin: '4px 0 0',
+            letterSpacing: '0.01em',
+          }}>
+            Step {stepRail.n} of {stepRail.m} · {stepRail.label}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-function PrimaryButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function PrimaryButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       className="mobile-case-button"
       onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
       style={{
         width: '100%',
         minHeight: 48,
-        borderRadius: 14,
+        borderRadius: LAYOUT.radius.panel,
         border: 'none',
-        background: C.navy,
-        color: '#FFFFFF',
+        background: disabled ? C.border : C.navy,
+        color: disabled ? C.muted : '#FFFFFF',
         fontFamily: SANS,
-        fontSize: 14,
+        fontSize: TYPE.body.size,
         fontWeight: 800,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -165,37 +235,59 @@ function PrimaryButton({ children, onClick }: { children: React.ReactNode; onCli
   );
 }
 
+type IntakeModality = 'text' | 'voice' | 'notice';
+
 function IntakeView({ onNext }: { onNext: () => void }) {
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState<IntakeModality | null>(null);
+
+  const tiles: { id: IntakeModality; label: string; Icon: typeof FileText }[] = [
+    { id: 'text', label: 'Prepared text', Icon: FileText },
+    { id: 'voice', label: 'Sample voice', Icon: Mic },
+    { id: 'notice', label: 'Sample notice', Icon: Camera },
+  ];
+
+  const handleSelect = (id: IntakeModality) => {
+    setSelected(id);
+    if (id === 'voice') {
+      navigate('/mobile/voice');
+      return;
+    }
+    if (id === 'notice') {
+      navigate('/mobile/case/consumer?stage=packet&notice=offer');
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{
         background: '#FFFFFF',
         border: `1px solid ${C.border}`,
-        borderRadius: 22,
+        borderRadius: LAYOUT.radius.plane,
         padding: 18,
         boxShadow: SHADOW.sm,
       }}>
-        <p style={{ fontFamily: SERIF, fontSize: 28, lineHeight: 1.08, color: C.ink, margin: '0 0 10px' }}>
+        <p style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, lineHeight: 1.08, color: C.ink, margin: '0 0 10px' }}>
           Start with what happened.
         </p>
-        <p style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 16px' }}>
           LokAI will keep this focused on a defective product refund path and ask only for missing facts.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-          {[
-            { label: 'Type', Icon: FileText },
-            { label: 'Speak', Icon: Mic },
-            { label: 'Upload', Icon: Camera },
-          ].map(({ label, Icon }) => {
+          {tiles.map(({ id, label, Icon }) => {
+            const isSelected = selected === id;
             return (
               <button
-                key={label}
-                aria-label={`${label} your issue`}
+                key={id}
+                type="button"
+                className="mobile-case-chip"
+                aria-pressed={isSelected}
+                onClick={() => handleSelect(id)}
                 style={{
                   minHeight: 64,
-                  borderRadius: 14,
-                  border: `1px solid ${C.border}`,
-                  background: '#F8F5EE',
+                  borderRadius: LAYOUT.radius.panel,
+                  border: `1.5px solid ${isSelected ? C.navy : C.border}`,
+                  background: isSelected ? '#EEF2F8' : '#F8F5EE',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -205,26 +297,29 @@ function IntakeView({ onNext }: { onNext: () => void }) {
                 }}
               >
                 <Icon size={17} color={C.navy} />
-                <span style={{ fontFamily: SANS, fontSize: 12, color: C.ink }}>{label}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.ink }}>{label}</span>
               </button>
             );
           })}
         </div>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '0 0 10px' }}>
+          Pick one prepared input to continue — no microphone, file, or network access is requested.
+        </p>
         <div style={{
           minHeight: 86,
           border: `1px solid ${C.border}`,
-          borderRadius: 14,
+          borderRadius: LAYOUT.radius.panel,
           background: '#F8F5EE',
           padding: 12,
           fontFamily: SANS,
-          fontSize: 14,
+          fontSize: TYPE.body.size,
           color: C.ink,
           lineHeight: 1.5,
         }}>
-          I bought a mobile phone that is defective. The seller is refusing replacement or refund.
+          I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a replacement.
         </div>
       </div>
-      <PrimaryButton onClick={onNext}>Continue</PrimaryButton>
+      <PrimaryButton onClick={onNext} disabled={selected !== 'text'}>Confirm prepared text</PrimaryButton>
     </div>
   );
 }
@@ -234,14 +329,14 @@ function ClarifyView({ onNext }: { onNext: () => void }) {
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderRadius: 20,
+      borderRadius: LAYOUT.radius.card,
       padding: 18,
       boxShadow: SHADOW.sm,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
         One detail needed
       </p>
-      <h2 style={{ fontFamily: SERIF, fontSize: 25, fontWeight: 400, color: C.ink, lineHeight: 1.12, margin: '0 0 14px' }}>
+      <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400, color: C.ink, lineHeight: 1.12, margin: '0 0 14px' }}>
         Have you already complained to the seller in writing?
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -252,12 +347,12 @@ function ClarifyView({ onNext }: { onNext: () => void }) {
             style={{
               width: '100%',
               minHeight: 48,
-              borderRadius: 14,
+              borderRadius: LAYOUT.radius.panel,
               border: `1px solid ${index === 1 ? C.navy : C.border}`,
               background: index === 1 ? '#EEF2F8' : '#FFFFFF',
               color: C.ink,
               fontFamily: SANS,
-              fontSize: 14,
+              fontSize: TYPE.body.size,
               fontWeight: 700,
               textAlign: 'left',
               padding: '0 14px',
@@ -272,47 +367,92 @@ function ClarifyView({ onNext }: { onNext: () => void }) {
   );
 }
 
-function AssessmentView({ onOpenSources }: { onOpenSources: () => void }) {
+const DEFAULT_ASSESSMENT_ZONES: [string, string][] = [
+  ['What the rule means', 'The prepared source notes support asking for repair, replacement, or refund when a product arrives damaged.'],
+  ['How it applies here', 'The invoice date, amount, damage photos, and seller refusal are present in this prepared example.'],
+  ['What you can do next', 'Review a written complaint first. If the seller does not resolve it, check the filing route and source notes before using the draft.'],
+];
+
+function zonesFromTurn(turn: ResponseTurn | null): [string, string][] {
+  if (!turn) return DEFAULT_ASSESSMENT_ZONES;
+  const legacy = turnAsLokAIResponse(turn);
+  const thirdText = legacy.zone3.steps.length > 0
+    ? legacy.zone3.steps.join(' ')
+    : legacy.zone3.cta;
+  return [
+    [legacy.zone1.label, legacy.zone1.finding],
+    [legacy.zone2.label, legacy.zone2.analysis],
+    [legacy.zone3.label, thirdText],
+  ];
+}
+
+function AssessmentView({
+  onOpenSources,
+  activeTurn,
+  isProgressing,
+  progressLabel,
+  progressIndex,
+}: {
+  onOpenSources: () => void;
+  activeTurn: ResponseTurn | null;
+  isProgressing: boolean;
+  progressLabel: string | null;
+  progressIndex: number;
+}) {
+  const zones = zonesFromTurn(activeTurn);
+
   return (
     <div style={{
       background: '#FFFFFF',
       border: `1px solid ${C.border}`,
-      borderLeft: `4px solid ${C.saffron}`,
-      borderRadius: '4px 18px 18px 18px',
+      borderRadius: LAYOUT.radius.turn,
       overflow: 'hidden',
       boxShadow: SHADOW.sm,
     }}>
-      {[
-        ['The law', 'A seller cannot ignore a genuine defective product complaint. You can ask for repair, replacement, or refund.'],
-        ['Your situation', 'The defect and seller refusal create a consumer complaint path. LokAI still needs the invoice date before the notice packet is complete.'],
-        ['Next step', 'Send a written demand notice first. If ignored, prepare the formal court complaint packet.'],
-      ].map(([label, text], index) => (
-        <div key={label} style={{ padding: '15px 16px', borderTop: index ? `1px solid ${C.border}` : 'none', background: index ? '#FAF8F3' : '#FFFFFF' }}>
-          <p style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
+      {isProgressing && progressLabel && (
+        <div style={{ padding: '4px 8px 0', borderBottom: `1px solid ${C.border}`, background: C.surface2 }}>
+          <TurnStatus
+            label={progressLabel}
+            stages={DEMO_PROGRESS_STAGES}
+            activeIndex={Math.max(0, progressIndex)}
+          />
+        </div>
+      )}
+      {zones.map(([label, text], index) => (
+        <div key={`${label}-${index}`} style={{ padding: '15px 16px', borderTop: index ? `1px solid ${C.border}` : 'none', background: index ? C.surface2 : '#FFFFFF' }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
             {label}
           </p>
-          <p style={{ fontFamily: index === 0 ? SERIF : SANS, fontSize: index === 0 ? 21 : 14, color: C.inkSoft, lineHeight: index === 0 ? 1.35 : 1.6, margin: 0 }}>
+          <p style={{
+            fontFamily: index === 0 ? SERIF : SANS,
+            fontSize: index === 0 ? TYPE.h3.size : TYPE.body.size,
+            color: C.inkSoft,
+            lineHeight: index === 0 ? 1.35 : 1.6,
+            margin: 0,
+          }}>
             {text}
           </p>
         </div>
       ))}
       <div style={{ padding: 14, borderTop: `1px solid ${C.border}`, background: '#FFFFFF' }}>
         <button
+          type="button"
+          className="lokai-pressable"
           onClick={onOpenSources}
           style={{
             width: '100%',
             minHeight: 44,
-            borderRadius: 12,
+            borderRadius: LAYOUT.radius.panel,
             border: `1px solid ${C.navy}`,
             background: '#FFFFFF',
             color: C.navy,
             fontFamily: SANS,
-            fontSize: 13,
+            fontSize: TYPE.small.size,
             fontWeight: 800,
             cursor: 'pointer',
           }}
         >
-          View source drawer
+          View source notes
         </button>
       </div>
     </div>
@@ -334,10 +474,10 @@ function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (le
   const active = AUTONOMY_OPTIONS.find(o => o.level === value);
   return (
     <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 18,
+      background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
       padding: 14, boxShadow: SHADOW.xs, display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         How much should LokAI do?
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
@@ -350,7 +490,7 @@ function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (le
               aria-pressed={isActive}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                padding: '10px 6px', borderRadius: 12,
+                padding: '10px 6px', borderRadius: LAYOUT.radius.panel,
                 border: `1.5px solid ${isActive ? C.navy : C.border}`,
                 background: isActive ? '#EEF2F8' : '#FFFFFF',
                 cursor: 'pointer',
@@ -358,7 +498,7 @@ function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (le
             >
               <Icon size={16} color={isActive ? C.navy : C.muted} />
               <span style={{
-                fontFamily: SANS, fontSize: 10.5, fontWeight: isActive ? 700 : 500,
+                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: isActive ? 700 : 500,
                 color: isActive ? C.navy : C.inkSoft, textAlign: 'center', lineHeight: 1.25,
               }}>
                 {label}
@@ -368,7 +508,7 @@ function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (le
         })}
       </div>
       {active && (
-        <p style={{ fontFamily: SANS, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
           {active.hint}
         </p>
       )}
@@ -381,39 +521,39 @@ function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket
   const basis = packet.fields.find(f => f.id === 'basis')?.value;
   return (
     <div style={{
-      background: '#FFFFFF', border: `1.5px solid ${C.navy}`, borderRadius: 20,
+      background: '#FFFFFF', border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.card,
       padding: 18, boxShadow: SHADOW.sm, display: 'flex', flexDirection: 'column', gap: 12,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         Before LokAI prepares this
       </p>
-      <p style={{ fontFamily: SERIF, fontSize: 22, lineHeight: 1.2, color: C.ink, margin: 0 }}>
+      <p style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, lineHeight: 1.2, color: C.ink, margin: 0 }}>
         {packet.title}
       </p>
       <ul style={{ margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {packet.fields.filter(f => f.id !== 'basis').slice(0, 4).map(f => (
-          <li key={f.id} style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
+          <li key={f.id} style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.5 }}>
             <strong style={{ color: C.ink }}>{f.label}:</strong> {f.value}
           </li>
         ))}
-        <li style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.5 }}>
+        <li style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.5 }}>
           {packet.evidenceChecklist.length} evidence items checked against what's already confirmed
         </li>
       </ul>
       {basis && (
-        <p style={{ fontFamily: SANS, fontSize: 12, color: C.muted, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: 0 }}>
           Legal basis: {basis}
         </p>
       )}
-      <p style={{ fontFamily: SANS, fontSize: 12, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
         You'll review and can edit every field before anything is finalized. Nothing sends automatically.
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
         <button
           onClick={onBack}
           style={{
-            minHeight: 44, borderRadius: 12, border: `1px solid ${C.border}`, background: '#FFFFFF',
-            color: C.inkSoft, fontFamily: SANS, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
           }}
         >
           Not yet
@@ -421,8 +561,8 @@ function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket
         <button
           onClick={onApprove}
           style={{
-            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
-            fontFamily: SANS, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 800, cursor: 'pointer',
           }}
         >
           Prepare the draft
@@ -436,13 +576,13 @@ function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket
 function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
   return (
     <div style={{
-      background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: 18,
+      background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
       padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         Guide me mode
       </p>
-      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
         A {packet.title.toLowerCase()} for this matter would typically request repair, replacement,
         or refund and cite the sections LokAI found earlier. LokAI won't prepare or send anything in
         this mode — switch to "Prepare with me" when you're ready to draft it.
@@ -461,10 +601,10 @@ function TrackingBanner({ onClick }: { onClick: () => void }) {
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%',
         background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)', borderLeft: `3px solid ${C.saffron}`,
-        borderRadius: '0 12px 12px 0', padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
+        borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`, padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
       }}
     >
-      <span style={{ fontFamily: SANS, fontSize: 11.5, color: C.inkSoft, lineHeight: 1.5 }}>
+      <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5 }}>
         LokAI will flag it here when the seller's response window ends. Tap to see how that looks.
       </span>
       <ArrowRight size={13} color={C.amber} style={{ flexShrink: 0 }} />
@@ -494,32 +634,32 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
   return (
     <div style={{
       background: '#FFFFFF', border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.navy}`,
-      borderRadius: '4px 18px 18px 18px', padding: 18, boxShadow: SHADOW.sm,
+      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn}`, padding: 18, boxShadow: SHADOW.sm,
       display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <span style={{
-        alignSelf: 'flex-start', fontFamily: SANS, fontSize: 10, fontWeight: 700,
+        alignSelf: 'flex-start', fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700,
         textTransform: 'uppercase', letterSpacing: '0.06em', color: C.navy,
-        background: '#EEF2F8', borderRadius: 999, padding: '3px 9px',
+        background: '#EEF2F8', borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
       }}>
         {matter?.category ?? 'Matter'}
       </span>
-      <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.22 }}>
+      <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.22 }}>
         {title}
       </h2>
-      <p style={{ fontFamily: SANS, fontSize: 13.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
         Only the consumer-refund journey is built end to end in this prototype. LokAI classified
         this matter and found its sources, but the guided steps, verification, and drafting are
         not implemented for it — so it stops here instead of running you through the wrong flow.
       </p>
       {captured.length > 0 && (
-        <div style={{ background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: 12, padding: '11px 13px' }}>
-          <p style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
+        <div style={{ background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.panel, padding: '11px 13px' }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
             What LokAI captured
           </p>
           <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {captured.map(item => (
-              <li key={item} style={{ fontFamily: SANS, fontSize: 12.5, color: C.inkSoft, lineHeight: 1.5 }}>{item}</li>
+              <li key={item} style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.5 }}>{item}</li>
             ))}
           </ul>
         </div>
@@ -528,8 +668,8 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
         <button
           onClick={() => navigate('/mobile/home')}
           style={{
-            minHeight: 44, borderRadius: 12, border: `1px solid ${C.border}`, background: '#FFFFFF',
-            color: C.inkSoft, fontFamily: SANS, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
           }}
         >
           Back to home
@@ -537,8 +677,8 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
         <button
           onClick={() => navigate('/mobile/case/consumer?stage=intake')}
           style={{
-            minHeight: 44, borderRadius: 12, border: 'none', background: C.navy, color: '#FFFFFF',
-            fontFamily: SANS, fontSize: 12, fontWeight: 800, cursor: 'pointer',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
+            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 800, cursor: 'pointer',
           }}
         >
           Open the built journey
@@ -557,11 +697,35 @@ function CaseArtboard() {
   const isSupportedMatter = !matterId || matterId === 'consumer';
   const [sourceOpen, setSourceOpen] = useState(false);
   const { selectedLanguage } = useConversations();
+  const {
+    scenario,
+    confirmFact,
+    correctFact,
+    setDraftApproved,
+    draftApproved,
+    draftAllowed,
+    activeTurn,
+    runScenario,
+    isProgressing,
+    progressLabel,
+    progressIndex,
+    addAuditEvent,
+    selectScenario,
+  } = useDemo();
+  const isGuardrailScene = scenario.id !== 'consumer';
+  const [sceneAcknowledged, setSceneAcknowledged] = useState(!isGuardrailScene);
   const failure = params.get('failure');
+  const sceneParam = params.get('scene');
   const notice = params.get('notice') as NoticeAssessmentKind | null;
   const rawStage = params.get('stage');
   const stage = failure ? 'failure' : mapStage(rawStage);
   const showDemoControls = params.get('demo') === '1' || params.get('capture') === '1';
+
+  useEffect(() => {
+    if (sceneParam && sceneParam !== scenario.id) {
+      selectScenario(sceneParam);
+    }
+  }, [sceneParam, scenario.id, selectScenario]);
   const workflow = useMemo(() => {
     const base = getConsumerWorkflowState(stage);
     if (!failure) return base;
@@ -585,9 +749,10 @@ function CaseArtboard() {
   const [previewApproved, setPreviewApproved] = useState(() => params.get('approved') === '1');
   const [replyPrepared, setReplyPrepared] = useState(false);
   // In Guide-me mode there's nothing to approve — LokAI never drafts. Otherwise
-  // the packet stage stays locked on "Next" until the intent preview is approved,
-  // the same way verify already locks on unconfirmed facts.
-  const blocksNext = isVerifyStage || (stage === 'packet' && autonomy !== 'guide' && !previewApproved);
+  // the packet stage stays locked on "Next" until the intent preview is approved.
+  // Shared matter store also blocks draft when the active scenario/turn disallows it.
+  const blocksNext = isVerifyStage
+    || (stage === 'packet' && autonomy !== 'guide' && (!previewApproved || !draftAllowed));
 
   const goStage = (next: MobileStageParam) => {
     navigate(`/mobile/case/consumer?stage=${next}`);
@@ -601,13 +766,25 @@ function CaseArtboard() {
     navigate(`/mobile/case/consumer?stage=packet&notice=${kind}`);
   };
 
+  useEffect(() => {
+    setSceneAcknowledged(scenario.id === 'consumer');
+  }, [scenario.id]);
+
+  useEffect(() => {
+    if (stage !== 'assess' || isProgressing) return;
+    if (scenario.id !== 'consumer' && !activeTurn) {
+      void runScenario();
+      return;
+    }
+    if (scenario.id === 'consumer' && !activeTurn) {
+      void runScenario('consumer');
+    }
+  }, [stage, scenario.id, activeTurn, isProgressing, runScenario]);
+
   return (
     <div style={{
       ...ARTBOARD,
-      background: [
-        'radial-gradient(ellipse 105% 42% at 50% 0%, rgba(221,231,255,0.50), transparent 70%)',
-        'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
-      ].join(', '),
+      background: PLANE.reading,
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
@@ -619,21 +796,19 @@ function CaseArtboard() {
       <HeaderBar
         stageLabel={isSupportedMatter ? workflow.stageLabel : 'Not built in this prototype'}
         matterLabel={isSupportedMatter ? 'Consumer refund case' : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
+        stepRail={isSupportedMatter && !failure ? journeyProgress(stage) : null}
       />
 
-      {/* Language continuity note — when a non-English language is chosen, be honest
-          that the structured guidance is shown in English while full translation is a
-          production step (Sarvam MT). Keeps the preference visible without faking it. */}
+      {/* Language continuity — prepared packs cover EN/HI/MR/TA for the consumer matter */}
       {selectedLanguage !== 'en' && (
         <div style={{
           margin: '10px 20px 0', padding: '8px 12px',
           background: '#EEF2F8', border: `1px solid ${C.border}`,
-          borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8,
+          borderRadius: LAYOUT.radius.control, display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <ShieldCheck size={13} color={C.navy} />
-          <span style={{ fontFamily: SANS, fontSize: 11, color: C.inkSoft, lineHeight: 1.4 }}>
-            Your language is set to {getLangLabel(selectedLanguage)}. Guidance is shown in English
-            here; the read-aloud and chat reply use {getLangLabel(selectedLanguage)}.
+          <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.4 }}>
+            Language set to {getLangLabel(selectedLanguage)}. Consumer answers use a prepared {getLangLabel(selectedLanguage)} pack — not live translation.
           </span>
         </div>
       )}
@@ -645,27 +820,89 @@ function CaseArtboard() {
           aria-live="polite"
           style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          {!isSupportedMatter ? (
+          {isGuardrailScene && !sceneAcknowledged ? (
+            <>
+              <GuardrailGallery compact />
+              <div style={{
+                background: C.surface,
+                border: `1px solid ${C.border}`,
+                borderRadius: LAYOUT.radius.panel,
+                padding: 14,
+                marginTop: 4,
+              }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.navy, margin: '0 0 6px' }}>
+                  {scenario.statusTitle}
+                </p>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
+                  {scenario.statusBody}
+                </p>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: 0 }}>
+                  Policy: {scenario.policyTier.replace(/_/g, ' ')}. Drafting{' '}
+                  {scenario.policyTier === 'self_service' ? 'is available after review.' : 'stays locked in this scene.'}
+                </p>
+                <ul style={{ margin: '10px 0 0', padding: '0 0 0 16px' }}>
+                  {scenario.allowedActions.map((a) => (
+                    <li key={a} style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, marginBottom: 4 }}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+              <PrimaryButton onClick={() => {
+                setSceneAcknowledged(true);
+                navigate('/mobile/case/consumer?stage=intake');
+              }}>
+                Continue with this scene’s constraints
+              </PrimaryButton>
+            </>
+          ) : !isSupportedMatter ? (
             <UnsupportedMatterCard matterId={matterId ?? ''} />
           ) : (
             <>
+          {isGuardrailScene && (
+            <div style={{
+              background: '#EEF2F8',
+              border: `1px solid ${C.border}`,
+              borderRadius: LAYOUT.radius.panel,
+              padding: 12,
+            }}>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, margin: '0 0 4px' }}>
+                {scenario.label}
+              </p>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+                {scenario.statusTitle}
+              </p>
+            </div>
+          )}
           <div style={{
             background: '#FFFFFF',
             border: `1px solid ${C.border}`,
-            borderRadius: 18,
+            borderRadius: LAYOUT.radius.turn,
             padding: 14,
             boxShadow: SHADOW.xs,
           }}>
-            <p style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 7px' }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 7px' }}>
               Current step
             </p>
-            <p style={{ fontFamily: SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
               {workflow.currentUserStep}
             </p>
           </div>
 
           {/* AI disclaimer — shown always, calm and informational */}
           <AIDisclaimerBanner />
+
+          {['assess', 'plan', 'packet'].includes(stage) && (
+            <div style={{
+              background: '#FFF9F1',
+              border: `1px solid ${C.border}`,
+              borderRadius: LAYOUT.radius.panel,
+              padding: 14,
+            }}>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.65, margin: 0 }}>
+                A <LegalText>deficiency</LegalText> can include a product that arrives damaged or does not work as promised.
+                Tap the highlighted term for a simple meaning.
+              </p>
+            </div>
+          )}
 
           {stage === 'failure' && failureState && <FailureStateCard failure={failureState} />}
 
@@ -680,12 +917,12 @@ function CaseArtboard() {
                   draftText={[
                     'LokAI — Reply to seller\'s partial offer (review before sending)',
                     '',
-                    'Subject: Re: Defective mobile phone — full refund still requested',
+                    'Subject: Re: Damaged mixer grinder — full refund still requested',
                     '',
                     'Thank you for your response. I do not accept the 50% partial refund, as the',
-                    'phone was defective at the time of purchase and I raised the issue promptly.',
+                    'mixer arrived damaged and I raised the issue promptly.',
                     '',
-                    'I am requesting the full refund of ₹28,999 within 7 days. If this is not',
+                    'I am requesting the full refund of ₹8,999 within 7 days. If this is not',
                     'resolved, I will file a formal complaint with the District Consumer Commission.',
                     '',
                     'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
@@ -707,7 +944,12 @@ function CaseArtboard() {
                   <EvidenceLocker items={getEvidenceLocker()} />
                   <VerificationScratchpad
                     facts={getVerificationFacts()}
-                    onConfirmed={() => goStage('assessment')}
+                    onFactConfirm={(id) => confirmFact(id)}
+                    onFactCorrect={(id, value) => correctFact(id, value)}
+                    onConfirmed={() => {
+                      setDraftApproved(true);
+                      goStage('assessment');
+                    }}
                   />
                 </>
               )}
@@ -719,7 +961,13 @@ function CaseArtboard() {
               )}
               {stage === 'assess'     && (
                 <>
-                  <AssessmentView onOpenSources={() => setSourceOpen(true)} />
+                  <AssessmentView
+                    onOpenSources={() => setSourceOpen(true)}
+                    activeTurn={activeTurn}
+                    isProgressing={isProgressing}
+                    progressLabel={progressLabel}
+                    progressIndex={progressIndex}
+                  />
                   <WorkflowTrustPanel workflow={workflow} onOpenSources={() => setSourceOpen(true)} />
                 </>
               )}
@@ -746,10 +994,10 @@ function CaseArtboard() {
                         draftText={[
                           'LokAI — Consumer demand notice draft (review before sending)',
                           '',
-                          'Subject: Defective mobile phone — request for repair, replacement, or refund',
+                          'Subject: Damaged mixer grinder — request for replacement or refund',
                           '',
-                          'I purchased a mobile phone from Metro Mobile Store. The phone became',
-                          'defective within two days (overheating and shutting down). I asked the',
+                          'I purchased a mixer grinder from HomeKart. It arrived with a cracked jar',
+                          'and is unsafe to run. I asked the',
                           'seller for a repair, replacement, or refund and the request was refused.',
                           '',
                           'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
@@ -760,6 +1008,12 @@ function CaseArtboard() {
                           '— Prepared with LokAI. Please review every detail before sending.',
                         ].join('\n')}
                         onPrint={() => window.print()}
+                        approved={draftApproved}
+                        onApprove={setDraftApproved}
+                      />
+                      <FirstActionChecklist
+                        compact
+                        onComplete={() => addAuditEvent('Exit checklist completed — user owns next actions outside LokAI')}
                       />
                       {autonomy === 'track' && <TrackingBanner onClick={() => goNotice('offer')} />}
                     </>
@@ -778,28 +1032,28 @@ function CaseArtboard() {
               aria-disabled={blocksNext}
               style={{
                 minHeight: 44,
-                borderRadius: 12,
+                borderRadius: LAYOUT.radius.panel,
                 border: 'none',
                 background: blocksNext ? C.border : C.navy,
                 color: blocksNext ? C.muted : '#FFFFFF',
                 fontFamily: SANS,
-                fontSize: 12,
+                fontSize: TYPE.caption.size,
                 fontWeight: 800,
                 cursor: blocksNext ? 'not-allowed' : 'pointer',
               }}
             >
-              {isVerifyStage ? 'Confirm facts above' : blocksNext ? 'Approve the plan above' : 'Next'}
+              {primaryCtaLabel(stage, blocksNext, isVerifyStage)}
             </button>
             <button
               onClick={() => goStage('human-review')}
               style={{
                 minHeight: 44,
-                borderRadius: 12,
+                borderRadius: LAYOUT.radius.panel,
                 border: `1px solid ${C.border}`,
                 background: '#FFFFFF',
                 color: C.inkSoft,
                 fontFamily: SANS,
-                fontSize: 12,
+                fontSize: TYPE.caption.size,
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
@@ -824,12 +1078,12 @@ function CaseArtboard() {
                 onClick={() => goFailure(kind)}
                 style={{
                   minHeight: 32,
-                  borderRadius: 999,
+                  borderRadius: LAYOUT.radius.pill,
                   border: `1px solid ${C.border}`,
                   background: '#FFFFFF',
                   color: C.muted,
                   fontFamily: SANS,
-                  fontSize: 10,
+                  fontSize: TYPE.label.size,
                   fontWeight: 700,
                   padding: '0 9px',
                   cursor: 'pointer',
@@ -855,12 +1109,12 @@ function CaseArtboard() {
                 onClick={() => goNotice(kind)}
                 style={{
                   minHeight: 32,
-                  borderRadius: 999,
+                  borderRadius: LAYOUT.radius.pill,
                   border: `1px solid ${C.saffron}`,
                   background: '#FFFFFF',
                   color: C.amber,
                   fontFamily: SANS,
-                  fontSize: 10,
+                  fontSize: TYPE.label.size,
                   fontWeight: 700,
                   padding: '0 9px',
                   cursor: 'pointer',

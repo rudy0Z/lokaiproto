@@ -1,44 +1,135 @@
 @import './fonts.css';
 @import './tailwind.css';
-@import './theme.css';
 
-/* ── LokAI color tokens ───────────────────────────────────────────────────── */
+/* ── LokAI design tokens (authoritative CSS source) ───────────────────────── */
 :root {
-  --surface-bg:      #F5F2EC;
+  /* Canvas */
+  --surface-bg:      #F8F5EE;
   --surface-card:    #FFFFFF;
-  --surface-raised:  #F4F2EE;
-  --navy:            #132846;
-  --navy-dark:       #152C54;
+  --surface-raised:  #FBF8F1;
+  --wash-blue:       #DDE7FF;
+  --wash-gold:       #FFE3B8;
+  --wash-rose:       #F5D8D4;
+
+  /* Ink */
+  --text-primary:    #181713;
+  --text-secondary:  #48453D;
+  --text-tertiary:   #858078;
+  --text-on-dark:    #FFFFFF;
+
+  /* Brand */
+  --navy:            #102A4C;
+  --navy-dark:       #0B1E37;
   --navy-soft:       #EEF2F8;
-  --saffron:         #E8832A;
-  --saffron-dark:    #C4620A;
-  --terracotta:      #C4724A;
-  --text-primary:    #1A1916;
-  --text-secondary:  #4A4840;
-  --text-tertiary:   #8A8880;
-  --lokai-border:    #E8E4DC;
-  --border-focus:    #132846;
+  --saffron:         #E9852B;
+  --saffron-dark:    #C86712;
+  --saffron-accessible: #CC5A10;
+  --terracotta:      #A94F2D;
+
+  /* Semantic */
+  --success:         #1F6B3A;
+  --danger:          #B8361C;
+  --caution:         #8A4500;
+  --oxblood:         #6B1F1F;
+
+  /* Structure */
+  --lokai-border:    #E7E0D4;
+  --border-strong:   #CFC5B6;
+  --border-focus:    #102A4C;
+
+  /* Soft fills */
+  --success-soft:    rgba(31, 107, 58, 0.08);
+  --caution-soft:    rgba(138, 69, 0, 0.08);
+  --danger-soft:     rgba(184, 54, 28, 0.08);
+  --oxblood-soft:    rgba(107, 31, 31, 0.08);
+  --navy-tint:       rgba(16, 42, 76, 0.08);
+  --saffron-tint:    rgba(233, 133, 43, 0.10);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --touch-target: 44px;
+
+  /* Radii — role scale (mirrors LAYOUT.radius) */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-control: 10px;
+  --radius-panel: 12px;
+  --radius-card: 16px;
+  --radius-turn: 18px;
+  --radius-plane: 22px;
+  --radius-dialog: 18px;
+  --radius-pill: 999px;
+
+  /* Type sizes (mirrors TYPE) */
+  --type-label: 10px;
+  --type-micro: 11px;
+  --type-caption: 12px;
+  --type-small: 13px;
+  --type-body: 14px;
+  --type-title: 15px;
+  --type-h4: 16px;
+  --type-lead: 18px;
+  --type-h3: 20px;
+  --type-editorial-sm: 22px;
+  --type-editorial: 28px;
+  --type-display2: 36px;
+  --type-display1: 56px;
+
+  /* Elevation */
+  --elevation-xs: 0 1px 2px rgba(26, 25, 22, 0.04);
+  --elevation-sm: 0 1px 2px rgba(26, 25, 22, 0.035), 0 3px 10px rgba(26, 25, 22, 0.045);
+  --elevation-md: 0 2px 5px rgba(26, 25, 22, 0.04), 0 8px 24px rgba(26, 25, 22, 0.065);
+  --elevation-lg: 0 14px 42px rgba(26, 25, 22, 0.10), 0 3px 10px rgba(26, 25, 22, 0.04);
+  --elevation-float: 0 22px 60px rgba(26, 25, 22, 0.13), 0 6px 18px rgba(26, 25, 22, 0.07);
+
+  /* Motion — ladder + named recipes (mirrors MOTION in shared.tsx) */
+  --duration-micro: 120ms;
+  --duration-state: 220ms;
+  --duration-dialog: 280ms;
+  --duration-press: 120ms;
+  --duration-expand: 220ms;
+  --duration-confirm: 180ms;
+  --duration-status: 220ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Font roles */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  --font-deva: "Noto Sans Devanagari", "Inter", sans-serif;
+  --font-tamil: "Noto Sans Tamil", "Inter", sans-serif;
 }
 
 /* ── Global base ─────────────────────────────────────────────────────────── */
 
-/* Body/html background — warm parchment across the entire app */
 html, body {
   background-color: var(--surface-bg) !important;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
 }
 
-/* ── Focus rings — saffron, keyboard-only ────────────────────────────────── */
+button, input, textarea, select {
+  font: inherit;
+}
+
 :focus-visible {
   outline: 2px solid var(--saffron);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
-/* Remove default outline since we supply :focus-visible */
+
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-/* ── Reduced motion — respect user OS preference ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -48,16 +139,99 @@ html, body {
   }
 }
 
-/* ── Devanagari override — Hindi + Marathi text ───────────────────────────── */
-/* font-size: base + 1px, line-height: 1.85 minimum                           */
-.deva {
+/* Script-aware body text */
+.deva,
+[lang="hi"],
+[lang="mr"] {
+  font-family: var(--font-deva);
   font-size: calc(1em + 1px);
   line-height: 1.85;
 }
 
-/* ── Dark sidebar scrollbar ────────────────────────────────────────────────── */
-/* Dark sidebar scrollbar */
+[lang="ta"] {
+  font-family: var(--font-tamil);
+  font-size: calc(1em + 1px);
+  line-height: 1.9;
+}
+
 .lokai-sidebar-scroll::-webkit-scrollbar { width: 3px; }
 .lokai-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+.demo-disclosure {
+  position: fixed;
+  right: 14px;
+  bottom: 12px;
+  z-index: 900;
+  max-width: calc(100vw - 28px);
+  border: 1px solid rgba(16,42,76,0.14);
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.92);
+  box-shadow: var(--elevation-md);
+  color: var(--navy);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  padding: 7px 11px;
+  pointer-events: none;
+}
+
+@media (min-width: 900px) {
+  .legal-term-mobile-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 899px) {
+  .demo-disclosure {
+    left: 50%;
+    right: auto;
+    bottom: 8px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .mobile-route-frame {
+    padding: 20px;
+  }
+
+  .mobile-route-frame > div {
+    width: min(760px, calc(100vw - 40px)) !important;
+    max-width: 760px !important;
+    padding-left: 76px;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .mobile-bottom-nav {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 76px;
+    height: auto !important;
+    z-index: 40;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 72px 8px 24px !important;
+    border-top: 0 !important;
+    border-right: 1px solid var(--lokai-border);
+    box-shadow: 4px 0 16px rgba(16,42,76,0.06) !important;
+  }
+
+  .mobile-bottom-nav > button {
+    flex: 0 0 72px !important;
+    width: 60px;
+    border-radius: 12px !important;
+    justify-content: center !important;
+    padding-top: 6px !important;
+  }
+
+  .mobile-floating-input {
+    left: 92px !important;
+  }
+}

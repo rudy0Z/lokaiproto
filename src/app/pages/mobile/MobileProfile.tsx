@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Settings, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react';
-import { SERIF, SANS, C, GRAD, SHADOW } from '../../components/shared';
+import { C, GRAD, LAYOUT, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
 import { StatusBar, BottomNav, HomeIndicator, MobileRouteCanvas } from './MobileHome';
 
 // ─── Toggle ────────────────────────────────────────────────────────────────────
@@ -10,8 +10,8 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
     <div
       onClick={onToggle}
       style={{
-        width: '44px', height: '24px', borderRadius: '12px',
-        background: on ? '#132846' : '#E8E4DC',
+        width: '44px', height: '24px', borderRadius: LAYOUT.radius.panel,
+        background: on ? C.navy : C.border,
         position: 'relative', cursor: 'pointer', flexShrink: 0,
         transition: 'background 0.2s ease',
       }}
@@ -19,9 +19,9 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       <div style={{
         position: 'absolute',
         top: '2px', left: on ? '22px' : '2px',
-        width: '20px', height: '20px', borderRadius: '50%',
+        width: '20px', height: '20px', borderRadius: LAYOUT.radius.full,
         background: '#FFFFFF',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
+        boxShadow: SHADOW.xs,
         transition: 'left 0.2s ease',
       }} />
     </div>
@@ -33,8 +33,8 @@ function SectionLabel({ text }: { text: string }) {
   return (
     <div style={{
       padding: '20px 20px 8px',
-      fontFamily: SANS, fontSize: '11px', fontWeight: 600,
-      color: '#8A8880', textTransform: 'uppercase', letterSpacing: '0.08em',
+      fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
+      color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
     }}>
       {text}
     </div>
@@ -45,8 +45,8 @@ function SectionLabel({ text }: { text: string }) {
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: '#FFFFFF', border: '1px solid #E8E4DC',
-      borderRadius: '16px', margin: '0 16px',
+      background: '#FFFFFF', border: `1px solid ${C.border}`,
+      borderRadius: LAYOUT.radius.card, margin: '0 16px',
       overflow: 'hidden',
       boxShadow: SHADOW.sm,
       ...style,
@@ -60,20 +60,20 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 function FreePlanCard() {
   return (
     <div style={{
-      background: '#F4F2EE', borderRadius: '12px',
+      background: C.surface2, borderRadius: LAYOUT.radius.panel,
       padding: '16px', marginBottom: '10px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
         <span style={{
-          fontFamily: SANS, fontSize: '16px', fontWeight: 700, color: '#1A1916',
+          fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.ink,
         }}>Free</span>
         <span style={{
-          fontFamily: SANS, fontSize: '11px', fontWeight: 500, color: '#8A8880',
-          background: '#E8E4DC', borderRadius: '999px', padding: '2px 10px',
+          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 500, color: C.muted,
+          background: C.border, borderRadius: LAYOUT.radius.pill, padding: '2px 10px',
         }}>Current plan</span>
       </div>
       <p style={{
-        fontFamily: SANS, fontSize: '13px', color: '#4A4840',
+        fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft,
         margin: 0, lineHeight: 1.6,
       }}>
         5 questions/day · Hindi + English · 1 document/month
@@ -85,23 +85,23 @@ function FreePlanCard() {
 function CitizenPlanCard() {
   return (
     <div style={{
-      background: '#EEF2F8', border: '1px solid #132846',
-      borderRadius: '12px', padding: '16px', marginBottom: '10px',
+      background: '#EEF2F8', border: `1px solid ${C.navy}`,
+      borderRadius: LAYOUT.radius.panel, padding: '16px', marginBottom: '10px',
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ fontFamily: SANS, fontSize: '16px', fontWeight: 700, color: '#132846' }}>Citizen</span>
-        <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: '#132846' }}>₹199/month</span>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.navy }}>Citizen</span>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.navy }}>₹199/month</span>
       </div>
       <p style={{
-        fontFamily: SANS, fontSize: '13px', color: '#4A4840',
+        fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft,
         margin: '0 0 12px', lineHeight: 1.6,
       }}>
         50 questions/day · All 12 languages · 10 documents/month · PDF export
       </p>
       <button style={{
         background: GRAD.buttonPrimary, border: 'none',
-        borderRadius: '999px', padding: '10px 20px',
-        fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: '#FFFFFF',
+        borderRadius: LAYOUT.radius.pill, padding: '10px 20px',
+        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: '#FFFFFF',
         cursor: 'pointer', boxShadow: SHADOW.sm,
       }}>
         Upgrade →
@@ -113,26 +113,26 @@ function CitizenPlanCard() {
 function CounselPlanCard() {
   return (
     <div style={{
-      background: 'linear-gradient(160deg, #1A1916 0%, #132846 100%)',
-      borderRadius: '12px', padding: '16px',
+      background: `linear-gradient(160deg, ${C.ink} 0%, ${C.navy} 100%)`,
+      borderRadius: LAYOUT.radius.panel, padding: '16px',
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '4px' }}>
         <span style={{
-          fontFamily: SERIF, fontSize: '22px', fontWeight: 400, fontStyle: 'normal', color: '#FFFFFF',
+          fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, fontStyle: 'normal', color: '#FFFFFF',
         }}>Counsel</span>
-        <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>₹499/month</span>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: '#FFFFFF' }}>₹499/month</span>
       </div>
       <p style={{
-        fontFamily: SANS, fontSize: '13px', color: 'rgba(255,255,255,0.75)',
+        fontFamily: SANS, fontSize: TYPE.small.size, color: 'rgba(255,255,255,0.75)',
         margin: '0 0 12px', lineHeight: 1.6,
       }}>
         Unlimited · All languages · Unlimited documents · Talk to a lawyer
       </p>
       <button style={{
         background: 'transparent',
-        border: '1.5px solid #E8832A',
-        borderRadius: '999px', padding: '10px 20px',
-        fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: '#E8832A',
+        border: `1.5px solid ${C.saffron}`,
+        borderRadius: LAYOUT.radius.pill, padding: '10px 20px',
+        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.saffron,
         cursor: 'pointer',
       }}>
         Upgrade to Counsel →
@@ -159,15 +159,15 @@ function SettingsRow({
         cursor: 'pointer',
       }}>
         <div style={{
-          width: '36px', height: '36px', borderRadius: '10px',
-          background: '#F4F2EE',
+          width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
+          background: C.surface2,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
           <Icon style={{ width: '18px', height: '18px', color: C.navy }} strokeWidth={1.5} />
         </div>
-        <span style={{ fontFamily: SANS, fontSize: '14px', color: C.ink, flex: 1 }}>{label}</span>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.ink, flex: 1 }}>{label}</span>
         {value && (
-          <span style={{ fontFamily: SANS, fontSize: '12px', color: C.muted, marginRight: '4px' }}>{value}</span>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginRight: '4px' }}>{value}</span>
         )}
         {rightSlot ?? <ChevronRight style={{ width: '16px', height: '16px', color: '#C8C4BC' }} />}
       </div>
@@ -184,7 +184,7 @@ export function ProfileArtboard() {
 
   return (
     <div style={{
-      width: '390px', height: '844px', background: '#F5F2EC',
+      width: '390px', height: '844px', background: C.bg,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       <StatusBar />
@@ -198,14 +198,14 @@ export function ProfileArtboard() {
       }}>
         <div style={{ flex: 1 }} />
         <span style={{
-          fontFamily: SANS, fontSize: '16px', fontWeight: 600, color: '#1A1916',
+          fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600, color: C.ink,
         }}>Profile</span>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
             style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            <Settings style={{ width: '20px', height: '20px', color: '#4A4840' }} strokeWidth={1.5} />
+            <Settings style={{ width: '20px', height: '20px', color: C.inkSoft }} strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -213,7 +213,7 @@ export function ProfileArtboard() {
       {/* Scrollable content */}
       <div style={{
         flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        background: '#F5F2EC', scrollbarWidth: 'none',
+        background: C.bg, scrollbarWidth: 'none',
       } as React.CSSProperties}>
 
         {/* ── Avatar Section ── */}
@@ -224,36 +224,36 @@ export function ProfileArtboard() {
         }}>
           {/* Avatar circle — 56px, navy bg, "P" */}
           <div style={{
-            width: '64px', height: '64px', borderRadius: '50%',
-            background: '#132846',
+            width: '64px', height: '64px', borderRadius: LAYOUT.radius.full,
+            background: C.navy,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: '12px',
           }}>
             <span style={{
-              fontFamily: SERIF, fontSize: '26px', fontWeight: 400,
+              fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
               color: '#FFFFFF', lineHeight: 1,
             }}>P</span>
           </div>
           {/* Name */}
           <p style={{
-            fontFamily: SANS, fontSize: '16px', fontWeight: 600,
-            color: '#1A1916', margin: '0 0 4px',
+            fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600,
+            color: C.ink, margin: '0 0 4px',
           }}>
             Priya Sharma
           </p>
           {/* Location */}
           <p style={{
-            fontFamily: SANS, fontSize: '14px', color: '#4A4840',
+            fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft,
             margin: '0 0 10px',
           }}>
             Mumbai, MH
           </p>
           {/* Plan chip — outline style */}
           <div style={{
-            border: `1px solid ${C.border}`, borderRadius: '999px',
+            border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.pill,
             padding: '4px 14px', display: 'inline-flex',
           }}>
-            <span style={{ fontFamily: SANS, fontSize: '12px', color: '#8A8880' }}>Free Plan</span>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>Free Plan</span>
           </div>
         </div>
 
@@ -264,20 +264,20 @@ export function ProfileArtboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
               {/* Active language chip */}
               <div style={{
-                background: '#EEF2F8', border: '1px solid #132846',
-                borderRadius: '999px', padding: '5px 14px',
-                fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: '#132846',
+                background: '#EEF2F8', border: `1px solid ${C.navy}`,
+                borderRadius: LAYOUT.radius.pill, padding: '5px 14px',
+                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.navy,
               }}>
                 English
               </div>
               <button style={{
-                fontFamily: SANS, fontSize: '14px', fontWeight: 500, color: '#E8832A',
+                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 500, color: C.saffron,
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
               }} onClick={() => navigate('/mobile/onboarding/2')}>
                 Change →
               </button>
             </div>
-            <p style={{ fontFamily: SANS, fontSize: '13px', color: '#8A8880', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: 0, lineHeight: 1.5 }}>
               Responses match the language you type or speak
             </p>
           </div>
@@ -307,7 +307,7 @@ export function ProfileArtboard() {
 
         {/* ── Disclaimer ── */}
         <p style={{
-          fontFamily: SANS, fontSize: '11px', color: '#8A8880',
+          fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
           textAlign: 'center', padding: '8px 32px 28px', lineHeight: 1.65,
         }}>
           LokAI provides legal information, not legal advice.

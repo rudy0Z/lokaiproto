@@ -2,7 +2,7 @@
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router';
 import { LayoutGrid, MessageSquare, Files, FilePenLine, ScanSearch, ArrowRight } from 'lucide-react';
-import { C, SANS, MONO, SHADOW } from './shared';
+import { C, LAYOUT, MONO, SANS, SHADOW, TYPE } from './shared';
 import { useConversations } from '../context/ConversationContext';
 
 const PALETTE_CSS = `
@@ -125,14 +125,14 @@ export function CommandPalette() {
                 onSelect={() => openConversation(conv.id)}
               >
                 <span style={{
-                  width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                  width: 7, height: 7, borderRadius: LAYOUT.radius.full, flexShrink: 0,
                   background: conv.status === 'Ready to File' ? C.green
                     : conv.status === 'Out of Scope' ? C.muted : C.saffron,
                 }} />
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {conv.title === 'New conversation' ? 'Untitled matter' : conv.title}
                 </span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }}>
+                <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted }}>
                   {conv.tags[0] || conv.status}
                 </span>
               </Command.Item>

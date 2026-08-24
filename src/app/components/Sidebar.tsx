@@ -4,7 +4,7 @@ import {
   ScanSearch, Settings,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
-import { BrandLogo, LogoMark, C, LAYOUT, SANS, SHADOW } from './shared';
+import { BrandLogo, C, LAYOUT, LogoMark, SANS, SHADOW, TYPE } from './shared';
 import { useSidebar } from '../context/SidebarContext';
 import { useConversations } from '../context/ConversationContext';
 
@@ -13,10 +13,10 @@ const COLLAPSED_W = parseInt(LAYOUT.sidebarShut, 10);
 
 const NAV_ITEMS = [
   { path: '/desktop/dashboard',           label: 'Dashboard',          Icon: LayoutGrid,    exact: true },
-  { path: '/desktop/chat',                label: 'Ask a Question',     Icon: MessageSquare, prefix: true, createsChat: true },
+  { path: '/desktop/chat',                label: 'Consumer Guide',     Icon: MessageSquare, prefix: true, createsChat: true },
   { path: '/desktop/documents',           label: 'Case Files',         Icon: Files },
   { path: '/desktop/document-draft',      label: 'Demand Notice',      Icon: FilePenLine },
-  { path: '/desktop/notice-interpreter',  label: 'Notice Upload',      Icon: ScanSearch },
+  { path: '/desktop/notice-interpreter',  label: 'Sample Notice',      Icon: ScanSearch },
 ];
 
 type NavItem = (typeof NAV_ITEMS)[number];
@@ -112,7 +112,7 @@ export function Sidebar() {
         position: 'relative',
         overflow: 'hidden',
         borderRight: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: 'inset -1px 0 rgba(255,255,255,0.05)',
+        boxShadow: SHADOW.insetEdge,
       }}>
         <SidebarAura />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -136,7 +136,7 @@ export function Sidebar() {
                   top: 42,
                   width: 30,
                   height: 30,
-                  borderRadius: 10,
+                  borderRadius: LAYOUT.radius.control,
                   border: '1px solid rgba(255,255,255,0.10)',
                   background: 'rgba(255,255,255,0.055)',
                   color: D.text2,
@@ -193,13 +193,13 @@ export function Sidebar() {
                       top: 10,
                       bottom: 10,
                       width: 3,
-                      borderRadius: '0 999px 999px 0',
+                      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.pill} ${LAYOUT.radius.pill} ${LAYOUT.radius.none}`,
                       background: C.saffron,
                     }} />
                   )}
                   <Icon size={expanded ? 18 : 19} strokeWidth={active ? 2.2 : 1.65} />
                   {expanded && (
-                    <span style={{ fontSize: 14, fontWeight: active ? 650 : 500, letterSpacing: '-0.01em' }}>
+                    <span style={{ fontSize: TYPE.body.size, fontWeight: active ? 650 : 500, letterSpacing: '-0.01em' }}>
                       {item.label}
                     </span>
                   )}
@@ -218,7 +218,7 @@ export function Sidebar() {
               }}>
                 <span style={{
                   color: D.text3,
-                  fontSize: 10,
+                  fontSize: TYPE.label.size,
                   fontWeight: 700,
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
@@ -242,7 +242,7 @@ export function Sidebar() {
                       style={{
                         width: '100%',
                         border: '1px solid transparent',
-                        borderRadius: 14,
+                        borderRadius: LAYOUT.radius.panel,
                         background: chatActive
                           ? 'rgba(255,255,255,0.12)'
                           : hoveredChat === conv.id ? 'rgba(255,255,255,0.07)' : 'transparent',
@@ -257,7 +257,7 @@ export function Sidebar() {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                         <span style={{
-                          fontSize: 13,
+                          fontSize: TYPE.small.size,
                           fontWeight: chatActive ? 650 : 560,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -269,7 +269,7 @@ export function Sidebar() {
                           flexShrink: 0,
                           width: 7,
                           height: 7,
-                          borderRadius: '50%',
+                          borderRadius: LAYOUT.radius.full,
                           background: conv.status === 'Ready to File' ? C.green : conv.status === 'Out of Scope' ? C.muted : C.saffron,
                           opacity: chatActive ? 1 : 0.65,
                         }} />
@@ -282,7 +282,7 @@ export function Sidebar() {
                         minWidth: 0,
                       }}>
                         <span style={{
-                          fontSize: 11,
+                          fontSize: TYPE.micro.size,
                           color: D.text3,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -290,8 +290,8 @@ export function Sidebar() {
                         }}>
                           {conv.tags.slice(0, 2).join(' · ') || conv.status}
                         </span>
-                        <span style={{ width: 3, height: 3, borderRadius: '50%', background: D.text3, flexShrink: 0 }} />
-                        <span style={{ fontSize: 11, color: D.text3, flexShrink: 0 }}>
+                        <span style={{ width: 3, height: 3, borderRadius: LAYOUT.radius.full, background: D.text3, flexShrink: 0 }} />
+                        <span style={{ fontSize: TYPE.micro.size, color: D.text3, flexShrink: 0 }}>
                           {conv.since.split(' · ')[0]}
                         </span>
                       </div>
@@ -319,7 +319,7 @@ export function Sidebar() {
                 style={{
                   width: 38,
                   height: 38,
-                  borderRadius: '50%',
+                  borderRadius: LAYOUT.radius.full,
                   border: '1px solid rgba(255,255,255,0.18)',
                   background: 'rgba(255,255,255,0.12)',
                   color: '#FFFFFF',
@@ -330,13 +330,13 @@ export function Sidebar() {
                   boxShadow: SHADOW.xs,
                 }}
               >
-                <span style={{ fontSize: 14, fontWeight: 700 }}>P</span>
+                <span style={{ fontSize: TYPE.body.size, fontWeight: 700 }}>P</span>
               </button>
               {expanded && (
                 <>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: D.text, fontSize: 13, fontWeight: 650 }}>Priya Sharma</div>
-                    <div style={{ color: D.text3, fontSize: 11, marginTop: 3 }}>Mumbai · India</div>
+                    <div style={{ color: D.text, fontSize: TYPE.small.size, fontWeight: 650 }}>Priya Sharma</div>
+                    <div style={{ color: D.text3, fontSize: TYPE.micro.size, marginTop: 3 }}>Mumbai · India</div>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); openSettings(); }}
@@ -344,7 +344,7 @@ export function Sidebar() {
                     style={{
                       width: 30,
                       height: 30,
-                      borderRadius: 10,
+                      borderRadius: LAYOUT.radius.control,
                       border: '1px solid rgba(255,255,255,0.10)',
                       background: 'rgba(255,255,255,0.06)',
                       color: D.text2,
@@ -360,7 +360,7 @@ export function Sidebar() {
               )}
             </div>
             {expanded && (
-              <p style={{ color: D.text3, fontSize: 11, lineHeight: 1.55, margin: '12px 0 0' }}>
+              <p style={{ color: D.text3, fontSize: TYPE.micro.size, lineHeight: 1.55, margin: '12px 0 0' }}>
                 Legal information, not legal advice.
               </p>
             )}

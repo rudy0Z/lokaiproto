@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { C, SANS, SHADOW } from './components/shared';
+import { C, LAYOUT, SANS, SHADOW, TYPE } from './components/shared';
 import { CAPTURE_ROUTE_GROUPS } from './captureRoutes';
 
 function isCaptureSession(hash: string) {
@@ -34,7 +34,7 @@ export default function CaptureLayout() {
             overflowY: 'auto',
             background: 'rgba(255,255,255,0.96)',
             border: `1px solid ${C.border}`,
-            borderRadius: '20px',
+            borderRadius: LAYOUT.radius.card,
             boxShadow: SHADOW.float,
             padding: '16px',
             zIndex: 9999,
@@ -45,7 +45,7 @@ export default function CaptureLayout() {
             <div
               style={{
                 fontFamily: SANS,
-                fontSize: '10px',
+                fontSize: TYPE.label.size,
                 fontWeight: 700,
                 color: C.navy,
                 textTransform: 'uppercase',
@@ -58,7 +58,7 @@ export default function CaptureLayout() {
             <div
               style={{
                 fontFamily: SANS,
-                fontSize: '13px',
+                fontSize: TYPE.small.size,
                 fontWeight: 600,
                 color: C.ink,
                 marginBottom: '4px',
@@ -69,7 +69,7 @@ export default function CaptureLayout() {
             <div
               style={{
                 fontFamily: SANS,
-                fontSize: '12px',
+                fontSize: TYPE.caption.size,
                 lineHeight: 1.5,
                 color: C.textSoft,
               }}
@@ -81,11 +81,11 @@ export default function CaptureLayout() {
           <div
             style={{
               fontFamily: SANS,
-              fontSize: '11px',
+              fontSize: TYPE.micro.size,
               color: C.muted,
               marginBottom: '12px',
               padding: '8px 10px',
-              borderRadius: '10px',
+              borderRadius: LAYOUT.radius.control,
               background: C.bg,
             }}
           >
@@ -98,7 +98,7 @@ export default function CaptureLayout() {
                 <div
                   style={{
                     fontFamily: SANS,
-                    fontSize: '10px',
+                    fontSize: TYPE.label.size,
                     fontWeight: 700,
                     color: C.muted,
                     textTransform: 'uppercase',
@@ -117,12 +117,12 @@ export default function CaptureLayout() {
                         onClick={() => navigateWithCapture(item.path)}
                         style={{
                           fontFamily: SANS,
-                          fontSize: '12px',
+                          fontSize: TYPE.caption.size,
                           fontWeight: 600,
                           color: active ? '#FFFFFF' : C.navy,
                           background: active ? C.navy : C.navySoft,
                           border: active ? `1px solid ${C.navy}` : `1px solid ${C.badgeBorder}`,
-                          borderRadius: '999px',
+                          borderRadius: LAYOUT.radius.pill,
                           padding: '8px 12px',
                           cursor: 'pointer',
                         }}

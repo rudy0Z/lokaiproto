@@ -12,68 +12,113 @@ export const BENGALI = '"Noto Sans Bengali", "Inter", sans-serif';
 export const SERIF = EDITORIAL;
 
 export const TYPE = {
-  // Display — editorial only
-  display1: { family: EDITORIAL, size: '56px', weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em' },
-  display2: { family: EDITORIAL, size: '36px', weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em' },
-  // UI
-  h3:       { family: SANS, size: '20px', weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
-  h4:       { family: SANS, size: '16px', weight: 600, lineHeight: 1.4  },
-  body:     { family: SANS, size: '14px', weight: 400, lineHeight: 1.55 },
-  bodyStrong:{ family: SANS, size: '14px', weight: 500, lineHeight: 1.55 },
-  small:    { family: SANS, size: '13px', weight: 400, lineHeight: 1.5  },
-  micro:    { family: SANS, size: '11px', weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
+  // Display — editorial (Fraunces) only
+  display1:    { family: EDITORIAL, size: '56px', weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em' },
+  display2:    { family: EDITORIAL, size: '36px', weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em' },
+  editorial:   { family: EDITORIAL, size: '28px', weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em' },
+  editorialSm: { family: EDITORIAL, size: '22px', weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em' },
+  // UI hierarchy — Inter. One size = one role. Do not invent px at call sites.
+  h3:          { family: SANS, size: '20px', weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
+  lead:        { family: SANS, size: '18px', weight: 500, lineHeight: 1.35 },
+  h4:          { family: SANS, size: '16px', weight: 600, lineHeight: 1.4  },
+  title:       { family: SANS, size: '15px', weight: 600, lineHeight: 1.4  },
+  body:        { family: SANS, size: '14px', weight: 400, lineHeight: 1.55 },
+  bodyStrong:  { family: SANS, size: '14px', weight: 500, lineHeight: 1.55 },
+  small:       { family: SANS, size: '13px', weight: 400, lineHeight: 1.5  },
+  caption:     { family: SANS, size: '12px', weight: 400, lineHeight: 1.45 },
+  captionStrong:{ family: SANS, size: '12px', weight: 600, lineHeight: 1.45 },
+  micro:       { family: SANS, size: '11px', weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
+  label:       { family: SANS, size: '10px', weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
 } as const;
 
-// ─── Full Color System ────────────────────────────────────────────────────────
+export type TypeRole = keyof typeof TYPE;
+
+/** Spread into a style object. Prefer this over bare fontSize. */
+export function typeStyle(
+  role: TypeRole,
+  overrides: React.CSSProperties = {},
+): React.CSSProperties {
+  const t = TYPE[role];
+  return {
+    fontFamily: t.family,
+    fontSize: t.size,
+    fontWeight: t.weight,
+    lineHeight: t.lineHeight,
+    ...('letterSpacing' in t && t.letterSpacing ? { letterSpacing: t.letterSpacing } : {}),
+    ...('textTransform' in t && t.textTransform ? { textTransform: t.textTransform } : {}),
+    ...overrides,
+  };
+}
+
+// ─── Color system (mirrors CSS tokens in src/styles/index.css) ────────────────
 export const C = {
   // Canvas
-  bg:        '#F8F5EE',
-  surface:   '#FFFFFF',
-  surface2:  '#FBF8F1',
-  washBlue:  '#DDE7FF',
-  washGold:  '#FFE3B8',
-  washRose:  '#F5D8D4',
+  bg:           '#F8F5EE',
+  surface:      '#FFFFFF',
+  surface2:     '#FBF8F1',
+  washBlue:     '#DDE7FF',
+  washGold:     '#FFE3B8',
+  washRose:     '#F5D8D4',
   // Ink
-  ink:       '#181713',
-  inkSoft:   '#48453D',
-  muted:     '#858078',
+  ink:          '#181713',
+  inkSoft:      '#48453D',
+  muted:        '#858078',
   // Structure
-  border:    '#E7E0D4',
+  border:       '#E7E0D4',
   borderStrong: '#CFC5B6',
   // Brand
-  navy:      '#102A4C',
-  saffron:   '#E9852B',
-  oxblood:   '#6B1F1F',
+  navy:         '#102A4C',
+  saffron:      '#E9852B',
+  oxblood:      '#6B1F1F',
   // Semantic
-  green:     '#1F6B3A',
-  red:       '#B8361C',
-  amber:     '#8A4500',
-  
-  // Backwards compat aliases to keep build green until Step 3 sweep
-  bgRaised:  '#FBF8F1',
-  navyDark:  '#0B1E37',
-  navySoft:  'rgba(16,42,76,0.08)',
-  saffronDark: '#C86712',
-  saffronSoft: 'rgba(233,133,43,0.10)',
-  deepAmber: '#E9852B',
-  terracotta: '#C4724A',
-  teal:      '#102A4C',
-  oxbloodDark: '#6B1F1F',
-  oxbloodSoft: 'rgba(107,31,31,0.08)',
-  text:      '#1A1916',
-  textSoft:  '#4A4840',
-  textDisabled: '#8A8880',
-  onDark:    '#FFFFFF',
-  onDarkSoft: 'rgba(255,255,255,0.65)',
-  borderLight: '#E5E0D6',
-  borderFocus: '#102A4C',
-  rule:      '#E5E0D6',
-  successSoft: 'rgba(31,107,58,0.08)',
-  cautionSoft: 'rgba(138,69,0,0.08)',
-  errorSoft:   'rgba(184,54,28,0.08)',
-  badgeBg:     'rgba(16,42,76,0.08)',
-  badgeText:   '#102A4C',
-  badgeBorder: '#CDCAC4',
+  green:        '#1F6B3A',
+  red:          '#B8361C',
+  amber:        '#8A4500',
+  // Derived / soft fills
+  bgRaised:     '#FBF8F1',
+  navyDark:     '#0B1E37',
+  navySoft:     'rgba(16,42,76,0.08)',
+  saffronDark:  '#C86712',
+  saffronSoft:  'rgba(233,133,43,0.10)',
+  terracotta:   '#A94F2D',
+  oxbloodSoft:  'rgba(107,31,31,0.08)',
+  onDark:       '#FFFFFF',
+  onDarkSoft:   'rgba(255,255,255,0.65)',
+  borderLight:  '#E7E0D4',
+  borderFocus:  '#102A4C',
+  rule:         '#E7E0D4',
+  successSoft:  'rgba(31,107,58,0.08)',
+  cautionSoft:  'rgba(138,69,0,0.08)',
+  errorSoft:    'rgba(184,54,28,0.08)',
+  badgeBg:      'rgba(16,42,76,0.08)',
+  badgeText:    '#102A4C',
+  badgeBorder:  '#CFC5B6',
+  // Legacy aliases (same values — keep call sites compiling)
+  deepAmber:    '#E9852B',
+  teal:         '#102A4C',
+  oxbloodDark:  '#6B1F1F',
+  text:         '#181713',
+  textSoft:     '#48453D',
+  textDisabled: '#858078',
+} as const;
+
+export const MOTION = {
+  micro: '120ms',
+  state: '220ms',
+  dialog: '280ms',
+  ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  /** Named recipes — same ladder, clearer call-site intent */
+  press: '120ms',
+  expand: '220ms',
+  confirm: '180ms',
+  status: '220ms',
+} as const;
+
+/** Composer autosize clamp — Prompt Kit / AI Elements behavior, LokAI tokens */
+export const COMPOSER = {
+  maxHeight: 240,
+  maxHeightCompact: 120,
+  minRows: 1,
 } as const;
 
 // ─── Spacing & Layout System ──────────────────────────────────────────────────
@@ -94,21 +139,42 @@ export const S = {
 export const LAYOUT = {
   maxContent:   '1120px',
   maxReading:   '720px',
+  maxChat:      '600px',
+  maxComposer:  '740px',
   sidebarOpen:  '240px',
   sidebarShut:  '64px',
   headerH:      '56px',
   composerH:    '88px',
+  touchTarget:  '44px',
   sectionGapY:  S[9],
   sectionPadX:  S[7],
   cardGap:      S[4],
+  /**
+   * Role radius — never invent px at call sites.
+   * none → hairline corners | xs → tiny chips | sm → badges
+   * control → buttons/inputs | panel → nested cards/list rows
+   * card → primary content cards | turn → AI Turn only
+   * plane → composers/hero | pill → full pills
+   */
   radius: {
-    xs: '4px',
-    sm: '6px',
-    md: '8px',
-    lg: '12px',
-    pill: '999px',
+    none:    '0',
+    xs:      '4px',
+    sm:      '6px',
+    control: '10px',
+    panel:   '12px',
+    card:    '16px',
+    turn:    '18px',
+    plane:   '22px',
+    pill:    '999px',
+    full:    '50%', // avatars, orbs, dots — true circles
+    // Legacy aliases (same values) — prefer role names above
+    md: '10px',
+    lg: '16px',
+    xl: '18px',
   },
 } as const;
+
+export type RadiusRole = keyof typeof LAYOUT.radius;
 
 // ─── Gradient & Wash System ───────────────────────────────────────────────────
 export const GRAD = {
@@ -116,6 +182,13 @@ export const GRAD = {
     'radial-gradient(ellipse 68% 54% at 50% 18%, rgba(221,231,255,0.90) 0%, rgba(221,231,255,0.38) 35%, transparent 68%)',
     'radial-gradient(ellipse 58% 44% at 46% 72%, rgba(255,179,80,0.36) 0%, rgba(255,227,184,0.20) 46%, transparent 74%)',
     'radial-gradient(ellipse 50% 38% at 68% 68%, rgba(245,216,212,0.30) 0%, transparent 70%)',
+    'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
+  ].join(', '),
+  /** Dimmed hero — same room, lights lowered for reading surfaces */
+  readingCanvas: [
+    'radial-gradient(ellipse 68% 54% at 50% 12%, rgba(221,231,255,0.36) 0%, rgba(221,231,255,0.14) 35%, transparent 68%)',
+    'radial-gradient(ellipse 58% 44% at 46% 78%, rgba(255,179,80,0.14) 0%, rgba(255,227,184,0.08) 46%, transparent 74%)',
+    'radial-gradient(ellipse 50% 38% at 68% 68%, rgba(245,216,212,0.12) 0%, transparent 70%)',
     'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
   ].join(', '),
   cardLift: 'linear-gradient(174deg, #FFFFFF 0%, #FBF8F1 100%)',
@@ -129,13 +202,20 @@ export const GRAD = {
   buttonHover: 'linear-gradient(180deg, #234B7F 0%, #183B6B 100%)',
 } as const;
 
+/** Page-plane backgrounds — one composition language across Home and workspace */
+export const PLANE = {
+  hero: GRAD.heroCanvas,
+  reading: GRAD.readingCanvas,
+  flat: C.bg,
+} as const;
+
 export const WASH = {
   heroCanvas: GRAD.heroCanvas,
   cardLift: GRAD.cardLift,
   oxbloodStamp: GRAD.oxbloodStamp,
   // Backwards compat
-  languageSpectrum: 'linear-gradient(90deg, #E8832A 0%, #132846 100%)',
-  sectionFade: 'linear-gradient(to bottom, rgba(245,242,236,0) 0%, #F5F2EC 100%)',
+  languageSpectrum: `linear-gradient(90deg, ${C.saffron} 0%, ${C.navy} 100%)`,
+  sectionFade: `linear-gradient(to bottom, rgba(248,245,238,0) 0%, ${C.bg} 100%)`,
 } as const;
 
 // ─── Shadow System ────────────────────────────────────────────────────────────
@@ -145,44 +225,23 @@ export const SHADOW = {
   md:    '0 2px 5px rgba(26,25,22,0.04), 0 8px 24px rgba(26,25,22,0.065)',
   lg:    '0 14px 42px rgba(26,25,22,0.10), 0 3px 10px rgba(26,25,22,0.04)',
   float: '0 22px 60px rgba(26,25,22,0.13), 0 6px 18px rgba(26,25,22,0.07)',
+  /** Specialty elevations — still tokens, never raw strings at call sites */
+  inset: 'inset 0 1px 0 rgba(255,255,255,0.8)',
+  insetSoft: 'inset 0 1px 0 rgba(255,255,255,0.7)',
+  insetEdge: 'inset -1px 0 rgba(255,255,255,0.05)',
+  navySoft: '0 4px 14px rgba(16,42,76,0.2)',
+  navy: '0 4px 12px rgba(16,42,76,0.28)',
+  overlay: '0 24px 72px rgba(11,30,55,0.24)',
+  saffronGlow: '0 4px 16px rgba(233,133,43,0.3)',
 } as const;
-
-// ─── Card base style ──────────────────────────────────────────────────────────
-export const CARD = {
-  base: {
-    background:   C.surface,
-    border:       `1px solid ${C.border}`,
-    borderRadius: LAYOUT.radius.md,
-    boxShadow:    SHADOW.xs,
-  } as React.CSSProperties,
-
-  featured: {
-    background:   GRAD.cardLift,
-    border:       `1.5px solid ${C.borderStrong}`,
-    borderRadius: LAYOUT.radius.md,
-    boxShadow:    SHADOW.md,
-  } as React.CSSProperties,
-
-  verdict: {
-    background:   C.surface,
-    border:       `1px solid ${C.border}`,
-    borderLeft:   `3px solid ${C.oxblood}`,
-    borderRadius: LAYOUT.radius.md,
-    boxShadow:    SHADOW.xs,
-  } as React.CSSProperties,
-} as const;
-
-export const CARD_BASE = CARD.base;
 
 // ─── Badge style token ────────────────────────────────────────────────────────
 export const BADGE: React.CSSProperties = {
-  fontFamily:  SANS,
-  fontSize:    '11px',
-  fontWeight:  500,
+  ...typeStyle('micro', { letterSpacing: '0.06em' }),
   color:       C.navy,
-  background:  'rgba(19,40,70,0.08)',
+  background:  C.navySoft,
   border:      `1px solid ${C.borderStrong}`,
-  borderRadius:'6px',
+  borderRadius: LAYOUT.radius.sm,
   padding:     '3px 10px',
   display:     'inline-block',
   whiteSpace:  'nowrap',
@@ -278,6 +337,80 @@ const SHARED_ANIM_CSS = `
   outline: 2px solid ${C.saffron};
   outline-offset: 3px;
 }
+
+/* Micro-craft: press / chip / composer — opacity + transform only */
+.lokai-pressable {
+  transform: translateY(0);
+  transition:
+    background ${MOTION.press} ${MOTION.ease},
+    border-color ${MOTION.press} ${MOTION.ease},
+    box-shadow ${MOTION.press} ${MOTION.ease},
+    transform ${MOTION.press} ${MOTION.ease};
+}
+.lokai-pressable:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: ${SHADOW.md};
+}
+.lokai-pressable:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: ${SHADOW.sm};
+}
+.lokai-chip {
+  transform: translateY(0);
+  transition:
+    background ${MOTION.press} ${MOTION.ease},
+    border-color ${MOTION.press} ${MOTION.ease},
+    box-shadow ${MOTION.press} ${MOTION.ease},
+    transform ${MOTION.press} ${MOTION.ease};
+}
+.lokai-chip:hover:not(:disabled) {
+  background: ${C.navySoft} !important;
+  border-color: ${C.navy} !important;
+  transform: translateY(-1px);
+  box-shadow: ${SHADOW.sm};
+}
+.lokai-chip:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: ${SHADOW.xs};
+}
+.lokai-composer-shell {
+  cursor: text;
+  transition:
+    border-color ${MOTION.state} ${MOTION.ease},
+    box-shadow ${MOTION.state} ${MOTION.ease};
+}
+.lokai-composer-shell:focus-within {
+  border-color: ${C.borderFocus} !important;
+  box-shadow: 0 0 0 3px rgba(16,42,76,0.12), ${SHADOW.sm} !important;
+}
+.lokai-disclose {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows ${MOTION.expand} ${MOTION.ease},
+    opacity ${MOTION.expand} ${MOTION.ease};
+}
+.lokai-disclose.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.lokai-disclose > .lokai-disclose-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lokai-pressable,
+  .lokai-chip,
+  .lokai-composer-shell,
+  .lokai-disclose {
+    transition: none !important;
+  }
+  .lokai-pressable:hover:not(:disabled),
+  .lokai-chip:hover:not(:disabled) {
+    transform: none !important;
+  }
+}
 `;
 
 function injectSharedStyles() {
@@ -289,24 +422,50 @@ function injectSharedStyles() {
   }
 }
 
+/** Call from surfaces that use lokai-chip / lokai-pressable / composer shell. */
+export function useLokaiSharedStyles() {
+  useEffect(() => { injectSharedStyles(); }, []);
+}
+
 // ─── Citation Stamp — the most important UI component ─────────────────────────
 export function CitationStamp({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
   useEffect(() => { injectSharedStyles(); }, []);
+
+  const handleCopy = () => {
+    void navigator.clipboard?.writeText(text).catch(() => {});
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), Number.parseInt(MOTION.confirm, 10) + 1200);
+  };
+
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '6px',
-      background: GRAD.oxbloodStamp,
-      color: '#FFFFFF',
-      borderRadius: '4px',
-      padding: '3px 10px',
-      fontFamily: MONO,
-      fontSize: '10px',
-      fontWeight: 500,
-      letterSpacing: '0.05em',
-    }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'rgba(255,255,255,0.6)', flexShrink: 0 }} />
-      {text}
-    </span>
+    <button
+      type="button"
+      onClick={handleCopy}
+      aria-label={copied ? 'Copied citation' : `Copy citation ${text}`}
+      className="lokai-pressable"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '6px',
+        background: GRAD.oxbloodStamp,
+        color: '#FFFFFF',
+        borderRadius: LAYOUT.radius.xs,
+        border: 'none',
+        padding: '3px 10px',
+        fontFamily: MONO,
+        fontSize: TYPE.label.size,
+        fontWeight: 500,
+        letterSpacing: '0.05em',
+        cursor: 'pointer',
+      }}
+    >
+      <span style={{
+        width: 5, height: 5, borderRadius: LAYOUT.radius.full,
+        background: copied ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.6)',
+        flexShrink: 0,
+        transition: `background ${MOTION.confirm} ${MOTION.ease}`,
+      }} />
+      {copied ? 'Copied' : text}
+    </button>
   );
 }
 
@@ -449,7 +608,7 @@ export function VoiceOrb({
           border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, overflow: 'hidden', cursor: onClick ? 'pointer' : 'default',
-          boxShadow: `0 4px 16px rgba(232,131,42,0.3)`,
+          boxShadow: SHADOW.saffronGlow,
         }}>
           <div style={{
             position: 'absolute', inset: 0,
@@ -654,14 +813,14 @@ export function LanguageChip({
         padding:       englishName ? '10px 12px' : '8px 14px',
         background:    selected ? 'rgba(19,40,70,0.08)' : C.bg,
         border:        selected ? `1.5px solid ${C.navy}` : `1px solid ${C.border}`,
-        borderRadius:  LAYOUT.radius.md,
+        borderRadius:  LAYOUT.radius.control,
         cursor:        'pointer',
         fontFamily:    SANS,
       }}
     >
       <span style={{
         fontFamily: SANS,
-        fontSize:   englishName ? '14px' : '13px',
+        fontSize:   englishName ? TYPE.body.size : TYPE.small.size,
         fontWeight: selected ? 600 : 500,
         color:      selected ? C.navy : C.ink,
         lineHeight: 1.3,
@@ -671,7 +830,7 @@ export function LanguageChip({
       {englishName && (
         <span style={{
           fontFamily: SANS,
-          fontSize:   '10px',
+          fontSize:   TYPE.label.size,
           color:      selected ? C.navy : C.muted,
         }}>
           {englishName}
@@ -681,123 +840,11 @@ export function LanguageChip({
   );
 }
 
-// ─── Response Card ────────────────────────────────────────────────────────────
-export type ResponseCardState = 'verified' | 'guidance' | 'outofscope';
-
-interface ResponseCardProps {
-  state?:          ResponseCardState;
-  zone1:           React.ReactNode;
-  zone1Citation?:  string;
-  zone2?:          React.ReactNode;
-  zone3?:          React.ReactNode;
-  zone1Label?:     string;
-  zone2Label?:     string;
-  zone3Label?:     string;
-  maxWidth?:       string | number;
-}
-
-export function ResponseCard({
-  state        = 'verified',
-  zone1,
-  zone1Citation,
-  zone2,
-  zone3,
-  zone1Label   = 'Finding',
-  zone2Label   = 'What the Law Says',
-  zone3Label   = 'What You Can Do',
-  maxWidth     = 540,
-}: ResponseCardProps) {
-  const cardBg = state === 'outofscope' ? 'rgba(138,69,0,0.08)' : C.surface;
-  const shadow = state === 'verified' ? SHADOW.md : SHADOW.sm;
-
-  return (
-    <div style={{
-      maxWidth,
-      background:   cardBg,
-      borderTop:    `1px solid ${C.border}`,
-      borderRight:  `1px solid ${C.border}`,
-      borderBottom: `1px solid ${C.border}`,
-      borderLeft:   state === 'verified'
-        ? '5px solid transparent'
-        : `5px solid ${C.borderStrong}`,
-      borderRadius: '4px 16px 16px 16px',
-      overflow:     'hidden',
-      boxShadow:    shadow,
-      position:     'relative',
-    }}>
-      {state === 'verified' && (
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0,
-          width: '5px',
-          background: C.green,
-          borderRadius: '4px 0 0 16px',
-        }} />
-      )}
-
-      <div style={{ padding: '20px 20px 16px 20px' }}>
-        <div style={{
-          fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-          color: C.muted, letterSpacing: '0.09em', textTransform: 'uppercase',
-          marginBottom: '8px',
-        }}>
-          {zone1Label}
-        </div>
-        <p style={{
-          fontFamily: EDITORIAL, fontSize: '22px', fontWeight: 400, fontStyle: 'normal',
-          color: C.ink, lineHeight: 1.4, margin: '0 0 10px',
-        }}>
-          {zone1}
-        </p>
-        {zone1Citation && <CitationStamp text={zone1Citation} />}
-      </div>
-
-      {zone2 && (
-        <>
-          <div style={{ height: '1px', background: C.border, margin: '0 20px' }} />
-          <div style={{ padding: '14px 20px' }}>
-            <div style={{
-              fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-              color: C.muted, letterSpacing: '0.09em', textTransform: 'uppercase',
-              marginBottom: '8px',
-            }}>
-              {zone2Label}
-            </div>
-            <p style={{
-              fontFamily: SANS, fontSize: '15px', color: C.ink,
-              lineHeight: 1.65, margin: 0,
-            }}>
-              {zone2}
-            </p>
-          </div>
-        </>
-      )}
-
-      {zone3 && (
-        <>
-          <div style={{ height: '1px', background: C.border, margin: '0 20px' }} />
-          <div style={{ padding: '14px 20px 18px' }}>
-            <div style={{
-              fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-              color: C.muted, letterSpacing: '0.09em', textTransform: 'uppercase',
-              marginBottom: '10px',
-            }}>
-              {zone3Label}
-            </div>
-            {zone3}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 // ─── Section label (small caps) ───────────────────────────────────────────────
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-      color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em',
-      marginBottom: '8px',
+      ...typeStyle('label', { color: C.muted, marginBottom: S[2] }),
     }}>
       {children}
     </div>
@@ -808,9 +855,13 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 export function DisclaimerText({ center = false }: { center?: boolean }) {
   return (
     <p style={{
-      fontFamily: SANS, fontSize: '11px', color: C.muted,
-      margin: 0, lineHeight: 1.5,
-      textAlign: center ? 'center' : 'left',
+      ...typeStyle('micro', {
+        color: C.muted,
+        margin: 0,
+        letterSpacing: 'normal',
+        textTransform: 'none',
+        textAlign: center ? 'center' : 'left',
+      }),
     }}>
       LokAI provides legal information, not legal advice.
     </p>

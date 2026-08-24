@@ -1,15 +1,16 @@
 ﻿import React, { useState } from 'react';
-import { ArrowLeft, Download, Pencil, Paperclip, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Download, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { SERIF, SANS, C, GRAD, SHADOW, Btn } from '../components/shared';
-import { ReviewGate } from '../components/LokAIWorkflow';
+import { Btn, C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../components/shared';
+import { ReviewGate, FirstActionChecklist } from '../components/LokAIWorkflow';
+import { useDemo } from '../context/DemoContext';
 
 // ─── Scrollbar CSS ────────────────────────────────────────────────────────────
 const DRAFT_CSS = `
   .draft-scroll::-webkit-scrollbar       { width: 4px; }
   .draft-scroll::-webkit-scrollbar-track { background: transparent; }
-  .draft-scroll::-webkit-scrollbar-thumb { background: #E0DDD5; border-radius: 2px; }
-  .draft-scroll::-webkit-scrollbar-thumb:hover { background: #E8832A; }
+  .draft-scroll::-webkit-scrollbar-thumb { background: #E7E0D4; border-radius: 2px; }
+  .draft-scroll::-webkit-scrollbar-thumb:hover { background: #E9852B; }
 
   /* Print / Save-as-PDF — show only the document, drop all app chrome */
   @media print {
@@ -26,8 +27,8 @@ function SectionLabel({ label }: { label: string }) {
   return (
     <div style={{ marginBottom: '8px', marginTop: '2px' }}>
       <span style={{
-        fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-        color: '#8A8880', textTransform: 'uppercase', letterSpacing: '0.1em',
+        fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
+        color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em',
       }}>
         {label}
       </span>
@@ -36,7 +37,7 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 function SectionRule() {
-  return <div style={{ height: '1px', background: '#E8E4DC', margin: '24px 0 20px' }} />;
+  return <div style={{ height: '1px', background: C.border, margin: '24px 0 20px' }} />;
 }
 
 // ─── Editable field — saffron dashed bottom border ────────────────────────────
@@ -51,16 +52,16 @@ function EditableField({ label, value, onChange }: {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: (focused || hovered) ? '#FFF8F2' : 'transparent',
-        borderBottom: '1.5px dashed #E8832A',
+        borderBottom: `1.5px dashed ${C.saffron}`,
         padding: '6px 10px 4px',
-        borderRadius: '4px 4px 0 0',
+        borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.xs} ${LAYOUT.radius.none} ${LAYOUT.radius.none}`,
         marginBottom: '18px',
         transition: 'background 0.15s',
       }}
     >
       <div style={{
-        fontFamily: SANS, fontSize: '10px', fontWeight: 600,
-        color: '#8A8880', textTransform: 'uppercase', letterSpacing: '0.08em',
+        fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
+        color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
         marginBottom: '3px',
       }}>
         {label}
@@ -71,8 +72,8 @@ function EditableField({ label, value, onChange }: {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={{
-          fontFamily: SANS, fontSize: '14px', fontWeight: 400,
-          color: '#1A1916', lineHeight: 1.6, width: '100%',
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 400,
+          color: C.ink, lineHeight: 1.6, width: '100%',
           background: 'transparent', border: 'none', outline: 'none', padding: 0,
         }}
       />
@@ -85,8 +86,8 @@ function LegalText({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '14px' }}>
       <p style={{
-        fontFamily: SANS, fontSize: '14px', fontWeight: 400,
-        color: '#4A4840', lineHeight: 1.8, margin: 0,
+        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 400,
+        color: C.inkSoft, lineHeight: 1.8, margin: 0,
         whiteSpace: 'pre-line',
       }}>
         {children}
@@ -98,44 +99,44 @@ function LegalText({ children }: { children: React.ReactNode }) {
 // ─── Document card — white, shadow-md, radius 16px, padding 40px ──────────────
 function DocumentCard() {
   const [fields, setFields] = useState({
-    date:           'March 25, 2026',
+    date:           '22 July 2026',
     buyerName:      'Priya Sharma',
     buyerAddr:      '14B, Pali Hill, Bandra West, Mumbai — 400050',
     buyerPhone:     '+91 98200 XXXXX',
     buyerEmail:     'priya.sharma@email.com',
-    sellerName:     'Metro Mobile Store',
-    sellerAddr:     'Linking Road, Bandra West, Mumbai',
-    productName:    'Mobile phone',
-    purchaseDate:   'Add invoice date',
-    invoiceAmount:  '₹28,999',
-    defectSummary:  'Phone overheats and shuts down within two days of purchase.',
-    complaintHistory: 'Seller refused replacement verbally. Written complaint not confirmed yet.',
-    requestedRemedy: 'Repair, replacement, or full refund.',
+    sellerName:     'HomeKart',
+    sellerAddr:     'Online marketplace · Mumbai service address',
+    productName:    'Mixer grinder',
+    purchaseDate:   '6 June 2026',
+    invoiceAmount:  '₹8,999',
+    defectSummary:  'The jar arrived cracked and the motor is unsafe to run.',
+    complaintHistory: 'Seller refused replacement in writing on 8 June 2026.',
+    requestedRemedy: 'Replacement or full refund.',
   });
   const set = (key: keyof typeof fields) => (v: string) => setFields(f => ({ ...f, [key]: v }));
 
   return (
     <div style={{
-      background: '#FFFFFF', border: '1px solid #E0DDD6',
-      borderRadius: '12px', padding: '40px 48px',
+      background: '#FFFFFF', border: `1px solid ${C.border}`,
+      borderRadius: LAYOUT.radius.panel, padding: '40px 48px',
       marginBottom: '32px', boxShadow: SHADOW.md,
     }}>
 
       {/* Document title — DM Serif Display 22px centered */}
       <h2 style={{
-        fontFamily: SERIF, fontSize: '22px', fontWeight: 400,
-        color: '#1A1916', margin: '0 0 28px',
+        fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400,
+        color: C.ink, margin: '0 0 28px',
         textAlign: 'center', letterSpacing: '-0.1px',
       }}>
         Consumer Demand Notice
       </h2>
 
-      <div style={{ height: '1px', background: '#E8E4DC', marginBottom: '24px' }} />
+      <div style={{ height: '1px', background: C.border, marginBottom: '24px' }} />
 
       {/* TO section */}
       <SectionLabel label="To" />
       <LegalText>
-        <strong style={{ fontFamily: SANS, fontSize: '13px', color: '#1A1916', fontWeight: 600 }}>To,</strong>
+        <strong style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, fontWeight: 600 }}>To,</strong>
       </LegalText>
       <EditableField label="Seller / Store Name" value={fields.sellerName} onChange={set('sellerName')} />
       <EditableField label="Seller Address"     value={fields.sellerAddr} onChange={set('sellerAddr')}  />
@@ -155,19 +156,19 @@ function DocumentCard() {
       {/* Subject */}
       <SectionLabel label="Subject" />
       <LegalText>
-        <strong style={{ fontFamily: SANS, fontSize: '13px', color: '#1A1916', fontWeight: 600 }}>Subject:</strong>
+        <strong style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, fontWeight: 600 }}>Subject:</strong>
         {' '}Notice regarding defective{' '}
-        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.productName}</span>
+        <span style={{ color: C.ink, fontWeight: 500 }}>{fields.productName}</span>
         {' '}purchased on{' '}
-        <span style={{ color: '#1A1916', fontWeight: 500 }}>{fields.purchaseDate}</span>
+        <span style={{ color: C.ink, fontWeight: 500 }}>{fields.purchaseDate}</span>
         {' '}and request for refund/replacement.
       </LegalText>
 
       {/* Salutation */}
       <LegalText>
         Dear Sir/Madam,{'\n\n'}I,{' '}
-        <strong style={{ color: '#1A1916' }}>{fields.buyerName}</strong>, am writing to formally notify you regarding a defect in the{' '}
-        <strong style={{ color: '#1A1916' }}>{fields.productName}</strong> purchased from your store. The product developed the following defect within two days of use:
+        <strong style={{ color: C.ink }}>{fields.buyerName}</strong>, am writing to formally notify you regarding a defect in the{' '}
+        <strong style={{ color: C.ink }}>{fields.productName}</strong> purchased from your store. The product developed the following defect within two days of use:
         {' '}{fields.defectSummary}
       </LegalText>
 
@@ -206,15 +207,15 @@ function DocumentCard() {
       <SectionLabel label="Legal Reference" />
       <LegalText>
         This packet is based on{' '}
-        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
           Section 2(10) of the Consumer Protection Act, 2019
         </span>
         {' '}for defect in goods,{' '}
-        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
           Section 2(11)
         </span>
         {' '}for deficiency in service, and{' '}
-        <span style={{ color: '#132846', textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
           Section 35
         </span>
         {' '}for complaint filing.
@@ -242,16 +243,16 @@ function DocumentCard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <LegalText>
           Yours faithfully,{'\n\n'}
-          <strong style={{ color: '#1A1916' }}>{fields.buyerName}</strong>
+          <strong style={{ color: C.ink }}>{fields.buyerName}</strong>
           {'\n'}{fields.buyerPhone}
           {'\n'}{fields.buyerEmail}
         </LegalText>
         <div style={{ textAlign: 'right', marginBottom: '18px' }}>
-          <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8A8880', marginBottom: '32px' }}>
+          <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginBottom: '32px' }}>
             Signature / Thumb impression
           </div>
           <div style={{ height: '1px', width: '160px', background: '#C4C0B8' }} />
-          <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8A8880', marginTop: '6px' }}>
+          <div style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, marginTop: '6px' }}>
             {fields.buyerName} · {fields.date}
           </div>
         </div>
@@ -286,8 +287,8 @@ function WhatNext() {
   return (
     <div style={{ marginBottom: '40px' }}>
       <h3 style={{
-        fontFamily: SERIF, fontSize: '22px', fontWeight: 400,
-        color: '#1A1916', margin: '0 0 24px',
+        fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400,
+        color: C.ink, margin: '0 0 24px',
       }}>
         What to do next
       </h3>
@@ -306,21 +307,21 @@ function WhatNext() {
 
         {steps.map(step => (
           <div key={step.num} style={{
-            background: '#FFFFFF', border: '1px solid #E8E4DC',
-            borderRadius: '16px', padding: '20px',
+            background: '#FFFFFF', border: `1px solid ${C.border}`,
+            borderRadius: LAYOUT.radius.card, padding: '20px',
             display: 'flex', flexDirection: 'column', gap: '12px',
             position: 'relative', zIndex: 1,
-            boxShadow: '0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05)',
+            boxShadow: SHADOW.xs,
           }}>
             {/* Step circle — 24px navy, white number */}
             <div style={{
-              width: '24px', height: '24px', borderRadius: '50%',
-              background: '#132846',
+              width: '24px', height: '24px', borderRadius: LAYOUT.radius.full,
+              background: C.navy,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
               <span style={{
-                fontFamily: SANS, fontSize: '12px', fontWeight: 600,
+                fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
                 color: '#FFFFFF', lineHeight: 1,
               }}>
                 {step.num}
@@ -330,15 +331,15 @@ function WhatNext() {
             <div>
               {/* Step title — 14px weight 600 Plus Jakarta Sans */}
               <div style={{
-                fontFamily: SANS, fontSize: '14px', fontWeight: 600,
-                color: '#1A1916', marginBottom: '6px', lineHeight: 1.3,
+                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
+                color: C.ink, marginBottom: '6px', lineHeight: 1.3,
               }}>
                 {step.title}
               </div>
               {/* Description — 13px secondary */}
               <p style={{
-                fontFamily: SANS, fontSize: '13px', fontWeight: 400,
-                color: '#4A4840', lineHeight: 1.65, margin: 0,
+                fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400,
+                color: C.inkSoft, lineHeight: 1.65, margin: 0,
               }}>
                 {step.desc}
               </p>
@@ -349,14 +350,14 @@ function WhatNext() {
 
       {/* Bottom legal strip — 13px secondary, 3px navy left border, #F4F2EE background */}
       <div style={{
-        background: '#F4F2EE',
-        borderLeft: '3px solid #132846',
-        borderRadius: '0 8px 8px 0',
+        background: C.surface2,
+        borderLeft: `3px solid ${C.navy}`,
+        borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
         padding: '14px 20px',
       }}>
         <p style={{
-          fontFamily: SANS, fontSize: '13px', fontWeight: 400,
-          color: '#4A4840', lineHeight: 1.65, margin: 0,
+          fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400,
+          color: C.inkSoft, lineHeight: 1.65, margin: 0,
         }}>
           LokAI provides legal information, not legal advice. This packet is an AI draft and should be reviewed before filing or sharing.
         </p>
@@ -365,82 +366,30 @@ function WhatNext() {
   );
 }
 
-// ─── Draft Input Bar — follow-up questions ────────────────────────────────────
-function DraftInputBar() {
-  const [value, setValue] = useState('');
-  const [focused, setFocused] = useState(false);
-  const showSend = !!(value.trim()) || focused;
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '10px',
-      background: '#FFFFFF', border: `1px solid ${C.border}`,
-      borderRadius: '16px', padding: '8px 12px',
-      boxShadow: '0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05)',
-    }}>
-      {/* Voice orb — 40px white circle, shadow-sm, navy mic */}
-      <div style={{
-        width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-        background: '#FFFFFF', border: `1px solid ${C.border}`,
-        boxShadow: '0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-      }}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <rect x="5.5" y="1" width="5" height="8" rx="2.5" stroke={C.navy} strokeWidth="1.15" />
-          <path d="M2.5 8C2.5 11.3 4.95 14 8 14C11.05 14 13.5 11.3 13.5 8" stroke={C.navy} strokeWidth="1.15" strokeLinecap="round" />
-          <line x1="8" y1="14" x2="8" y2="15.5" stroke={C.navy} strokeWidth="1.15" strokeLinecap="round" />
-        </svg>
-      </div>
-
-      {/* Input */}
-      <input
-        type="text" value={value}
-        onChange={e => setValue(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        onKeyDown={e => { if (e.key === 'Enter' && value.trim()) setValue(''); }}
-        placeholder="Ask a follow-up question about this draft..."
-        style={{
-          flex: 1, background: 'transparent', border: 'none', outline: 'none',
-          fontFamily: SANS, fontSize: '15px', color: C.muted,
-        }}
-      />
-
-      {/* Send — fades in on focus */}
-      <button
-        onClick={() => { if (value.trim()) setValue(''); }}
-        style={{
-          width: '32px', height: '32px', borderRadius: '50%',
-          background: GRAD.buttonPrimary, border: 'none',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, opacity: showSend ? 1 : 0, transition: 'opacity 0.15s ease',
-          boxShadow: SHADOW.sm,
-        }}
-      >
-        <ArrowRight style={{ width: '14px', height: '14px', color: 'white' }} />
-      </button>
-
-      {/* Paperclip — always visible, rightmost */}
-      <button style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', color: C.muted,
-        padding: '4px', flexShrink: 0,
-      }}>
-        <Paperclip style={{ width: '17px', height: '17px' }} />
-      </button>
-    </div>
-  );
-}
-
 // ─── Draft Page ────────────────────────────────────────────────────────────────
 export default function Draft() {
   const navigate = useNavigate();
   const documentRef = React.useRef<HTMLDivElement | null>(null);
+  const {
+    scenario,
+    facts,
+    draftAllowed,
+    draftApproved,
+    setDraftApproved,
+    language,
+    activeTurn,
+    addAuditEvent,
+  } = useDemo();
+
+  const missingFacts = facts.filter((f) => f.state === 'missing' || f.state === 'disputed');
+  const stopReason = activeTurn?.mode === 'stop'
+    ? (activeTurn.payload as { reason?: string }).reason
+    : scenario.statusBody;
 
   // Save as PDF — uses the browser's native print-to-PDF with a print stylesheet
   // that strips app chrome, so the citizen gets a clean filing-ready document.
   const handleDownload = () => {
+    if (!draftAllowed) return;
     window.print();
   };
 
@@ -448,8 +397,98 @@ export default function Draft() {
     documentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  if (!draftAllowed) {
+    return (
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: PLANE.reading, overflow: 'hidden' }}>
+        <style>{DRAFT_CSS}</style>
+        <div className="draft-scroll" style={{ flex: 1, overflowY: 'auto', padding: '36px 48px 32px' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
+                background: '#FFFFFF', border: `1px solid ${C.border}`,
+                cursor: 'pointer', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', color: C.inkSoft, marginBottom: 24,
+              }}
+            >
+              <ArrowLeft style={{ width: '16px', height: '16px' }} />
+            </button>
+
+            <div style={{
+              background: '#FFFFFF',
+              border: `1px solid ${C.border}`,
+              borderTop: `3px solid ${C.oxblood}`,
+              borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.card}`,
+              padding: 28,
+              boxShadow: SHADOW.sm,
+            }}>
+              <p style={{
+                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700,
+                color: C.oxblood, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px',
+              }}>
+                Draft held
+              </p>
+              <h1 style={{
+                fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
+                color: C.ink, lineHeight: 1.2, margin: '0 0 12px',
+              }}>
+                LokAI will not prepare this draft yet
+              </h1>
+              <p style={{
+                fontFamily: SANS, fontSize: TYPE.title.size, color: C.inkSoft, lineHeight: 1.65, margin: '0 0 18px',
+              }}>
+                {stopReason || scenario.statusTitle}
+              </p>
+
+              {missingFacts.length > 0 && (
+                <div style={{
+                  background: C.surface2, border: `1px solid ${C.border}`,
+                  borderRadius: LAYOUT.radius.panel, padding: 14, marginBottom: 18,
+                }}>
+                  <p style={{
+                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
+                    color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px',
+                  }}>
+                    What is missing
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {missingFacts.map((f) => (
+                      <li key={f.id} style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.ink, marginBottom: 6 }}>
+                        {f.label}: {f.value || 'not confirmed'}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 8px' }}>
+                Who to ask: confirm the missing detail with the seller, or bring a lawyer / trusted helper if the matter is contested.
+              </p>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 20px' }}>
+                What unblocks it: confirm every required fact, then return when the policy tier allows a self-service draft.
+              </p>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Btn variant="primary" size="sm" onClick={() => navigate('/desktop/chat/consumer')}>
+                  Return to the matter
+                </Btn>
+                <Btn variant="secondary" size="sm" onClick={() => navigate('/desktop/documents')}>
+                  View case files
+                </Btn>
+              </div>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: '16px 0 0' }}>
+                Language: {language.toUpperCase()} · Scene: {scenario.label}
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: C.bg, overflow: 'hidden' }}>
+    <main style={{ flex: 1, display: 'flex', flexDirection: 'column', background: PLANE.reading, overflow: 'hidden' }}>
       <style>{DRAFT_CSS}</style>
 
       {/* ── Scrollable content area ── */}
@@ -467,10 +506,10 @@ export default function Draft() {
             <button
               onClick={() => navigate(-1)}
               style={{
-                width: '36px', height: '36px', borderRadius: '10px',
-                background: '#FFFFFF', border: '1px solid #E8E4DC',
+                width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
+                background: '#FFFFFF', border: `1px solid ${C.border}`,
                 cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', color: '#4A4840', flexShrink: 0,
+                justifyContent: 'center', color: C.inkSoft, flexShrink: 0,
                 zIndex: 1,
               }}
             >
@@ -483,8 +522,8 @@ export default function Draft() {
               textAlign: 'center', pointerEvents: 'none',
             }}>
               <h1 style={{
-                fontFamily: SERIF, fontSize: '22px', fontWeight: 400,
-                color: '#1A1916', margin: 0, letterSpacing: '-0.1px',
+                fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400,
+                color: C.ink, margin: 0, letterSpacing: '-0.1px',
                 whiteSpace: 'nowrap',
               }}>
                 Consumer Demand Notice
@@ -507,19 +546,20 @@ export default function Draft() {
           {/* ── AI draft review banner — #FFF3E8, 3px saffron left border, 13px ── */}
           <div style={{
             background: '#FFF3E8',
-            borderLeft: '3px solid #E8832A',
-            borderRadius: '0 8px 8px 0',
+            borderLeft: `3px solid ${C.saffron}`,
+            borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
             padding: '12px 16px',
             marginBottom: '20px',
             display: 'flex', alignItems: 'center', gap: '10px',
           }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
-              <circle cx="7" cy="7" r="6" stroke="#E8832A" strokeWidth="1.2" />
-              <line x1="7" y1="4.5" x2="7" y2="7.5" stroke="#E8832A" strokeWidth="1.2" strokeLinecap="round" />
-              <circle cx="7" cy="9.5" r="0.7" fill="#E8832A" />
+              <circle cx="7" cy="7" r="6" stroke={C.saffron} strokeWidth="1.2" />
+              <line x1="7" y1="4.5" x2="7" y2="7.5" stroke={C.saffron} strokeWidth="1.2" strokeLinecap="round" />
+              <circle cx="7" cy="9.5" r="0.7" fill={C.saffron} />
             </svg>
-            <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 400, color: '#8A4500' }}>
-              AI draft — review all details before sending
+            <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400, color: '#8A4500' }}>
+              AI draft — review all details before sending · {scenario.matterTitle}
+              {draftApproved ? ' · Approved for copy/print' : ''}
             </span>
           </div>
 
@@ -534,11 +574,11 @@ export default function Draft() {
               draftText={[
                 'LokAI — Consumer demand notice draft (review before sending)',
                 '',
-                'To: Metro Mobile Store',
+                'To: HomeKart',
                 'Address: Linking Road, Bandra West, Mumbai',
-                'Subject: Defective mobile phone — request for repair, replacement, or refund',
+                'Subject: Damaged mixer grinder — request for replacement or refund',
                 '',
-                'I purchased a mobile phone from Metro Mobile Store. The phone became defective',
+                'I purchased a mixer grinder from HomeKart. It arrived damaged',
                 'shortly after purchase. I asked the seller for a repair, replacement, or refund,',
                 'and the request was refused.',
                 '',
@@ -549,25 +589,52 @@ export default function Draft() {
                 '',
                 '— Prepared with LokAI. Please review every detail before sending.',
               ].join('\n')}
+              approved={draftApproved}
+              onApprove={setDraftApproved}
               onPrint={() => window.print()}
             />
           </div>
+
+          {draftApproved && (
+            <div className="no-print" style={{ margin: '16px 0 8px' }}>
+              <FirstActionChecklist
+                onComplete={() => addAuditEvent('Exit checklist completed — user owns next actions outside LokAI')}
+              />
+            </div>
+          )}
 
           {/* ── What to do next ── */}
           <WhatNext />
         </div>
       </div>
 
-      {/* ── Fixed bottom input bar ── */}
+      {/* ── Compact scoped ask — draft stays the subject of the page ── */}
       <div className="no-print" style={{
         flexShrink: 0,
         background: '#FFFFFF',
-        borderTop: '1px solid #E8E4DC',
-        boxShadow: '0 -1px 4px rgba(26,25,22,0.04), 0 -4px 12px rgba(26,25,22,0.04)',
-        padding: '14px 48px 20px',
+        borderTop: `1px solid ${C.border}`,
+        boxShadow: SHADOW.xs,
+        padding: '12px 48px 16px',
       }}>
-        <div style={{ maxWidth: '740px', margin: '0 auto' }}>
-          <DraftInputBar />
+        <div style={{ maxWidth: '740px', margin: '0 auto', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/desktop/chat/consumer', { state: { initialQuestion: 'Review my demand notice draft for missing facts' } })}
+            style={{
+              minHeight: 40,
+              padding: '0 16px',
+              borderRadius: LAYOUT.radius.pill,
+              border: `1px solid ${C.navy}`,
+              background: C.surface,
+              color: C.navy,
+              fontFamily: SANS,
+              fontSize: TYPE.small.size,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Ask about this draft
+          </button>
         </div>
       </div>
     </main>

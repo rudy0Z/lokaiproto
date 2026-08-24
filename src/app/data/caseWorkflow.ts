@@ -90,12 +90,9 @@ export interface TrustSignals {
   riskLevel: RiskLevel;
   draftStatus: DraftStatus;
   /**
-   * Share of the assessment that maps to a verified source in the knowledge
-   * base (0–100). This is LokAI's deliberate replacement for a single
-   * "confidence %": it measures source grounding, not model self-belief.
-   * Below 85 the product deprecates the verdict and routes to a safe fallback.
+   * Inspectable claim coverage — never model confidence.
+   * Prefer groundedClaims/totalClaims in UI; claimRatio is derived (0–1).
    */
-  groundingScore: number;
   groundedClaims: number;
   totalClaims: number;
 }
@@ -132,7 +129,6 @@ type FailureTrustPatch = Pick<
   | 'factCompleteness'
   | 'jurisdictionClarity'
   | 'riskLevel'
-  | 'groundingScore'
   | 'groundedClaims'
   | 'totalClaims'
 >;
@@ -145,8 +141,8 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Defines defect in goods.',
     coverage: 'direct',
-    lastReviewed: 'Verified source set · 2026',
-    howUsed: 'Classifies the defective phone as a goods defect, not only a customer-service issue.',
+    lastReviewed: 'Illustrative · expert review pending',
+    howUsed: 'Classifies the damaged mixer as a goods defect, not only a customer-service issue.',
   },
   {
     id: 'cpa-2-11',
@@ -155,7 +151,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Defines deficiency in service.',
     coverage: 'direct',
-    lastReviewed: 'Verified source set · 2026',
+    lastReviewed: 'Illustrative · expert review pending',
     howUsed: 'Frames seller refusal as a possible deficiency in service after the user reports the defect.',
   },
   {
@@ -165,7 +161,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Allows a consumer to file a complaint before the appropriate commission.',
     coverage: 'direct',
-    lastReviewed: 'Verified source set · 2026',
+    lastReviewed: 'Illustrative · expert review pending',
     howUsed: 'Supports the filing route if the seller ignores the written complaint.',
   },
   {
@@ -175,20 +171,20 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Applies where the purchase was made through an online marketplace.',
     coverage: 'related',
-    lastReviewed: 'Verified source set · 2026',
+    lastReviewed: 'Illustrative · expert review pending',
     howUsed: 'Used only if the purchase happened through an online marketplace.',
   },
 ];
 
 const CONSUMER_FACTS = {
   buyerName: 'Priya Sharma',
-  sellerName: 'Metro Mobile Store',
-  platform: 'Offline retail purchase',
-  product: 'Mobile phone',
-  purchaseDate: 'Needs invoice date',
-  defectSummary: 'Phone overheats and shuts down within two days of purchase.',
-  complaintHistory: 'Seller refused replacement verbally. Written complaint not confirmed yet.',
-  requestedRemedy: 'Repair, replacement, or refund.',
+  sellerName: 'HomeKart',
+  platform: 'Online marketplace',
+  product: 'Mixer grinder',
+  purchaseDate: '6 June 2026',
+  defectSummary: 'Mixer arrived with a cracked jar and does not run safely.',
+  complaintHistory: 'Seller refused replacement in writing.',
+  requestedRemedy: 'Replacement or full refund.',
 };
 
 /**
@@ -200,22 +196,22 @@ const CONSUMER_FACTS = {
  */
 export function getVerificationFacts(): VerificationFact[] {
   return [
-    { id: 'product', label: 'Product', value: 'Mobile phone', status: 'confirmed' },
-    { id: 'seller', label: 'Seller', value: 'Metro Mobile Store', status: 'confirmed' },
-    { id: 'amount', label: 'Invoice amount', value: '₹28,999', status: 'confirmed' },
+    { id: 'product', label: 'Product', value: 'Mixer grinder', status: 'confirmed' },
+    { id: 'seller', label: 'Seller', value: 'HomeKart', status: 'confirmed' },
+    { id: 'amount', label: 'Invoice amount', value: '₹8,999', status: 'confirmed' },
     {
       id: 'purchaseDate',
       label: 'Purchase date',
-      value: '15 Apr 2026',
-      status: 'needs_review',
-      hint: 'LokAI read this from a blurry invoice line, and the seller-chat screenshot in your evidence references 12 Apr instead — check which date is correct before we rely on it for deadlines.',
+      value: '6 June 2026',
+      status: 'confirmed',
+      hint: 'This date appears on both the prepared invoice and seller message.',
     },
-    { id: 'defect', label: 'Defect', value: 'Overheats and shuts down', status: 'confirmed' },
+    { id: 'defect', label: 'Defect', value: 'Cracked jar; motor unsafe to run', status: 'confirmed' },
   ];
 }
 
 // ─── Evidence Locker ───────────────────────────────────────────────────────────
-// Grounding has two sides: the law side (sources, coverage, groundingScore above)
+// Grounding has two sides: the law side (sources, coverage, claim counts above)
 // and the evidence side — whether the facts LokAI is reasoning over actually hold
 // up against each other. This is the evidence side: what's uploaded, what's
 // missing, and whether two documents silently disagree.
@@ -248,16 +244,27 @@ export function getEvidenceLocker(): EvidenceItem[] {
       label: 'Invoice or payment receipt',
       status: 'uploaded',
       extractedFacts: [
-        { label: 'Date read from invoice', value: '15 Apr 2026' },
-        { label: 'Amount', value: '₹28,999' },
+        { label: 'Date read from invoice', value: '6 June 2026' },
+        { label: 'Amount', value: '₹8,999' },
       ],
+    },
+    {
+      id: 'whatsapp-chat',
+      label: 'WhatsApp or seller-chat screenshots',
+      status: 'uploaded',
+      extractedFacts: [{ label: 'Seller refusal received', value: '8 June 2026' }],
+    },
+    {
+      id: 'order-ticket',
+      label: 'Platform order or ticket ID',
+      status: 'uploaded',
+      extractedFacts: [{ label: 'Order ID', value: 'HK-48291' }],
     },
     {
       id: 'seller-chat',
       label: 'Seller replies, call logs, or written complaint proof',
-      status: 'conflicting',
-      extractedFacts: [{ label: 'Date mentioned in the message', value: '12 Apr 2026' }],
-      conflictNote: 'This message references 12 Apr — three days before the invoice date LokAI read. Confirm which one is correct in the facts below; it changes when the response window starts.',
+      status: 'uploaded',
+      extractedFacts: [{ label: 'Written refusal', value: '8 June 2026' }],
     },
     {
       id: 'defect-evidence',
@@ -301,12 +308,12 @@ export function getNoticeAssessment(kind: NoticeAssessmentKind): NoticeAssessmen
   }
   return {
     kind: 'offer',
-    title: 'Metro Mobile Store replied',
-    decodedSummary: 'The seller offers a 50% refund (₹14,500) instead of the full amount, citing "used condition" of the phone.',
+    title: 'HomeKart replied',
+    decodedSummary: 'The seller offers store credit of ₹4,500 instead of the full refund, citing “opened packaging.”',
     riskLevel: 'looks_genuine',
     riskExplanation: 'The reply comes from the same email thread as the original purchase and references the correct invoice number and defect description.',
     deadline: 'The seller asks for a response within 7 days.',
-    extractedAmount: '₹14,500 offered of ₹28,999 claimed',
+    extractedAmount: '₹4,500 store credit offered against ₹8,999 paid',
     suggestedReply: 'Decline the partial offer and restate the full refund request, citing the same statutory sections, with a final 7-day deadline before filing.',
   };
 }
@@ -326,13 +333,15 @@ export function buildFilingPacket(caseFacts = CONSUMER_FACTS): FilingPacket {
     ],
     evidenceChecklist: [
       'Invoice or payment receipt',
+      'WhatsApp or seller-chat screenshots',
+      'Platform order or ticket ID',
       'Warranty card or product listing',
       'Photos or video showing the defect',
       'Seller replies, call logs, or written complaint proof',
       'Repair report, if already inspected',
     ],
     copySummary:
-      'I purchased a mobile phone that became defective shortly after purchase. I asked the seller for repair, replacement, or refund, but the issue has not been resolved. I am keeping invoice proof, defect evidence, and seller communication ready for a consumer notice.',
+      'I purchased a mixer grinder that arrived damaged. I asked the seller for replacement or refund, but the request was refused. I am keeping the invoice, WhatsApp or seller-chat screenshots, platform order ID, damage photos, and seller messages ready for a consumer notice.',
     reviewNotice: 'AI draft. Review every field before sending.',
   };
 }
@@ -341,19 +350,19 @@ const BASE_ACTION_PLAN: WorkflowActionStep[] = [
   {
     id: 'written-complaint',
     title: 'Send written complaint',
-    description: 'Ask the seller or manufacturer for repair, replacement, or refund in writing.',
+    description: 'Ask the seller or manufacturer for repair, replacement, or refund in writing — send by registered post with acknowledgement due (AD) and keep the postal receipt.',
     status: 'current',
   },
   {
     id: 'save-proof',
     title: 'Save proof',
-    description: 'Keep invoice, warranty, defect photos, and seller replies together.',
+    description: 'Keep invoice, WhatsApp or seller-chat screenshots, platform order or ticket ID, warranty, and defect photos together.',
     status: 'waiting',
   },
   {
     id: 'file-if-ignored',
     title: 'File if ignored',
-    description: 'Use NCH or the District Consumer Commission if no response arrives.',
+    description: 'File on e-Daakhil, call National Consumer Helpline (1915), or approach the District Consumer Commission if no response arrives.',
     status: 'waiting',
   },
 ];
@@ -377,10 +386,10 @@ function getStageLabel(stage: WorkflowStage) {
 
 export function buildAuditTrail(workflowState: CaseWorkflowState): AuditEvent[] {
   return [
-    { id: 'intake', label: 'Issue submitted', detail: 'Defective mobile phone and seller refusal recorded.', time: '9:41 AM' },
+    { id: 'intake', label: 'Issue submitted', detail: 'Damaged mixer and seller refusal recorded.', time: '9:41 AM' },
     { id: 'triage', label: 'Matter classified', detail: 'LokAI matched this to consumer refund / defective product.', time: '9:42 AM' },
     { id: 'clarify', label: 'Missing detail requested', detail: workflowState.clarificationQuestion || 'Purchase date and written complaint status checked.', time: '9:42 AM' },
-    { id: 'sources', label: 'Sources checked', detail: 'Consumer Protection Act sections and e-commerce rules reviewed in verified source set.', time: '9:43 AM' },
+    { id: 'sources', label: 'Sources checked', detail: 'Illustrative Consumer Protection Act source notes reviewed; expert review remains pending.', time: '9:43 AM' },
     { id: 'packet', label: 'Packet prepared', detail: workflowState.filingPacket.title, time: '9:44 AM' },
   ];
 }
@@ -418,7 +427,7 @@ export function getConsumerWorkflowState(
     title: 'Consumer refund case',
     stage: normalizedStage,
     stageLabel: getStageLabel(normalizedStage),
-    summary: 'Defective mobile phone with seller refusal. LokAI is keeping the path narrow: written complaint, evidence, then demand notice if ignored.',
+    summary: 'Damaged mixer with a written seller refusal. LokAI is keeping the path narrow: organise proof, send a written complaint, then review a demand notice if needed.',
     clarificationQuestion: 'Have you already complained to the seller in writing?',
     currentUserStep: isClarify
       ? 'Answer the written-complaint question.'
@@ -437,7 +446,6 @@ export function getConsumerWorkflowState(
       draftStatus: isBlocked ? 'ready_to_use' : 'ai_draft',
       // Grounding drops while a fact is missing, recovers once the case is complete,
       // and collapses in the source-gap failure path.
-      groundingScore: defaultFailureTrust?.groundingScore ?? (isClarify || isVerify ? 74 : 88),
       groundedClaims: defaultFailureTrust?.groundedClaims ?? (isClarify || isVerify ? 3 : 4),
       totalClaims: defaultFailureTrust?.totalClaims ?? 4,
     },
@@ -492,7 +500,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
     source_gap: {
       kind: 'source_gap',
       title: 'Source coverage is not enough',
-      body: 'LokAI does not have a direct source for this exact claim in the verified source set.',
+      body: 'This prepared prototype does not have an official source that directly supports the exact claim.',
       nextAction: 'Use a general safe step or request human review',
       riskLevel: 'review_recommended',
       safeFallback: 'Keep records and avoid sending a legal claim until a reliable source is checked.',
@@ -508,10 +516,10 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
     ocr_unreadable: {
       kind: 'ocr_unreadable',
       title: 'The document is hard to read',
-      body: 'LokAI could not reliably extract the text from the uploaded image.',
-      nextAction: 'Retake photo or enter key lines manually',
+      body: 'LokAI could not reliably read the invoice total and date on the uploaded image.',
+      nextAction: 'Enter ₹8,999 and the purchase date manually, or retake a clearer photo',
       riskLevel: 'self_service',
-      safeFallback: 'Capture the date, sender, amount, and deadline manually.',
+      safeFallback: 'Capture the date, seller name, amount, and deadline yourself before LokAI builds an assessment.',
     },
     language_uncertain: {
       kind: 'language_uncertain',
@@ -524,16 +532,16 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
     model_timeout: {
       kind: 'model_timeout',
       title: 'LokAI paused before finishing',
-      body: 'Your input is preserved. The live model did not respond in time.',
-      nextAction: 'Retry or use offline checklist',
+      body: 'Your sample is still here. Nothing was uploaded or sent.',
+      nextAction: 'Retry the prepared answer, or review the evidence checklist offline',
       riskLevel: 'self_service',
-      safeFallback: 'Save invoice, defect photos, warranty, and seller messages.',
+      safeFallback: 'Save invoice, defect photos, warranty, and seller messages while you wait.',
     },
     out_of_scope: {
       kind: 'out_of_scope',
       title: 'This is outside LokAI’s scope',
-      body: 'LokAI supports Indian legal rights, notices, RTI, tenancy, consumer issues, and legal documents.',
-      nextAction: 'Start a supported legal matter',
+      body: 'This prototype only covers consumer refund examples — a damaged product, a seller refusal, and the next practical step. It does not handle RTI, tenancy, employment, or criminal matters.',
+      nextAction: 'Open the prepared consumer-refund example',
       riskLevel: 'review_recommended',
       safeFallback: 'If this is urgent or unsafe, contact the appropriate official or professional help.',
     },
@@ -557,7 +565,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'needs_one_detail',
       jurisdictionClarity: 'confirmed',
       riskLevel: 'self_service',
-      groundingScore: 74,
       groundedClaims: 3,
       totalClaims: 4,
     },
@@ -566,7 +573,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'complete',
       jurisdictionClarity: 'confirmed',
       riskLevel: 'review_recommended',
-      groundingScore: 52,
       groundedClaims: 2,
       totalClaims: 4,
     },
@@ -575,7 +581,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'needs_one_detail',
       jurisdictionClarity: 'unknown',
       riskLevel: 'review_recommended',
-      groundingScore: 61,
       groundedClaims: 2,
       totalClaims: 4,
     },
@@ -584,7 +589,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'insufficient',
       jurisdictionClarity: 'assumed',
       riskLevel: 'self_service',
-      groundingScore: 68,
       groundedClaims: 2,
       totalClaims: 4,
     },
@@ -593,7 +597,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'needs_one_detail',
       jurisdictionClarity: 'confirmed',
       riskLevel: 'self_service',
-      groundingScore: 76,
       groundedClaims: 3,
       totalClaims: 4,
     },
@@ -602,7 +605,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'complete',
       jurisdictionClarity: 'confirmed',
       riskLevel: 'self_service',
-      groundingScore: 70,
       groundedClaims: 3,
       totalClaims: 4,
     },
@@ -611,7 +613,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'insufficient',
       jurisdictionClarity: 'unknown',
       riskLevel: 'review_recommended',
-      groundingScore: 40,
       groundedClaims: 1,
       totalClaims: 4,
     },
@@ -620,7 +621,6 @@ export function getFailureTrustSignals(kind: FailureKind | string | null): Failu
       factCompleteness: 'insufficient',
       jurisdictionClarity: 'unknown',
       riskLevel: 'human_required',
-      groundingScore: 58,
       groundedClaims: 2,
       totalClaims: 4,
     },
