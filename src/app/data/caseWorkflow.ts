@@ -141,7 +141,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Defines defect in goods.',
     coverage: 'direct',
-    lastReviewed: 'Illustrative · expert review pending',
+    lastReviewed: 'Example — verify with a lawyer',
     howUsed: 'Classifies the damaged mixer as a goods defect, not only a customer-service issue.',
   },
   {
@@ -151,7 +151,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Defines deficiency in service.',
     coverage: 'direct',
-    lastReviewed: 'Illustrative · expert review pending',
+    lastReviewed: 'Example — verify with a lawyer',
     howUsed: 'Frames seller refusal as a possible deficiency in service after the user reports the defect.',
   },
   {
@@ -161,7 +161,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Allows a consumer to file a complaint before the appropriate commission.',
     coverage: 'direct',
-    lastReviewed: 'Illustrative · expert review pending',
+    lastReviewed: 'Example — verify with a lawyer',
     howUsed: 'Supports the filing route if the seller ignores the written complaint.',
   },
   {
@@ -171,7 +171,7 @@ const CONSUMER_SOURCES: WorkflowSource[] = [
     jurisdiction: 'India',
     excerpt: 'Applies where the purchase was made through an online marketplace.',
     coverage: 'related',
-    lastReviewed: 'Illustrative · expert review pending',
+    lastReviewed: 'Example — verify with a lawyer',
     howUsed: 'Used only if the purchase happened through an online marketplace.',
   },
 ];

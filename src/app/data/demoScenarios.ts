@@ -24,7 +24,7 @@ export interface DemoSource {
   jurisdiction: string;
   support: SourceSupport;
   supportsClaim: string;
-  reviewLabel: 'Illustrative · expert review pending';
+  reviewLabel: 'Example — verify with a lawyer';
 }
 
 export interface DemoScenario {
@@ -105,7 +105,7 @@ const consumerSource: DemoSource = {
   jurisdiction: 'India',
   support: 'supports',
   supportsClaim: 'A consumer can seek a remedy for a defective product through the applicable complaint process.',
-  reviewLabel: 'Illustrative · expert review pending',
+  reviewLabel: 'Example — verify with a lawyer',
 };
 
 export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
@@ -220,7 +220,7 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
     userMessage: 'I bought a damaged mixer in January 2022. The seller still refuses a refund. Can I file a consumer complaint now?',
     policyTier: 'human_help_required',
     statusTitle: 'LokAI will not prepare a filing for this date',
-    statusBody: 'The prepared purchase date sits outside the complaint window this demo illustrates. LokAI keeps the summary but will not draft a notice or recommend filing. Ask a lawyer about limitation for your facts.',
+    statusBody: 'This purchase is from too long ago for the time limit this example covers. LokAI will keep your summary, but it will not draft a notice or suggest filing — the deadline rules are something a lawyer should check for your exact dates.',
     allowedActions: [
       'Keep the purchase and evidence summary',
       'Ask a lawyer about limitation',

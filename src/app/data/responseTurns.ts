@@ -28,7 +28,7 @@ export interface TurnCitation {
   id: string;
   title: string;
   reference: string;
-  reviewLabel: 'Illustrative · expert review pending';
+  reviewLabel: 'Example — verify with a lawyer';
 }
 
 export interface ExplainPayload {
@@ -112,13 +112,13 @@ const CPA_CITATIONS: TurnCitation[] = [
     id: 'cpa-2-10',
     title: 'Consumer Protection Act, 2019',
     reference: 'Section 2(10) — defect in goods',
-    reviewLabel: 'Illustrative · expert review pending',
+    reviewLabel: 'Example — verify with a lawyer',
   },
   {
     id: 'cpa-35',
     title: 'Consumer Protection Act, 2019',
     reference: 'Section 35 — complaint before commission',
-    reviewLabel: 'Illustrative · expert review pending',
+    reviewLabel: 'Example — verify with a lawyer',
   },
 ];
 
@@ -338,7 +338,7 @@ export const PREPARED_TURNS: ResponseTurn[] = [
         id: 'cpa-limitation-note',
         title: 'Consumer Protection Act, 2019',
         reference: 'Complaint timelines · illustrative',
-        reviewLabel: 'Illustrative · expert review pending',
+        reviewLabel: 'Example — verify with a lawyer',
       },
     ],
     groundedClaims: 1,
@@ -348,7 +348,7 @@ export const PREPARED_TURNS: ResponseTurn[] = [
       mode: 'stop',
       data: {
         reason:
-          'This prepared example uses a January 2022 purchase date. That sits outside the complaint window this demo illustrates, so LokAI will not draft a notice or recommend filing.',
+          'This example uses a January 2022 purchase — older than the time limit this demo covers. So LokAI will not draft a notice or suggest filing; a lawyer can check the deadline for your real dates.',
         preservedSummary:
           'Damaged mixer purchased January 2022 for ₹8,999; seller still refuses a refund. Evidence checklist and matter summary are preserved.',
         stillAvailable: [
@@ -419,7 +419,7 @@ export const PREPARED_TURNS: ResponseTurn[] = [
         id: 'mmc-203',
         title: 'Mumbai Municipal Corporation Act, 1888',
         reference: 'Section 203 — recovery (illustrative)',
-        reviewLabel: 'Illustrative · expert review pending',
+        reviewLabel: 'Example — verify with a lawyer',
       },
     ],
     groundedClaims: 3,

@@ -6,6 +6,7 @@ import { useConversations, type Conversation } from '../../context/ConversationC
 import { LANGUAGE_REGISTRY, type LanguageEntry } from '../../data/languagePacks';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
 import { Composer } from '../../components/ai/Turn';
+import { Sheet } from '../../components/Sheet';
 import { useDemo } from '../../context/DemoContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 
@@ -255,17 +256,17 @@ export const LANG_LABEL: Record<string, string> = {
 };
 export const getLangLabel = (code: string) => LANG_LABEL[code] ?? 'English';
 
-export function LanguageBottomSheet({ selected, onSelect, onClose }: {
-  selected: string; onSelect: (code: string) => void; onClose: () => void;
+export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
+  open: boolean; selected: string; onSelect: (code: string) => void; onClose: () => void;
 }) {
+  /* Migrated to the shared <Sheet> (contained to the phone artboard) — it was
+     a hand-rolled absolute overlay that snapped open/closed with no exit
+     transition, focus management, or escape handling. `contain` keeps it
+     inside the 390px frame rather than escaping to the viewport in dev/p
+     views the way a plain fixed sheet would. */
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', zIndex: 30 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(26,25,22,0.5)' }} />
-      <div style={{
-        position: 'relative', zIndex: 1, background: C.surface,
-        borderRadius: `${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.none} ${LAYOUT.radius.none}`, boxShadow: SHADOW.float,
-        display: 'flex', flexDirection: 'column', maxHeight: '520px',
-      }}>
+    <Sheet open={open} onClose={onClose} side="bottom" label="Choose language" contain maxHeight="520px">
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
           <div style={{ width: '36px', height: '4px', borderRadius: LAYOUT.radius.xs, background: C.border }} />
         </div>
@@ -312,13 +313,13 @@ export function LanguageBottomSheet({ selected, onSelect, onClose }: {
             );
           })}
         </div>
-        <div style={{ height: '60px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ height: '60px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <button onClick={onClose} style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.textSoft, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 24px' }}>
             Close
           </button>
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 }
 
@@ -947,14 +948,13 @@ export function HomeArtboard() {
       {/* ── Floating composer — real input + mic, above the bottom nav ── */}
       <FloatingComposer />
 
-      {/* ── Language bottom sheet ── */}
-      {langSheetOpen && (
-        <LanguageBottomSheet
-          selected={selectedLanguage}
-          onSelect={(code) => { setSelectedLanguage(code); setLangSheetOpen(false); }}
-          onClose={() => setLangSheetOpen(false)}
-        />
-      )}
+      {/* ── Language bottom sheet — always mounted; Sheet animates open/exit ── */}
+      <LanguageBottomSheet
+        open={langSheetOpen}
+        selected={selectedLanguage}
+        onSelect={(code) => { setSelectedLanguage(code); setLangSheetOpen(false); }}
+        onClose={() => setLangSheetOpen(false)}
+      />
     </div>
   );
 }

@@ -298,11 +298,14 @@ export function LokAISourceDrawer({
   onClose,
   title = 'Source trail',
   sources,
+  contain = false,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   sources: WorkflowSource[];
+  /** True when rendered inside a mobile phone artboard — see Sheet's `contain`. */
+  contain?: boolean;
 }) {
   /* Presentation (side drawer on desktop, bottom sheet on phones) and its
      motion now live in <Sheet>. Previously this was `width: min(420px,100%)`
@@ -310,7 +313,7 @@ export function LokAISourceDrawer({
      entire screen and hid the answer whose sources it was showing — the
      opposite of inspect-without-losing-context. */
   return (
-    <Sheet open={open} onClose={onClose} side="right" label={title} width={420}>
+    <Sheet open={open} onClose={onClose} side="right" label={title} width={420} contain={contain}>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
         <div style={{
           minHeight: 64,

@@ -1301,6 +1301,7 @@ function CaseArtboard() {
         onClose={() => setSourceOpen(false)}
         title="Source drawer"
         sources={workflow.sources}
+        contain
       />
     </div>
   );

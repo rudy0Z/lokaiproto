@@ -8,6 +8,7 @@ import { Turn, TurnStatus } from '../../components/ai/Turn';
 import type { ResponseTurn } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
+import { ARTBOARD } from '../../embed';
 
 /* voicePulse / voiceBarListen removed.
    This screen hand-rolled its own listening visual — a pulsing circle with
@@ -36,8 +37,7 @@ export function VoiceActiveArtboard() {
   return (
     <div
       style={{
-        width: 390,
-        height: 844,
+        ...ARTBOARD,
         position: 'relative',
         overflow: 'hidden',
         background: C.bg,

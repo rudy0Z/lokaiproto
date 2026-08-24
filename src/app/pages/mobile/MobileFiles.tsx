@@ -91,7 +91,7 @@ function FilesArtboard() {
     {
       id: 'consumer-sources',
       title: 'Source basis',
-      meta: scenario.sources[0]?.reviewLabel ?? 'Illustrative · expert review pending',
+      meta: scenario.sources[0]?.reviewLabel ?? 'Example — verify with a lawyer',
       route: '/mobile/case/consumer?stage=retrieve',
       detail: scenario.sources[0]?.title ?? 'Consumer Protection Act, 2019',
     },

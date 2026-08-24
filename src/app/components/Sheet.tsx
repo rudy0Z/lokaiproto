@@ -51,6 +51,7 @@ export function Sheet({
   label,
   width = 420,
   maxHeight = '85vh',
+  contain = false,
   children,
 }: {
   open: boolean;
@@ -61,10 +62,27 @@ export function Sheet({
   width?: number;
   /** Bottom-sheet height ceiling — keeps the surface behind it partly visible. */
   maxHeight?: string;
+  /**
+   * Contain within the nearest positioned ancestor instead of the viewport.
+   *
+   * The mobile screens render inside a 390px phone artboard. A `position:
+   * fixed` sheet has no transform ancestor there, so in standalone/dev view
+   * it resolves to the browser viewport and escapes the phone frame (in the
+   * portfolio embed the iframe *is* the phone, so fixed happens to look
+   * right — but the dev harness and /p views do not have that). `contain`
+   * switches to `position: absolute`, which fills the artboard root (those
+   * roots are position: relative). Pass it from any in-artboard call site.
+   *
+   * It also forces bottom-sheet layout: inside a phone, a "right drawer" is
+   * always full-width, so it must behave like the compact case regardless of
+   * the browser window width.
+   */
+  contain?: boolean;
   children: React.ReactNode;
 }) {
   const reduce = useReducedMotion();
-  const compact = useIsCompact();
+  const windowCompact = useIsCompact();
+  const compact = contain || windowCompact;
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -75,8 +93,10 @@ export function Sheet({
   useEffect(() => {
     if (!open) return;
     restoreRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    /* Locking document.body scroll only makes sense for a viewport-level
+       sheet; a contained sheet lives inside its own scroll context. */
+    const previousOverflow = contain ? '' : document.body.style.overflow;
+    if (!contain) document.body.style.overflow = 'hidden';
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -88,10 +108,10 @@ export function Sheet({
     return () => {
       window.cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
+      if (!contain) document.body.style.overflow = previousOverflow;
       restoreRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open, onClose, contain]);
 
   const hidden = effectiveSide === 'bottom' ? { y: '100%' } : { x: '100%' };
   const shown = effectiveSide === 'bottom' ? { y: 0 } : { x: 0 };
@@ -115,7 +135,7 @@ export function Sheet({
         <div
           role="presentation"
           style={{
-            position: 'fixed',
+            position: contain ? 'absolute' : 'fixed',
             inset: 0,
             zIndex: 300,
             display: 'flex',
