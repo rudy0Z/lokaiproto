@@ -157,7 +157,9 @@ const CHIPS = [
 ];
 
 // ─── Hero Input ───────────────────────────────────────────────────────────────
-function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElement> }) {
+/* RefObject<T | null> — useRef<T>(null) produces a nullable ref, so the
+   prop type has to admit null or the caller can never satisfy it. */
+function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElement | null> }) {
   const navigate  = useNavigate();
   const [val, setVal] = useState('');
   const localRef  = useRef<HTMLTextAreaElement>(null);

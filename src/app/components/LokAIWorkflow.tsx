@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
 import { C, LAYOUT, MONO, SANS, SERIF, SHADOW, TYPE } from './shared';
+import { Sheet } from './Sheet';
 import type {
   AuditEvent,
   CaseWorkflowState,
@@ -303,36 +304,14 @@ export function LokAISourceDrawer({
   title?: string;
   sources: WorkflowSource[];
 }) {
-  if (!open) return null;
+  /* Presentation (side drawer on desktop, bottom sheet on phones) and its
+     motion now live in <Sheet>. Previously this was `width: min(420px,100%)`
+     inside a full-bleed fixed container, so at 390px the drawer covered the
+     entire screen and hid the answer whose sources it was showing — the
+     opposite of inspect-without-losing-context. */
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 300,
-        display: 'flex',
-        justifyContent: 'flex-end',
-      }}
-    >
-      <button
-        aria-label="Close source drawer"
-        onClick={onClose}
-        style={{ position: 'absolute', inset: 0, border: 'none', background: 'rgba(26,25,22,0.42)', cursor: 'pointer' }}
-      />
-      <aside style={{
-        position: 'relative',
-        zIndex: 1,
-        width: 'min(420px, 100%)',
-        height: '100%',
-        background: C.surface,
-        borderLeft: `1px solid ${C.border}`,
-        boxShadow: SHADOW.lg,
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+    <Sheet open={open} onClose={onClose} side="right" label={title} width={420}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
         <div style={{
           minHeight: 64,
           borderBottom: `1px solid ${C.border}`,
@@ -369,8 +348,8 @@ export function LokAISourceDrawer({
         <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sources.map(source => <SourceCard key={source.id} source={source} />)}
         </div>
-      </aside>
-    </div>
+      </div>
+    </Sheet>
   );
 }
 

@@ -26,7 +26,9 @@ export default function RootEmpty() {
   return (
     <SidebarProvider>
       <SettingsPanel />
-      <Sidebar firstTimeUser={true} />
+      {/* Sidebar takes no props — `firstTimeUser` was a leftover from a
+          removed API and was silently ignored. */}
+      <Sidebar />
       <MainContent />
     </SidebarProvider>
   );

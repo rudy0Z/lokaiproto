@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, Copy, Volume2, Info, RotateCcw, ChevronDown } from 'lucide-react';
 import { C, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
+import { Sheet } from '../Sheet';
 import { LegalText } from '../demo/LegalTerms';
 import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
@@ -1037,37 +1038,14 @@ export function ScopedAskSheet({
   onSubmit: (text: string) => void;
 }) {
   const { runPreparedInput } = useDemo();
-  if (!open) return null;
 
+  /* Presentation and motion live in <Sheet>. Was a hard mount/unmount with
+     no transition, and dismissed on onMouseDown — a pointer event that
+     never fires on touch — despite being laid out as a mobile bottom
+     sheet (alignItems: 'flex-end'). */
   return (
-    <div
-      role="presentation"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 80,
-        background: 'rgba(11,30,55,0.4)',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        padding: 16,
-      }}
-    >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        style={{
-          width: 'min(520px, 100%)',
-          background: C.surface,
-          borderRadius: LAYOUT.radius.turn,
-          padding: 20,
-          boxShadow: SHADOW.float,
-        }}
-      >
+    <Sheet open={open} onClose={onClose} side="bottom" label={title}>
+      <div style={{ padding: 20 }}>
         <h2 style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.ink, margin: '0 0 12px' }}>
           {title}
         </h2>
@@ -1080,7 +1058,7 @@ export function ScopedAskSheet({
             onClose();
           }}
         />
-      </section>
-    </div>
+      </div>
+    </Sheet>
   );
 }

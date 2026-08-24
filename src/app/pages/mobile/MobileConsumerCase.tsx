@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
@@ -41,19 +42,17 @@ import type { ResponseTurn } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { TurnStatus } from '../../components/ai/Turn';
 
+/* caseCardIn removed — the stage transition is now AnimatePresence-driven
+   (see StageTransition below) so it can have a real exit and a direction,
+   which a CSS enter-animation on a keyed remount structurally cannot.
+   Focus ring was C.saffron (2.46:1, failed WCAG 2.2 1.4.11) — same fix as
+   the global :focus-visible rule in index.css. */
 const CASE_CSS = `
   .mobile-case-scroll::-webkit-scrollbar { width: 0; height: 0; }
   .mobile-case-chip:focus-visible,
   .mobile-case-button:focus-visible {
-    outline: 2px solid ${C.saffron};
+    outline: 2px solid ${C.saffronAccessible};
     outline-offset: 2px;
-  }
-  @keyframes caseCardIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .case-card-enter {
-    animation: caseCardIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 `;
 
@@ -101,6 +100,56 @@ function journeyProgress(stage: WorkflowStage): { n: number; m: number; label: s
     m: JOURNEY_STEPS.length,
     label: STAGE_STEP_LABEL[stage] ?? stage,
   };
+}
+
+/**
+ * Stage transition — direction-aware, with a real exit.
+ *
+ * The stage content was a keyed <div> with a CSS enter-animation. Because
+ * the key forces a remount, React destroyed the outgoing stage in the same
+ * tick, so an exit animation was structurally impossible — and moving
+ * backward played the identical entrance as moving forward, giving the user
+ * no spatial cue about which way they had just travelled.
+ *
+ * AnimatePresence mode="wait" lets the old stage leave before the new one
+ * enters, and JOURNEY_STEPS gives the ordering needed to flip the slide
+ * sign. Non-journey stages (failure, escalation, audit) have no index, so
+ * they cross-fade without direction rather than guessing one.
+ *
+ * Critically damped (bounce: 0) — this is a state change the product drove,
+ * not a surface the user flung, so overshoot would be unearned.
+ */
+function StageTransition({
+  stageKey,
+  direction,
+  children,
+}: {
+  stageKey: string;
+  direction: number;
+  children: React.ReactNode;
+}) {
+  const reduce = useReducedMotion();
+  const offset = 16 * direction;
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={stageKey}
+        aria-live="polite"
+        initial={reduce ? { opacity: 0 } : { opacity: 0, x: offset }}
+        animate={reduce ? { opacity: 1 } : { opacity: 1, x: 0 }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, x: -offset }}
+        transition={
+          reduce
+            ? { duration: 0.15, ease: 'linear' }
+            : { type: 'spring', bounce: 0, duration: 0.32 }
+        }
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 function primaryCtaLabel(stage: WorkflowStage, blocksNext: boolean, isVerifyStage: boolean): string {
@@ -754,6 +803,20 @@ function CaseArtboard() {
   const blocksNext = isVerifyStage
     || (stage === 'packet' && autonomy !== 'guide' && (!previewApproved || !draftAllowed));
 
+  /* Slide direction for the stage transition: +1 forward, -1 backward.
+     Derived from JOURNEY_STEPS order by comparing against the previous
+     stage, so going back through the journey visibly reverses instead of
+     replaying the same entrance. Stages outside the journey (failure,
+     escalation, audit) have no index and cross-fade with direction 0. */
+  const previousStageRef = useRef<WorkflowStage>(stage);
+  const stageDirection = useMemo(() => {
+    const from = JOURNEY_STEPS.indexOf(previousStageRef.current);
+    const to = JOURNEY_STEPS.indexOf(stage);
+    if (from < 0 || to < 0 || from === to) return 0;
+    return to > from ? 1 : -1;
+  }, [stage]);
+  useEffect(() => { previousStageRef.current = stage; }, [stage]);
+
   const goStage = (next: MobileStageParam) => {
     navigate(`/mobile/case/consumer?stage=${next}`);
   };
@@ -814,11 +877,9 @@ function CaseArtboard() {
       )}
 
       <div className="mobile-case-scroll" style={{ flex: 1, overflowY: 'auto', padding: '18px 20px 104px' }}>
-        <div
-          key={`${stage}-${failure ?? ''}`}
-          className="case-card-enter"
-          aria-live="polite"
-          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        <StageTransition
+          stageKey={`${stage}-${failure ?? ''}`}
+          direction={stageDirection}
         >
           {isGuardrailScene && !sceneAcknowledged ? (
             <>
@@ -1127,7 +1188,7 @@ function CaseArtboard() {
           )}
             </>
           )}
-        </div>
+        </StageTransition>
       </div>
 
       <BottomNav active="chat" />

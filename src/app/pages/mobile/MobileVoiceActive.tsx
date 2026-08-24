@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Mic, Type } from 'lucide-react';
-import { C, LAYOUT, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
+import { C, LAYOUT, SANS, SERIF, SHADOW, TYPE, VoiceOrb } from '../../components/shared';
 import { StatusBar, HomeIndicator, MobileRouteCanvas } from './MobileHome';
 import { useDemo } from '../../context/DemoContext';
 import { Turn, TurnStatus } from '../../components/ai/Turn';
@@ -9,16 +9,14 @@ import type { ResponseTurn } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
 
-const VOICE_CSS = `
-  @keyframes voicePulse {
-    0%   { transform: scale(1);   opacity: 0.5; }
-    100% { transform: scale(1.35); opacity: 0;   }
-  }
-  @keyframes voiceBarListen {
-    0%, 100% { transform: scaleY(0.3); }
-    50% { transform: scaleY(1); }
-  }
-`;
+/* voicePulse / voiceBarListen removed.
+   This screen hand-rolled its own listening visual — a pulsing circle with
+   a static mic icon — and defined voiceBarListen for level bars that were
+   then never referenced anywhere, so the bars simply did not exist. The
+   shared <VoiceOrb> already implements all four states (idle, listening
+   with animated bars, processing, error) and now crossfades between them,
+   so this screen uses that instead of maintaining a second, less complete
+   copy of the same thing. */
 
 export function VoiceActiveArtboard() {
   const navigate = useNavigate();
@@ -47,7 +45,6 @@ export function VoiceActiveArtboard() {
         flexDirection: 'column',
       }}
     >
-      <style>{VOICE_CSS}</style>
       <StatusBar />
       <div style={{
         padding: '12px 16px',
@@ -115,18 +112,8 @@ export function VoiceActiveArtboard() {
 
         {(phase === 'listening' || phase === 'transcribing') && (
           <div style={{ textAlign: 'center', paddingTop: 48 }}>
-            <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto 24px' }}>
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: LAYOUT.radius.full,
-                background: 'rgba(233,133,43,0.25)',
-                animation: phase === 'listening' ? 'voicePulse 1.2s ease-out infinite' : undefined,
-              }} />
-              <div style={{
-                position: 'absolute', inset: 16, borderRadius: LAYOUT.radius.full,
-                background: C.navy, display: 'grid', placeItems: 'center', color: '#fff',
-              }}>
-                <Mic size={28} />
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+              <VoiceOrb size={96} state={phase === 'listening' ? 'listening' : 'processing'} />
             </div>
             <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink }}>
               {phase === 'listening' ? 'Playing prepared voice example…' : 'Turning the example into text…'}

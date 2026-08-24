@@ -2,6 +2,7 @@
  * Hybrid response system — every AI reply is a typed mode, not a forced 3-zone card.
  * Three-zone "explain" is one mode among seven.
  */
+import type { TrustLevel } from '../data/matterIntelligence';
 
 export type ResponseMode =
   | 'clarify'
@@ -519,7 +520,10 @@ export function turnToLegacyLokAIResponse(turn: ResponseTurn): {
   };
   scope: 'in' | 'out';
   responseLanguage: string;
-  trustLevel?: string;
+  /* Was `string`, which silently widened away from the TrustLevel union and
+     made this whole object unassignable to LokAIResponse. The three values
+     actually produced below are all valid members. */
+  trustLevel?: TrustLevel;
   missingFacts?: string[];
 } {
   const citations = turn.citations.map((c) => `${c.title} · ${c.reference}`);

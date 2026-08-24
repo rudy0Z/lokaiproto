@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 
 // ─── Font constants ───────────────────────────────────────────────────────────
 export const EDITORIAL = '"Fraunces", Georgia, serif';
@@ -100,6 +101,10 @@ export const C = {
   navyDark:     '#0B1E37',
   navySoft:     'rgba(16,42,76,0.08)',
   saffronDark:  '#C86712',
+  /* The only saffron legal on a focus ring or any UI boundary:
+     3.83:1 on canvas / 4.17:1 on white, clearing WCAG 2.2 1.4.11's 3:1.
+     Plain `saffron` is 2.46:1 and must never carry accessibility meaning. */
+  saffronAccessible: '#CC5A10',
   saffronSoft:  'rgba(233,133,43,0.10)',
   terracotta:   '#A94F2D',
   oxbloodSoft:  'rgba(107,31,31,0.08)',
@@ -574,113 +579,151 @@ export function VoiceOrb({
     </svg>
   );
 
-  // ── IDLE ──
-  if (state === 'idle') {
-    return (
-      <button
+  /*
+   * One persistent button across all four states.
+   *
+   * Each state used to be its own early-return with a different JSX shape
+   * (bare <button> vs. <div>-wrapped), so React tore down and rebuilt the
+   * DOM on every change and the orb snapped between states. For a legal
+   * product, speaking to it is the single most "alive" moment in the app;
+   * it should not flicker.
+   *
+   * The surface now animates (background, border) while the state-specific
+   * decorations — pulse ring, rotating arc, level bars — mount and unmount
+   * through AnimatePresence. The ambient loops themselves stay as plain
+   * CSS keyframes: they are non-interruptible atmosphere, not gesture
+   * response, so they gain nothing from springs.
+   */
+  const isListening = state === 'listening';
+  const isProcessing = state === 'processing';
+  const isError = state === 'error';
+
+  const surface = isListening
+    ? C.saffron
+    : isProcessing
+      ? C.navy
+      : isError
+        ? C.errorSoft
+        : C.surface2;
+
+  const borderStyle = isError
+    ? `1.5px solid ${C.red}`
+    : state === 'idle'
+      ? `2px solid ${C.border}`
+      : '2px solid transparent';
+
+  const barHeights = [8, 14, 20, 14, 8];
+
+  return (
+    <div style={{
+      position: 'relative',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      width: `${size}px`, height: `${size}px`, flexShrink: 0,
+    }}>
+      <AnimatePresence>
+        {isListening && (
+          <motion.span
+            key="ring"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'absolute',
+              width: `${size + 4}px`, height: `${size + 4}px`,
+              borderRadius: LAYOUT.radius.full,
+              border: `1.5px solid ${C.saffron}`,
+              animation: 'lokaiPulseRing 1.6s ease-out infinite',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+        {isProcessing && (
+          <motion.span
+            key="arc"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'absolute', inset: 0,
+              borderRadius: LAYOUT.radius.full,
+              border: '2px solid transparent',
+              borderTopColor: 'rgba(255,255,255,0.5)',
+              animation: 'lokaiSpin 1s linear infinite',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.button
         type="button"
         className="lokai-voice-orb"
         aria-label={voiceLabel}
         onClick={onClick}
         disabled={!onClick}
+        animate={{ background: surface, border: borderStyle }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         style={{
           ...buttonReset,
-          width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-          background: C.surface2,
-          border: `2px solid ${C.border}`,
+          position: 'relative',
+          width: `${size}px`, height: `${size}px`,
+          borderRadius: LAYOUT.radius.full,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, cursor: onClick ? 'pointer' : 'default',
+          flexShrink: 0, overflow: 'hidden',
+          cursor: onClick ? 'pointer' : 'default',
         }}
       >
-        <MicIcon />
-      </button>
-    );
-  }
-
-  // ── LISTENING ──
-  if (state === 'listening') {
-    const barHeights = [8, 14, 20, 14, 8];
-    return (
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
-        {/* Pulsing ring */}
-        <div style={{
-          position: 'absolute',
-          width: `${size + 4}px`, height: `${size + 4}px`, borderRadius: '50%',
-          border: `1.5px solid ${C.saffron}`,
-          opacity: 0.4,
-          animation: 'lokaiPulseRing 1.6s ease-out infinite',
-        }} />
-        {/* Orb */}
-        <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
-          ...buttonReset,
-          width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-          background: C.saffron,
-          border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, overflow: 'hidden', cursor: onClick ? 'pointer' : 'default',
-          boxShadow: SHADOW.saffronGlow,
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.18) 0%, transparent 55%)',
-          }} />
-          {/* 3 animated bars */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', position: 'relative', zIndex: 1 }}>
-            {barHeights.map((h, i) => (
-              <div key={i} style={{
-                width: '3px', height: `${h}px`,
-                background: 'rgba(255,255,255,0.9)', borderRadius: '2px',
-                transformOrigin: 'center bottom',
-                animation: `lokaiBarBounce ${0.5 + i * 0.12}s ease-in-out ${i * 0.1}s infinite`,
-              }} />
-            ))}
-          </div>
-        </button>
-      </div>
-    );
-  }
-
-  // ── PROCESSING ──
-  if (state === 'processing') {
-    return (
-      <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
-        {/* Rotating arc */}
-        <div style={{
-          position: 'absolute', inset: 0, borderRadius: '50%',
-          border: '2px solid transparent',
-          borderTopColor: 'rgba(255,255,255,0.5)',
-          animation: 'lokaiSpin 1s linear infinite',
-        }} />
-        <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
-          ...buttonReset,
-          width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-          background: C.navy,
-          border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: onClick ? 'pointer' : 'default',
-        }}>
-          <MicIcon />
-        </button>
-      </div>
-    );
-  }
-
-  // ── ERROR ──
-  return (
-    <button type="button" className="lokai-voice-orb" aria-label={voiceLabel} onClick={onClick} disabled={!onClick} style={{
-      ...buttonReset,
-      width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-      background: 'rgba(184,54,28,0.08)',
-      border: `1.5px solid ${C.red}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, cursor: onClick ? 'pointer' : 'default',
-    }}>
-      <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none">
-        <line x1="4" y1="4" x2="12" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="12" y1="4" x2="4" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    </button>
+        <AnimatePresence mode="wait" initial={false}>
+          {isListening ? (
+            <motion.span
+              key="bars"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '3px', position: 'relative', zIndex: 1 }}
+            >
+              {barHeights.map((h, i) => (
+                <span key={i} style={{
+                  width: '3px', height: `${h}px`,
+                  background: 'rgba(255,255,255,0.9)',
+                  borderRadius: LAYOUT.radius.xs,
+                  transformOrigin: 'center bottom',
+                  animation: `lokaiBarBounce ${0.5 + i * 0.12}s ease-in-out ${i * 0.1}s infinite`,
+                }} />
+              ))}
+            </motion.span>
+          ) : isError ? (
+            <motion.svg
+              key="error"
+              width={iconSize} height={iconSize} viewBox="0 0 16 16" fill="none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+            >
+              <line x1="4" y1="4" x2="12" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
+              <line x1="12" y1="4" x2="4" y2="12" stroke={C.red} strokeWidth="1.6" strokeLinecap="round" />
+            </motion.svg>
+          ) : (
+            <motion.span
+              key="mic"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              style={{ display: 'flex' }}
+            >
+              <MicIcon />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    </div>
   );
 }
 
