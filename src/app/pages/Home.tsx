@@ -11,7 +11,10 @@ import type { DemoLanguage } from '../data/responseTurns';
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const CSS = `
-  /* Hero gradient — Sarvam-like Indian AI aura, softened for legal trust */
+  /* Hero surface — warm paper, one controlled moment.
+     Indian-ness lives in scripts, channels (1915, e-Daakhil, registered
+     post) and construction, not in a lab-launch glow borrowed from
+     another studio's brand page. */
   .home-hero-bg {
     background: ${GRAD.heroCanvas};
     position: relative;

@@ -31,6 +31,19 @@ import type { WorkflowStage } from '../data/caseWorkflow';
 
 export type MatterFact = DemoFact & { confirmedByUser?: boolean };
 
+/*
+ * Initial language — reads `?lang=` from the hash-route query ONCE at module
+ * load, mirroring IS_EMBED's detection pattern in ../embed.ts. Lets deep
+ * links (portfolio specimens, guided-tour steps) and directly-shared URLs
+ * open in a specific language without waiting for an in-app click.
+ */
+function detectInitialLanguage(): DemoLanguage {
+  if (typeof window === 'undefined') return 'en';
+  const query = window.location.hash.split('?')[1] ?? '';
+  const value = new URLSearchParams(query).get('lang');
+  return value === 'hi' || value === 'mr' || value === 'ta' ? value : 'en';
+}
+
 interface DemoContextValue {
   scenarioId: string;
   scenario: DemoScenario;
@@ -80,7 +93,7 @@ function factsFromScenario(scenario: DemoScenario): MatterFact[] {
 
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [scenarioId, setScenarioId] = useState(DEFAULT_SCENARIO_ID);
-  const [language, setLanguage] = useState<DemoLanguage>('en');
+  const [language, setLanguage] = useState<DemoLanguage>(detectInitialLanguage);
   const [stage, setStage] = useState<WorkflowStage>('intake');
   const [selectedTermId, setSelectedTermId] = useState<string | null>(null);
   const [draftApproved, setDraftApprovedState] = useState(false);

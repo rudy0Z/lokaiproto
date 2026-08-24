@@ -32,13 +32,12 @@ export default function CaptureLayout() {
             width: '272px',
             maxHeight: 'calc(100vh - 32px)',
             overflowY: 'auto',
-            background: 'rgba(255,255,255,0.96)',
+            background: C.surface,
             border: `1px solid ${C.border}`,
             borderRadius: LAYOUT.radius.card,
             boxShadow: SHADOW.float,
             padding: '16px',
             zIndex: 9999,
-            backdropFilter: 'blur(12px)',
           }}
         >
           <div style={{ marginBottom: '14px' }}>

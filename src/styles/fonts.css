@@ -1,4 +1,5 @@
-﻿@import '@fontsource/fraunces/latin-300.css';
+/* Latin — display, UI, and evidence metadata */
+@import '@fontsource/fraunces/latin-300.css';
 @import '@fontsource/fraunces/latin-400.css';
 @import '@fontsource/fraunces/latin-600.css';
 @import '@fontsource/inter/latin-400.css';
@@ -8,5 +9,34 @@
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import '@fontsource/jetbrains-mono/latin-500.css';
 @import '@fontsource/jetbrains-mono/latin-600.css';
+
+/*
+ * Indian scripts — Noto Sans Devanagari (hi, mr) and Tamil (ta).
+ *
+ * These were referenced by --font-deva / --font-tamil in index.css and by
+ * DEVANAGARI / TAMIL in shared.tsx, and claimed by every design doc, but
+ * NO Noto face was ever actually loaded. Indic text fell back to whatever
+ * the device happened to have installed — fine on Windows (ships Nirmala),
+ * FOUT or a mismatched fallback elsewhere. That also meant the carefully
+ * tuned 1.85/1.9 line-heights were being applied to a font that wasn't the
+ * intended one, and the embed was neither deterministic nor self-contained
+ * despite PRODUCT.md requiring both.
+ *
+ * Script-specific subsets only (devanagari-*, tamil-*), not the full family,
+ * and only the three weights the UI actually uses — Indic faces are large,
+ * and loading Latin glyphs twice would be pure waste.
+ *
+ * Noto specifically because the content is inherently code-switched: the
+ * prepared packs mix Latin legal/tech terms inline into Devanagari and Tamil
+ * lines ("ticket ID", "e-Daakhil", "refund"). A harmonized superfamily keeps
+ * baseline and x-height consistent across that switch; an unrelated Indic
+ * face beside Inter would visibly break every mixed line.
+ */
+@import '@fontsource/noto-sans-devanagari/devanagari-400.css';
+@import '@fontsource/noto-sans-devanagari/devanagari-500.css';
+@import '@fontsource/noto-sans-devanagari/devanagari-600.css';
+@import '@fontsource/noto-sans-tamil/tamil-400.css';
+@import '@fontsource/noto-sans-tamil/tamil-500.css';
+@import '@fontsource/noto-sans-tamil/tamil-600.css';
 
 /* Font custom properties are owned by index.css (:root). This file only loads faces. */

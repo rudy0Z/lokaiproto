@@ -1,8 +1,9 @@
 ﻿import React, { useState } from 'react';
 import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { BrandLogo, C, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE, useLokaiSharedStyles } from '../../components/shared';
+import { BrandLogo, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
+import { LANGUAGE_REGISTRY, type LanguageEntry } from '../../data/languagePacks';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -220,20 +221,21 @@ export function MobileInputDock({ placeholder = 'Tell us your problem...' }: { p
 }
 
 // ─── Language Bottom Sheet ────────────────────────────────────────────────────
-const LANG_ITEMS = [
-  { code: 'hi', name: 'हिन्दी',  en: 'Hindi'     },
-  { code: 'bn', name: 'বাংলা',   en: 'Bengali'   },
-  { code: 'ta', name: 'தமிழ்',  en: 'Tamil'     },
-  { code: 'te', name: 'తెలుగు', en: 'Telugu'    },
-  { code: 'mr', name: 'मराठी',  en: 'Marathi'   },
-  { code: 'pa', name: 'ਪੰਜਾਬੀ', en: 'Punjabi'   },
-  { code: 'gu', name: 'ગુજરાતી', en: 'Gujarati'  },
-  { code: 'kn', name: 'ಕನ್ನಡ',  en: 'Kannada'   },
-  { code: 'or', name: 'ଓଡ଼ିଆ',  en: 'Odia'      },
-  { code: 'ml', name: 'മലയാളം', en: 'Malayalam' },
-  { code: 'as', name: 'অসমীয়া', en: 'Assamese'  },
-  { code: 'en', name: 'English', en: 'English'   },
-] as const;
+/* Sourced from LANGUAGE_REGISTRY (data/languagePacks.ts) rather than a local
+   literal, so adding a language is one edit in one data file. The registry's
+   `prepared` flag is what keeps the picker honest: the full list stays visible
+   (India is multilingual — that is the product's founding thesis) but the
+   eight without prepared packs are shown as not-yet-available instead of
+   silently falling back to English. */
+const LANG_ITEMS = LANGUAGE_REGISTRY;
+
+/** Native names must render in their own script — SANS (Inter) has no Indic
+ *  glyphs, so without this the picker itself relied on device fallback. */
+function scriptFont(script: LanguageEntry['script']): string {
+  if (script === 'devanagari') return DEVANAGARI;
+  if (script === 'tamil') return TAMIL;
+  return SANS;
+}
 
 // Shared language-label map so every screen shows the citizen's chosen language
 // in its own script — the preference set on Home persists across the whole flow.
@@ -263,28 +265,40 @@ export function LanguageBottomSheet({ selected, onSelect, onClose }: {
             Choose language
           </h2>
           <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: 0 }}>
-            Responses will adapt to your selection
+            Four languages have prepared answers in this prototype. The rest are
+            designed, not built.
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', padding: '0 20px 16px', overflowY: 'auto', flex: 1 }}>
           {LANG_ITEMS.map(lang => {
             const isSel = selected === lang.code;
+            const available = lang.prepared;
             return (
-              <button key={lang.code} onClick={() => onSelect(lang.code)} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-                padding: '12px 8px',
-                background: isSel ? '#EEF2F8' : C.bg,
-                border: isSel ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
-                borderRadius: LAYOUT.radius.control, cursor: 'pointer', position: 'relative',
-                transition: 'background 0.15s ease, border-color 0.15s ease',
-              }}>
+              <button
+                key={lang.code}
+                onClick={() => available && onSelect(lang.code)}
+                disabled={!available}
+                aria-disabled={!available}
+                title={available ? undefined : `${lang.english} is not prepared in this prototype`}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+                  padding: '12px 8px',
+                  background: isSel ? '#EEF2F8' : C.bg,
+                  border: isSel ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
+                  borderRadius: LAYOUT.radius.control,
+                  cursor: available ? 'pointer' : 'not-allowed',
+                  position: 'relative',
+                  opacity: available ? 1 : 0.45,
+                  transition: 'background 0.15s ease, border-color 0.15s ease',
+                }}
+              >
                 {isSel && (
                   <div style={{ position: 'absolute', top: '5px', right: '5px', width: '14px', height: '14px', borderRadius: LAYOUT.radius.full, background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Check style={{ width: '8px', height: '8px', color: 'white', strokeWidth: 3 }} />
                   </div>
                 )}
-                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: isSel ? 600 : 500, color: isSel ? C.navy : C.ink }}>{lang.name}</span>
-                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, color: isSel ? C.navy : C.muted }}>{lang.en}</span>
+                <span style={{ fontFamily: scriptFont(lang.script), fontSize: TYPE.body.size, fontWeight: isSel ? 600 : 500, color: isSel ? C.navy : C.ink }}>{lang.native}</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, color: isSel ? C.navy : C.muted }}>{lang.english}</span>
               </button>
             );
           })}

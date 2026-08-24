@@ -147,6 +147,56 @@ export const SCRIPT_RAIL: { id: DemoLanguage; label: string; native: string }[] 
   { id: 'ta', label: 'Tamil', native: 'தமிழ்' },
 ];
 
+/* ─── Language registry — the single place a language is added ──────────────
+ *
+ * Adding a language is a three-step change and this is step one:
+ *   1. add a row here with `prepared: true` and its script
+ *   2. add its string pack to CONSUMER_EXPLAIN_I18N above (+ GLOSSARY_I18N)
+ *   3. import its Noto subset in src/styles/fonts.css
+ *
+ * `prepared` is the honesty flag. LokAI's language picker deliberately shows
+ * the full ambition (India is multilingual; that is the founding thesis) but
+ * must not imply coverage it does not have — .design-os/02-blueprint.md
+ * explicitly rejects claiming "12 fully localized languages". Rows with
+ * `prepared: false` render as visibly not-yet-available rather than as
+ * working options that silently fall back to English.
+ *
+ * `script` drives font selection. Only devanagari and tamil subsets are
+ * loaded (see fonts.css), which is exactly why every other script is
+ * `prepared: false` — an unloaded script would render in an arbitrary
+ * device fallback and break the line's baseline against inline Latin.
+ */
+export type LanguageScript = 'latin' | 'devanagari' | 'tamil';
+
+export interface LanguageEntry {
+  code: string;
+  native: string;
+  english: string;
+  script: LanguageScript | 'unloaded';
+  prepared: boolean;
+}
+
+export const LANGUAGE_REGISTRY: LanguageEntry[] = [
+  { code: 'en', native: 'English',   english: 'English',   script: 'latin',      prepared: true  },
+  { code: 'hi', native: 'हिन्दी',      english: 'Hindi',     script: 'devanagari', prepared: true  },
+  { code: 'mr', native: 'मराठी',      english: 'Marathi',   script: 'devanagari', prepared: true  },
+  { code: 'ta', native: 'தமிழ்',      english: 'Tamil',     script: 'tamil',      prepared: true  },
+  { code: 'bn', native: 'বাংলা',      english: 'Bengali',   script: 'unloaded',   prepared: false },
+  { code: 'te', native: 'తెలుగు',     english: 'Telugu',    script: 'unloaded',   prepared: false },
+  { code: 'pa', native: 'ਪੰਜਾਬੀ',      english: 'Punjabi',   script: 'unloaded',   prepared: false },
+  { code: 'gu', native: 'ગુજરાતી',    english: 'Gujarati',  script: 'unloaded',   prepared: false },
+  { code: 'kn', native: 'ಕನ್ನಡ',      english: 'Kannada',   script: 'unloaded',   prepared: false },
+  { code: 'or', native: 'ଓଡ଼ିଆ',      english: 'Odia',      script: 'unloaded',   prepared: false },
+  { code: 'ml', native: 'മലയാളം',    english: 'Malayalam', script: 'unloaded',   prepared: false },
+  { code: 'as', native: 'অসমীয়া',    english: 'Assamese',  script: 'unloaded',   prepared: false },
+];
+
+export const PREPARED_LANGUAGES = LANGUAGE_REGISTRY.filter((l) => l.prepared);
+
+export function isPreparedLanguage(code: string): code is DemoLanguage {
+  return LANGUAGE_REGISTRY.some((l) => l.code === code && l.prepared);
+}
+
 export function allPreparedTurnIds(): string[] {
   return PREPARED_TURNS.map((t) => t.id);
 }

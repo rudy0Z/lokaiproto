@@ -8,15 +8,16 @@ export type CaptureRouteGroup = {
   items: CaptureRouteItem[];
 };
 
+/*
+ * Pruned 2026-08-25 (rework Phase 0d) — removed entries with no matching
+ * route in routes.tsx (capture hub/export/system-design, empty-state,
+ * login, onboarding 1-4, pricing, verdict, rights, language-palette,
+ * errors — all deleted screens or never-built pages). The three
+ * chat/:language entries now point at the real consumer-case route with
+ * `?lang=` (see DemoContext's detectInitialLanguage) instead of the old
+ * `/mobile/chat/:language` redirect, which dropped the language entirely.
+ */
 export const CAPTURE_ROUTE_GROUPS: CaptureRouteGroup[] = [
-  {
-    title: 'Capture Tools',
-    items: [
-      { label: 'Capture Hub', path: '/capture' },
-      { label: 'Export Overview', path: '/export' },
-      { label: 'System Design', path: '/system-design' },
-    ],
-  },
   {
     title: 'Desktop',
     items: [
@@ -26,28 +27,20 @@ export const CAPTURE_ROUTE_GROUPS: CaptureRouteGroup[] = [
       { label: 'Notice Interpreter', path: '/desktop/notice-interpreter' },
       { label: 'Document Draft', path: '/desktop/document-draft' },
       { label: 'Documents', path: '/desktop/documents' },
-      { label: 'Empty State', path: '/desktop/empty-state' },
     ],
   },
   {
     title: 'Mobile',
     items: [
-      { label: 'Login', path: '/mobile/login' },
-      { label: 'Onboarding 1', path: '/mobile/onboarding/1' },
-      { label: 'Onboarding 2', path: '/mobile/onboarding/2' },
-      { label: 'Onboarding 3', path: '/mobile/onboarding/3' },
-      { label: 'Onboarding 4', path: '/mobile/onboarding/4' },
       { label: 'Home', path: '/mobile/home' },
-      { label: 'Chat · Hindi', path: '/mobile/chat/hindi' },
-      { label: 'Chat · Tamil', path: '/mobile/chat/tamil' },
-      { label: 'Chat · Marathi', path: '/mobile/chat/marathi' },
-      { label: 'Pricing', path: '/mobile/pricing' },
-      { label: 'Verdict', path: '/mobile/verdict' },
-      { label: 'Rights', path: '/mobile/rights' },
+      { label: 'Case · Consumer', path: '/mobile/case/consumer' },
+      { label: 'Case · Hindi', path: '/mobile/case/consumer?stage=intake&lang=hi' },
+      { label: 'Case · Tamil', path: '/mobile/case/consumer?stage=intake&lang=ta' },
+      { label: 'Case · Marathi', path: '/mobile/case/consumer?stage=intake&lang=mr' },
+      { label: 'Case · Boundary', path: '/mobile/case/out-of-scope' },
       { label: 'Voice', path: '/mobile/voice' },
-      { label: 'Language Palette', path: '/mobile/language-palette' },
       { label: 'Profile', path: '/mobile/profile' },
-      { label: 'Errors', path: '/mobile/errors' },
+      { label: 'Files', path: '/mobile/files' },
     ],
   },
 ];

@@ -14,7 +14,9 @@
   /* Ink */
   --text-primary:    #181713;
   --text-secondary:  #48453D;
-  --text-tertiary:   #858078;
+  /* Was #858078 (3.60:1 on canvas — failed WCAG AA). Restored to the
+     DTCG-specified step: 5.40:1 on canvas, 5.88:1 on white. */
+  --text-tertiary:   #68645D;
   --text-on-dark:    #FFFFFF;
 
   /* Brand */
@@ -68,20 +70,25 @@
   --radius-dialog: 18px;
   --radius-pill: 999px;
 
-  /* Type sizes (mirrors TYPE) */
-  --type-label: 10px;
-  --type-micro: 11px;
-  --type-caption: 12px;
-  --type-small: 13px;
-  --type-body: 14px;
-  --type-title: 15px;
-  --type-h4: 16px;
-  --type-lead: 18px;
-  --type-h3: 20px;
-  --type-editorial-sm: 22px;
-  --type-editorial: 28px;
-  --type-display2: 36px;
-  --type-display1: 56px;
+  /* Type sizes (mirrors TYPE in shared.tsx).
+     rem, not px — px ignores the OS/browser text-size setting entirely,
+     which is the single biggest accessibility failure for this product's
+     users (older, lower-confidence, often reading outdoors under stress).
+     Floor raised from 10px to 12px: label/micro/caption now share 0.75rem
+     and differentiate by weight, tracking, and transform instead of size. */
+  --type-label: 0.75rem;      /* 12px — was 10px */
+  --type-micro: 0.75rem;      /* 12px — was 11px */
+  --type-caption: 0.75rem;    /* 12px */
+  --type-small: 0.8125rem;    /* 13px */
+  --type-body: 0.875rem;      /* 14px */
+  --type-title: 0.9375rem;    /* 15px */
+  --type-h4: 1rem;            /* 16px */
+  --type-lead: 1.125rem;      /* 18px */
+  --type-h3: 1.25rem;         /* 20px */
+  --type-editorial-sm: 1.375rem; /* 22px */
+  --type-editorial: 1.75rem;  /* 28px */
+  --type-display2: 2.25rem;   /* 36px */
+  --type-display1: 3.5rem;    /* 56px */
 
   /* Elevation */
   --elevation-xs: 0 1px 2px rgba(26, 25, 22, 0.04);
@@ -120,8 +127,11 @@ button, input, textarea, select {
   font: inherit;
 }
 
+/* --saffron (#E9852B) measured 2.46:1 on canvas — failed WCAG 2.2 1.4.11
+   (3:1 for focus indicators) on every focusable element in the app.
+   --saffron-accessible is 3.83:1 on canvas / 4.17:1 on white. */
 :focus-visible {
-  outline: 2px solid var(--saffron);
+  outline: 2px solid var(--saffron-accessible);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
 }
@@ -130,11 +140,19 @@ button, input, textarea, select {
   outline: none;
 }
 
+/* Reduced motion means a gentler equivalent, not zero feedback.
+   The previous blanket rule flattened transition-duration on *everything*,
+   which collapsed EMOTION_CRAFT's staged zone reveals and every stage
+   change into an instant snap — losing the comprehension pacing that
+   design intends, rather than degrading it.
+   Now: kill vestibular motion (transforms, looping animations, smooth
+   scroll) but keep short colour/opacity transitions that carry meaning. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: opacity, background-color, border-color, color, box-shadow !important;
+    transition-duration: 150ms !important;
     scroll-behavior: auto !important;
   }
 }

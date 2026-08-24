@@ -6,29 +6,48 @@ export const SANS = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", san
 export const MONO = '"JetBrains Mono", ui-monospace, "SF Mono", monospace';
 export const DEVANAGARI = '"Noto Sans Devanagari", "Inter", sans-serif';
 export const TAMIL = '"Noto Sans Tamil", "Inter", sans-serif';
-export const BENGALI = '"Noto Sans Bengali", "Inter", sans-serif';
+/* No BENGALI const — the face is not loaded in fonts.css, so declaring it
+   would promise a script the app cannot actually render. Bengali is listed
+   in LANGUAGE_REGISTRY as `prepared: false` instead. Add the const and the
+   fonts.css import together, or not at all. */
 
 // Backwards compatibility for now (Step 1)
 export const SERIF = EDITORIAL;
 
+/**
+ * Type scale — rem, not px.
+ *
+ * px sizes ignore the OS/browser text-size setting completely. For this
+ * product's users — often older, lower-confidence, reading outdoors under
+ * stress — that was the single biggest accessibility failure in the app,
+ * outranking every color issue. rem scales with the user's own setting.
+ *
+ * Tracking and leading stay size-specific (tighter/negative as size grows,
+ * looser as it shrinks); those are unitless or em-relative so they scale
+ * correctly. Do not flatten them to one value.
+ *
+ * Floor raised 10px → 12px. label / micro / caption now share 0.75rem and
+ * differentiate by weight, tracking, and transform rather than by size.
+ */
 export const TYPE = {
-  // Display — editorial (Fraunces) only
-  display1:    { family: EDITORIAL, size: '56px', weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em' },
-  display2:    { family: EDITORIAL, size: '36px', weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em' },
-  editorial:   { family: EDITORIAL, size: '28px', weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em' },
-  editorialSm: { family: EDITORIAL, size: '22px', weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em' },
+  // Display — editorial (Fraunces) only. Latin-only by design; Indic scripts
+  // lead with SANS at raised size/weight (Fraunces has no Devanagari/Tamil).
+  display1:    { family: EDITORIAL, size: '3.5rem',    weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em' },
+  display2:    { family: EDITORIAL, size: '2.25rem',   weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em' },
+  editorial:   { family: EDITORIAL, size: '1.75rem',   weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em' },
+  editorialSm: { family: EDITORIAL, size: '1.375rem',  weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em' },
   // UI hierarchy — Inter. One size = one role. Do not invent px at call sites.
-  h3:          { family: SANS, size: '20px', weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
-  lead:        { family: SANS, size: '18px', weight: 500, lineHeight: 1.35 },
-  h4:          { family: SANS, size: '16px', weight: 600, lineHeight: 1.4  },
-  title:       { family: SANS, size: '15px', weight: 600, lineHeight: 1.4  },
-  body:        { family: SANS, size: '14px', weight: 400, lineHeight: 1.55 },
-  bodyStrong:  { family: SANS, size: '14px', weight: 500, lineHeight: 1.55 },
-  small:       { family: SANS, size: '13px', weight: 400, lineHeight: 1.5  },
-  caption:     { family: SANS, size: '12px', weight: 400, lineHeight: 1.45 },
-  captionStrong:{ family: SANS, size: '12px', weight: 600, lineHeight: 1.45 },
-  micro:       { family: SANS, size: '11px', weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
-  label:       { family: SANS, size: '10px', weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
+  h3:          { family: SANS, size: '1.25rem',   weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
+  lead:        { family: SANS, size: '1.125rem',  weight: 500, lineHeight: 1.35 },
+  h4:          { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
+  title:       { family: SANS, size: '0.9375rem', weight: 600, lineHeight: 1.4  },
+  body:        { family: SANS, size: '0.875rem',  weight: 400, lineHeight: 1.55 },
+  bodyStrong:  { family: SANS, size: '0.875rem',  weight: 500, lineHeight: 1.55 },
+  small:       { family: SANS, size: '0.8125rem', weight: 400, lineHeight: 1.5  },
+  caption:     { family: SANS, size: '0.75rem',   weight: 400, lineHeight: 1.45 },
+  captionStrong:{ family: SANS, size: '0.75rem',  weight: 600, lineHeight: 1.45 },
+  micro:       { family: SANS, size: '0.75rem', weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
+  label:       { family: SANS, size: '0.75rem', weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
 } as const;
 
 export type TypeRole = keyof typeof TYPE;
@@ -62,7 +81,9 @@ export const C = {
   // Ink
   ink:          '#181713',
   inkSoft:      '#48453D',
-  muted:        '#858078',
+  /* Was #858078 (3.60:1 on canvas — failed AA at ~160 call sites across 20
+     files). Restored to the DTCG step: 5.40:1 canvas / 5.88:1 white. */
+  muted:        '#68645D',
   // Structure
   border:       '#E7E0D4',
   borderStrong: '#CFC5B6',
@@ -94,12 +115,11 @@ export const C = {
   badgeText:    '#102A4C',
   badgeBorder:  '#CFC5B6',
   // Legacy aliases (same values — keep call sites compiling)
-  deepAmber:    '#E9852B',
   teal:         '#102A4C',
   oxbloodDark:  '#6B1F1F',
   text:         '#181713',
   textSoft:     '#48453D',
-  textDisabled: '#858078',
+  textDisabled: '#68645D',
 } as const;
 
 export const MOTION = {
@@ -184,20 +204,26 @@ export const GRAD = {
     'radial-gradient(ellipse 50% 38% at 68% 68%, rgba(245,216,212,0.30) 0%, transparent 70%)',
     'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
   ].join(', '),
-  /** Dimmed hero — same room, lights lowered for reading surfaces */
-  readingCanvas: [
-    'radial-gradient(ellipse 68% 54% at 50% 12%, rgba(221,231,255,0.36) 0%, rgba(221,231,255,0.14) 35%, transparent 68%)',
-    'radial-gradient(ellipse 58% 44% at 46% 78%, rgba(255,179,80,0.14) 0%, rgba(255,227,184,0.08) 46%, transparent 74%)',
-    'radial-gradient(ellipse 50% 38% at 68% 68%, rgba(245,216,212,0.12) 0%, transparent 70%)',
-    'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
-  ].join(', '),
+  /**
+   * Reading surfaces — flat warm paper.
+   *
+   * Was three stacked radial washes (cool blue + hot saffron + rose) on
+   * eight surfaces. Read as a tricolour glow rather than a material, and
+   * fought the "chrome should recede" rule in .design-os/03-direction.md,
+   * which explicitly rejects decorative gradients. Stamp-paper direction:
+   * the page is paper, not a lit stage. Kept as a token (not deleted) so
+   * every call site changes at once and nothing needs touching.
+   */
+  readingCanvas: 'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
   cardLift: 'linear-gradient(174deg, #FFFFFF 0%, #FBF8F1 100%)',
   oxbloodStamp: 'linear-gradient(135deg, #7A2020 0%, #6B1F1F 100%)',
 
-  // Backwards compat
+  /* `language` (saffron→navy, 90deg) removed — it was the tricolour drawn
+     as a literal stripe. Do not reintroduce a two-pole brand gradient;
+     if a spectrum is ever wanted it must be one hue interpolation used
+     as state, never as chrome. */
   brand: 'linear-gradient(160deg, #12110E 0%, #102A4C 100%)',
   verdict: 'linear-gradient(180deg, #F6A13D 0%, #E9852B 100%)',
-  language: 'linear-gradient(90deg, #E9852B, #102A4C)',
   buttonPrimary: 'linear-gradient(180deg, #183B6B 0%, #102A4C 100%)',
   buttonHover: 'linear-gradient(180deg, #234B7F 0%, #183B6B 100%)',
 } as const;
@@ -213,8 +239,6 @@ export const WASH = {
   heroCanvas: GRAD.heroCanvas,
   cardLift: GRAD.cardLift,
   oxbloodStamp: GRAD.oxbloodStamp,
-  // Backwards compat
-  languageSpectrum: `linear-gradient(90deg, ${C.saffron} 0%, ${C.navy} 100%)`,
   sectionFade: `linear-gradient(to bottom, rgba(248,245,238,0) 0%, ${C.bg} 100%)`,
 } as const;
 
@@ -232,7 +256,6 @@ export const SHADOW = {
   navySoft: '0 4px 14px rgba(16,42,76,0.2)',
   navy: '0 4px 12px rgba(16,42,76,0.28)',
   overlay: '0 24px 72px rgba(11,30,55,0.24)',
-  saffronGlow: '0 4px 16px rgba(233,133,43,0.3)',
 } as const;
 
 // ─── Badge style token ────────────────────────────────────────────────────────
@@ -276,13 +299,12 @@ const SHARED_ANIM_CSS = `
   transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
 }
 .lokai-btn-primary:hover:not(:disabled) {
-  background: ${C.navy} !important;
-  box-shadow: ${SHADOW.md} !important;
-  transform: translateY(-1px) !important;
+  background: ${C.navyDark} !important;
+  box-shadow: ${SHADOW.sm} !important;
 }
 .lokai-btn-primary:active:not(:disabled) {
-  transform: translateY(0) !important;
-  box-shadow: ${SHADOW.sm} !important;
+  background: ${C.navyDark} !important;
+  box-shadow: ${SHADOW.xs} !important;
 }
 .lokai-btn-secondary {
   background: transparent;
@@ -338,40 +360,34 @@ const SHARED_ANIM_CSS = `
   outline-offset: 3px;
 }
 
-/* Micro-craft: press / chip / composer — opacity + transform only */
+/* Micro-craft: press / chip / composer.
+   Hover-lift (translateY(-1px) + shadow bloom) removed — it is
+   marketing-button physics inside a legal tool, and it is hover-triggered,
+   so on touch it can visually stick after a tap. Feedback is now a surface
+   change on press, which works identically on both pointer types. */
 .lokai-pressable {
-  transform: translateY(0);
   transition:
     background ${MOTION.press} ${MOTION.ease},
     border-color ${MOTION.press} ${MOTION.ease},
-    box-shadow ${MOTION.press} ${MOTION.ease},
-    transform ${MOTION.press} ${MOTION.ease};
+    box-shadow ${MOTION.press} ${MOTION.ease};
 }
 .lokai-pressable:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: ${SHADOW.md};
+  background: ${C.surface2};
 }
 .lokai-pressable:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: ${SHADOW.sm};
+  background: #EDEAE4;
 }
 .lokai-chip {
-  transform: translateY(0);
   transition:
     background ${MOTION.press} ${MOTION.ease},
-    border-color ${MOTION.press} ${MOTION.ease},
-    box-shadow ${MOTION.press} ${MOTION.ease},
-    transform ${MOTION.press} ${MOTION.ease};
+    border-color ${MOTION.press} ${MOTION.ease};
 }
 .lokai-chip:hover:not(:disabled) {
   background: ${C.navySoft} !important;
   border-color: ${C.navy} !important;
-  transform: translateY(-1px);
-  box-shadow: ${SHADOW.sm};
 }
 .lokai-chip:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: ${SHADOW.xs};
+  background: #DDE6F5 !important;
 }
 .lokai-composer-shell {
   cursor: text;
@@ -400,15 +416,10 @@ const SHARED_ANIM_CSS = `
   min-height: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lokai-pressable,
-  .lokai-chip,
-  .lokai-composer-shell,
+  /* Keep the colour/opacity transitions — they carry meaning and are not
+     vestibular. Only the expanding-height animation is dropped. */
   .lokai-disclose {
-    transition: none !important;
-  }
-  .lokai-pressable:hover:not(:disabled),
-  .lokai-chip:hover:not(:disabled) {
-    transform: none !important;
+    transition: opacity 150ms linear !important;
   }
 }
 `;

@@ -169,9 +169,13 @@ export function SettingsPanel() {
         <Divider />
 
         {/* ── Language Preferences ─────────────────────────── */}
-        {/* Language gradient: 3px top border — celebratory, language selector only */}
+        {/* Was a 3px saffron→navy bar (GRAD.language) — literally the flag
+            rendered as a stripe, and the exact "repeated colored side
+            stripe" .design-os/03-direction.md rejects. The section still
+            reads as its own zone via a hairline rule; the celebration
+            belongs in the native script names below, not in chrome. */}
         <div className="settings-scroll" style={{ overflowY: 'auto', flex: 1, paddingBottom: 20 }}>
-          <div style={{ height: '3px', background: GRAD.language, flexShrink: 0 }} />
+          <div style={{ height: '1px', background: C.border, flexShrink: 0 }} />
           <SectionHeading label="Language Preferences" />
 
           {/* Language Preference */}

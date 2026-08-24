@@ -30,26 +30,25 @@ const D = {
   active: 'rgba(255,255,255,0.13)',
 };
 
+/**
+ * Sidebar surface — flat.
+ *
+ * Was a navy poster: two radial washes (cool blue top, saffron bottom — the
+ * tricolour again) over a 3-stop navy gradient, plus an SVG turbulence
+ * noise layer. Chrome was louder than the conversation, which for a legal
+ * product should be quieter than ChatGPT's, not louder. .design-os/
+ * 03-direction.md already rejects decorative gradients and repeated colour
+ * stripes; the code was ignoring its own contract.
+ *
+ * Now one flat navy field. The rail recedes; the matter is the content.
+ */
 function SidebarAura() {
   return (
-    <>
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: [
-          'radial-gradient(ellipse 80% 34% at 22% 0%, rgba(221,231,255,0.16), transparent 70%)',
-          'radial-gradient(ellipse 90% 38% at 20% 96%, rgba(233,133,43,0.16), transparent 72%)',
-          'linear-gradient(180deg, #0B1E37 0%, #102A4C 48%, #0E2E55 100%)',
-        ].join(', '),
-      }} />
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        opacity: 0.045,
-        pointerEvents: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")`,
-      }} />
-    </>
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      background: C.navyDark,
+    }} />
   );
 }
 

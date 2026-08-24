@@ -41,7 +41,10 @@ export const EMOTION_CRAFT: Record<EmotionalIntent, {
     statusLine: 'Stopped to protect you · human help available',
   },
   honest_gap: {
-    statusTone: C.saffronDark,
+    // Was C.saffronDark (#C86712) — 3.88:1 on white, failed AA for the
+    // caption-sized statusLine it colours. C.amber is 7.16:1 and already
+    // a legitimate palette member for caution.
+    statusTone: C.amber,
     revealStepMs: 220,
     denser: false,
     primaryFirst: false,
