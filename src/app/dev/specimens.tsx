@@ -29,12 +29,23 @@ export interface Specimen {
   label: string;
   group: string;
   note?: string;
+  /** Where this lives in the real app — shown on the specimen page so it
+   *  never reads as an unexplained form floating in space. */
+  source: string;
   /** Natural render width; the frame sizes to this. */
   width?: number;
   /** Frames for a looping specimen. Length drives the loop; index is passed to render. */
   frames?: string[];
   render: (frame: number) => React.ReactNode;
 }
+
+/**
+ * Mobile stage content width — 390px artboard minus 20px padding each side,
+ * per MobileConsumerCase / MobileVoiceActive. Every specimen sourced from a
+ * mobile screen renders at this width so its proportions match where it
+ * actually lives, not an arbitrary "looks about right" number.
+ */
+const MOBILE_CONTENT_WIDTH = 350;
 
 /* The response-mode cycle — the single strongest specimen available. Same
    citizen question resolving as different modes: explain, then needing a
@@ -55,7 +66,8 @@ function turnSpecimen(id: string, label: string, turnId: string, note?: string):
     label,
     group: 'Response modes',
     note,
-    width: 420,
+    source: 'Mobile · case verify/assess stage (also renders in the desktop chat)',
+    width: MOBILE_CONTENT_WIDTH,
     render: () => {
       const turn = getTurnById(turnId);
       return turn ? <Turn turn={turn} /> : <MissingTurn id={turnId} />;
@@ -77,7 +89,8 @@ export const SPECIMENS: Specimen[] = [
     label: 'Response-mode taxonomy (loop)',
     group: 'Response modes',
     note: 'One question, four modes — the EMOTION_CRAFT system as a designed taxonomy.',
-    width: 420,
+    source: 'Mobile · case verify/assess stage (also renders in the desktop chat)',
+    width: MOBILE_CONTENT_WIDTH,
     frames: MODE_CYCLE.map((m) => m.mode),
     render: (frame) => {
       const { turnId } = MODE_CYCLE[frame % MODE_CYCLE.length]!;
@@ -96,6 +109,7 @@ export const SPECIMENS: Specimen[] = [
     label: 'Voice orb states (loop)',
     group: 'Voice',
     note: 'idle → listening → processing → error, crossfading.',
+    source: 'Mobile · voice screen and the composer mic on every mobile surface',
     width: 160,
     frames: VOICE_STATES,
     render: (frame) => (
@@ -110,7 +124,8 @@ export const SPECIMENS: Specimen[] = [
     label: 'Grounding meter',
     group: 'Trust',
     note: 'N of M claims mapped to sources — coverage, not a confidence %.',
-    width: 360,
+    source: 'Mobile/desktop · inside every explain-mode Turn, and the source drawer header',
+    width: MOBILE_CONTENT_WIDTH,
     render: () => (
       <div style={{ padding: 16 }}>
         <GroundingMeter grounded={3} total={4} note="One claim awaits a source you can add." />
@@ -123,7 +138,8 @@ export const SPECIMENS: Specimen[] = [
     label: 'Verification scratchpad',
     group: 'Trust',
     note: 'Confirm-or-fix chips — the citizen owns the facts before the AI interprets them.',
-    width: 420,
+    source: 'Mobile · case verify stage (D-01, the fact-verification gate)',
+    width: MOBILE_CONTENT_WIDTH,
     render: () => (
       <div style={{ padding: 16 }}>
         <VerificationScratchpad facts={getVerificationFacts()} onConfirmed={() => {}} />
@@ -136,7 +152,8 @@ export const SPECIMENS: Specimen[] = [
     label: 'Review gate',
     group: 'Trust',
     note: 'Draft unlocks export only after the user reads it — no direct send.',
-    width: 420,
+    source: 'Mobile · case packet stage (D-03, review-gated export)',
+    width: MOBILE_CONTENT_WIDTH,
     render: () => (
       <div style={{ padding: 16 }}>
         <ReviewGate draftText={SAMPLE_DRAFT} />
