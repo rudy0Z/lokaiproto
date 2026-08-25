@@ -1074,7 +1074,7 @@ function CaseArtboard() {
              says, and the glossary hint duplicates the inline LegalText terms —
              both are suppressed here so the answer isn't pushed below the fold.
              They still render on the earlier stages that have no answer yet. */}
-          {stage !== 'assess' && (
+          {!['assess', 'failure'].includes(stage) && (
             <div style={{
               background: C.surface,
               border: `1px solid ${C.border}`,
@@ -1094,7 +1094,7 @@ function CaseArtboard() {
           {/* AI disclaimer — calm and informational. On the answer stage it moves
              below the answer (L3) as a quiet line inside AssessmentView, so the
              answer isn't preceded by a tinted card. */}
-          {stage !== 'assess' && <AIDisclaimerBanner />}
+          {!['assess', 'failure'].includes(stage) && <AIDisclaimerBanner />}
 
           {['plan', 'packet'].includes(stage) && (
             <div style={{
@@ -1110,7 +1110,14 @@ function CaseArtboard() {
             </div>
           )}
 
-          {stage === 'failure' && failureState && <FailureStateCard failure={failureState} />}
+          {stage === 'failure' && failureState && (
+            <FailureStateCard
+              failure={failureState}
+              onSafeAction={() => goStage(
+                failureState.riskLevel === 'human_required' ? 'human-review' : 'intake',
+              )}
+            />
+          )}
 
           {notice && (
             <>
@@ -1233,6 +1240,10 @@ function CaseArtboard() {
             </>
           )}
 
+          {/* The forward/Review CTA row is suppressed on a stop state — a refusal
+             must not put a navy "Continue" under "don't rely on AI here" (L6).
+             The StopState carries its own safe-action CTA instead. */}
+          {stage !== 'failure' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button
               onClick={() => goStage(nextStage(stage))}
@@ -1274,6 +1285,7 @@ function CaseArtboard() {
               Review
             </button>
           </div>
+          )}
 
           {showDemoControls && (
             <div

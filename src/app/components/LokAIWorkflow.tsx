@@ -1364,39 +1364,91 @@ export function FirstActionChecklist({
   );
 }
 
-export function FailureStateCard({ failure }: { failure: FailureState }) {
+/**
+ * StopState (FailureStateCard) — §3.4/L6/L8. The product's whole thesis is that
+ * it knows when to stop, so the refusal is the most designed screen in the app,
+ * not the least. It was a pale Bootstrap alert (pink box, red left border) with
+ * the app's usual navy "Continue" sitting right underneath — the highest-
+ * affordance control inviting the user *past* the refusal it was refusing.
+ *
+ * Now it goes full-bleed dark: the one place mobile inverts tone, so a stop
+ * reads as a different kind of moment rather than another card. The SAFE action
+ * is the only prominent control; there is no "continue anyway." In a dark theme
+ * this same relationship flips to warm-and-luminous (L8) — the contrast is the
+ * constant, the direction follows the theme.
+ */
+export function StopState({
+  failure,
+  onSafeAction,
+}: {
+  failure: FailureState;
+  /** The safe path out — escalate to a human for human_required, recover otherwise. */
+  onSafeAction?: () => void;
+}) {
+  const needsHuman = failure.riskLevel === 'human_required';
+  const actionLabel = needsHuman ? 'Find legal-aid help' : failure.nextAction;
+
   return (
     <div style={{
-      background: failure.riskLevel === 'human_required' ? '#FFF1EE' : '#FFFFFF',
-      border: `1px solid ${failure.riskLevel === 'human_required' ? 'rgba(184,54,28,0.22)' : C.border}`,
-      borderLeft: `3px solid ${failure.riskLevel === 'human_required' ? C.red : C.saffron}`,
-      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`,
-      padding: 14,
-      boxShadow: SHADOW.xs,
+      background: C.navyDark,
+      borderRadius: LAYOUT.radius.turn,
+      padding: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14,
+      boxShadow: SHADOW.lg,
     }}>
-      <SmallLabel>Safe recovery</SmallLabel>
-      <h3 style={{ fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 800, color: C.ink, margin: '0 0 6px' }}>
+      <span style={{
+        alignSelf: 'flex-start',
+        display: 'inline-flex', alignItems: 'center', gap: 7,
+        ...typeStyle('label', { color: needsHuman ? '#F3B0A2' : '#F2C79A' }),
+      }}>
+        <ShieldCheck size={14} />
+        {needsHuman ? 'LokAI is stopping here' : 'LokAI paused'}
+      </span>
+
+      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400, color: C.onDark, lineHeight: 1.2, margin: 0 }}>
         {failure.title}
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
+
+      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.onDarkSoft, lineHeight: 1.6, margin: 0 }}>
         {failure.body}
       </p>
+
       <div style={{
-        background: '#F8F5EE',
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.control,
-        padding: '9px 10px',
+        borderTop: '1px solid rgba(255,255,255,0.14)',
+        paddingTop: 14,
+        display: 'flex', flexDirection: 'column', gap: 4,
       }}>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.navy, margin: '0 0 3px' }}>
-          {failure.nextAction}
+        <p style={{ ...typeStyle('captionStrong', { color: C.onDark, margin: 0 }) }}>
+          What to do instead
         </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.45, margin: 0 }}>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.onDarkSoft, lineHeight: 1.55, margin: 0 }}>
           {failure.safeFallback}
         </p>
       </div>
+
+      {onSafeAction && (
+        <button
+          onClick={onSafeAction}
+          style={{
+            minHeight: 48, marginTop: 2,
+            borderRadius: LAYOUT.radius.panel, border: 'none',
+            background: C.bg, color: C.navy,
+            fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 800, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          {actionLabel}
+          <ArrowRight size={16} />
+        </button>
+      )}
     </div>
   );
 }
+
+/** @deprecated legacy name — kept so any old import keeps compiling. Use StopState. */
+export const FailureStateCard = StopState;
 
 /**
  * NoticeAssessmentCard — the same "verify before trusting" discipline the
