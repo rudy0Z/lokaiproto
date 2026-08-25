@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, ChevronRight, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
-import { C, LAYOUT, MONO, SANS, SERIF, SHADOW, TYPE } from './shared';
+import { C, LAYOUT, MONO, S, SANS, SERIF, SHADOW, TYPE, typeStyle } from './shared';
 import { Sheet } from './Sheet';
 import type {
   AuditEvent,
@@ -773,65 +773,66 @@ const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg
  */
 export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
   const uploadedCount = items.filter(i => i.status !== 'missing').length;
+  /*
+   * §3.2/§3.6 rebuild: the section sits on the page (serif header is the divider,
+   * no outer card). Each evidence item is a discrete object, so it keeps a row —
+   * but as a hairline-separated list, not a stack of colored-left-border boxes.
+   * Only a conflict (the thing the user must notice) gets a fill.
+   */
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.turn,
-      padding: 15,
-      boxShadow: SHADOW.sm,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 10,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
-          Evidence locker
-        </h3>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted }}>
-          {uploadedCount} of {items.length} uploaded
-        </span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+          <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.2 }}>
+            Evidence locker
+          </h3>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
+            {uploadedCount} of {items.length} uploaded
+          </span>
+        </div>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '6px 0 0' }}>
+          What LokAI checked before trusting the facts below — including whether any two documents disagree.
+        </p>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
-        What LokAI checked before trusting the facts below — including whether any two documents disagree.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(item => {
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {items.map((item, i) => {
           const style = EVIDENCE_STATUS_STYLE[item.status];
+          const isConflict = item.status === 'conflicting';
           return (
             <div key={item.id} style={{
-              background: style.bg,
-              border: `1px solid ${item.status === 'conflicting' ? 'rgba(233,133,43,0.32)' : C.border}`,
-              borderLeft: `3px solid ${style.border}`,
-              borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
-              padding: '9px 11px',
+              borderTop: i ? `1px solid ${C.rule}` : 'none',
+              padding: isConflict ? 0 : '11px 0',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink, margin: 0 }}>
-                  {item.label}
-                </p>
-                <span style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: style.labelColor, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {style.label}
-                </span>
-              </div>
-              {item.extractedFacts && item.extractedFacts.length > 0 && (
-                <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {item.extractedFacts.map(f => (
-                    <span key={f.label} style={{
-                      fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft,
-                      background: '#FFFFFF', border: `1px solid ${C.border}`,
-                      borderRadius: LAYOUT.radius.pill, padding: '2px 9px',
-                    }}>
-                      {f.label}: <strong style={{ color: C.ink }}>{f.value}</strong>
-                    </span>
-                  ))}
+              <div style={isConflict ? {
+                background: C.cautionSoft, borderRadius: LAYOUT.radius.panel, padding: 12, margin: '9px 0',
+              } : undefined}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink, margin: 0 }}>
+                    {item.label}
+                  </p>
+                  <span style={{ ...typeStyle('label', { color: style.labelColor, whiteSpace: 'nowrap', flexShrink: 0 }) }}>
+                    {style.label}
+                  </span>
                 </div>
-              )}
-              {item.conflictNote && (
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.5, margin: '7px 0 0' }}>
-                  {item.conflictNote}
-                </p>
-              )}
+                {item.extractedFacts && item.extractedFacts.length > 0 && (
+                  <div style={{ marginTop: 7, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {item.extractedFacts.map(f => (
+                      <span key={f.label} style={{
+                        fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft,
+                        background: C.surface2, border: `1px solid ${C.border}`,
+                        borderRadius: LAYOUT.radius.pill, padding: '2px 9px',
+                      }}>
+                        {f.label}: <strong style={{ color: C.ink }}>{f.value}</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {item.conflictNote && (
+                  <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.5, margin: '8px 0 0' }}>
+                    {item.conflictNote}
+                  </p>
+                )}
+              </div>
             </div>
           );
         })}
@@ -873,167 +874,170 @@ export function VerificationScratchpad({
     onFactCorrect?.(id, value);
   };
 
-  return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderTop: `3px solid ${C.navy}`,
-      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel}`,
-      padding: 15,
-      boxShadow: SHADOW.sm,
-    }}>
-      <style>{CSS}</style>
-      <SmallLabel>Verify before LokAI builds your assessment</SmallLabel>
-      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 6px' }}>
-        Are these facts right?
-      </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>
-        LokAI pulled these from what you shared and your invoice. Confirm or fix each one — your
-        guidance is only as accurate as these facts, so you own them, not the AI.
-      </p>
+  const remaining = items.length - confirmedCount;
 
-      {/* Live claim coverage — climbs as the user confirms facts, never a fabricated % */}
+  /*
+   * §3.2 rebuild. The signature component — "the user owns the facts, not the
+   * model." Was a folded-corner card (one sharp corner + navy top border — a
+   * one-off shape used nowhere else) holding two back-to-back progress bars and
+   * a KYC-style stack of bordered fact cards. Now it sits on the page: the serif
+   * question is its own header, ONE claim-count indicator, and facts as a
+   * hairline list where the value leads and the field label is quiet beneath it.
+   * Only a fact that still needs review gets a fill — the exception is flagged,
+   * every settled row stays calm.
+   */
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
+      <style>{CSS}</style>
+      <div>
+        <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, lineHeight: 1.2, margin: '0 0 6px' }}>
+          Are these facts right?
+        </h3>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+          LokAI pulled these from what you shared and your invoice. Confirm or fix each one — your
+          guidance is only as accurate as these facts, so you own them, not the AI.
+        </p>
+      </div>
+
+      {/* Single claim-count indicator — climbs as facts are confirmed, never a % */}
       <GroundingMeter
         live
         grounded={confirmedCount}
         total={items.length}
         note={allConfirmed
           ? 'These facts are yours now. The assessment is built on what you confirmed, not on what the AI guessed.'
-          : `Confirm or fix ${items.length - confirmedCount} flagged fact${items.length - confirmedCount === 1 ? '' : 's'} before LokAI builds the assessment. Coverage is claim counts, not model confidence.`}
+          : `Confirm or fix ${remaining} flagged fact${remaining === 1 ? '' : 's'} before LokAI builds the assessment. Coverage is claim counts, not model confidence.`}
       />
 
-      {/* Progress */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
-        <div style={{ flex: 1, height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', width: `${(confirmedCount / items.length) * 100}%`,
-            background: allConfirmed ? C.green : C.saffron, borderRadius: LAYOUT.radius.pill,
-            transition: 'width 0.25s cubic-bezier(0.22,1,0.36,1)',
-          }} />
-        </div>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
-          {confirmedCount} of {items.length} confirmed
-        </span>
-      </div>
-
-      {/* Fact chips */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(fact => {
+      {/* Fact list — hairline rows, value leads, label quiet beneath */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {items.map((fact, i) => {
           const isEditing = editingId === fact.id;
           const needsReview = fact.status === 'needs_review';
           return (
             <div key={fact.id} style={{
-              background: needsReview ? '#FFF8F0' : C.surface2,
-              border: `1px solid ${needsReview ? 'rgba(233,133,43,0.32)' : C.border}`,
-              borderLeft: `3px solid ${needsReview ? C.saffron : C.green}`,
-              borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
-              padding: '9px 11px',
+              borderTop: i ? `1px solid ${C.rule}` : 'none',
+              padding: needsReview ? 0 : '12px 0',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 2px' }}>
-                    {fact.label}
-                  </p>
-                  {isEditing ? (
-                    <input
-                      className="lokai-verification-input"
-                      aria-label={`Correct ${fact.label}`}
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(fact.id); }}
-                      style={{
-                        width: '100%', boxSizing: 'border-box',
-                        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink,
-                        border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.control,
-                        padding: '5px 8px', background: '#FFFFFF',
-                      }}
-                    />
-                  ) : (
-                    <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {fact.value}
+              <div style={needsReview ? {
+                background: C.cautionSoft,
+                borderRadius: LAYOUT.radius.panel,
+                padding: 12,
+                margin: '10px 0',
+              } : undefined}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    {isEditing ? (
+                      <input
+                        className="lokai-verification-input"
+                        aria-label={`Correct ${fact.label}`}
+                        value={draft}
+                        autoFocus
+                        onChange={e => setDraft(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(fact.id); }}
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink,
+                          border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.control,
+                          padding: '6px 9px', background: C.surface,
+                        }}
+                      />
+                    ) : (
+                      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1.35 }}>
+                        {fact.value}
+                      </p>
+                    )}
+                    <p style={{ ...typeStyle('caption', { color: C.muted, margin: '2px 0 0' }) }}>
+                      {fact.label}
                     </p>
+                  </div>
+
+                  {!isEditing && (
+                    needsReview ? (
+                      <span aria-hidden style={{
+                        width: 8, height: 8, borderRadius: LAYOUT.radius.full,
+                        background: C.saffron, flexShrink: 0, marginTop: 6,
+                      }} />
+                    ) : (
+                      <button
+                        onClick={() => startEdit(fact)}
+                        aria-label={`Edit ${fact.label}`}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted,
+                        }}
+                      >
+                        <Check size={15} color={C.green} strokeWidth={2.6} />
+                        <Pencil size={12} color={C.muted} />
+                      </button>
+                    )
                   )}
                 </div>
 
-                {/* Status / actions */}
-                {!isEditing && fact.status === 'confirmed' && (
-                  <button
-                    onClick={() => startEdit(fact)}
-                    aria-label={`Edit ${fact.label}`}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted,
-                    }}
-                  >
-                    <Check size={14} color={C.terracotta} strokeWidth={2.6} />
-                    <Pencil size={12} color={C.muted} />
-                  </button>
+                {/* Needs-review hint + actions */}
+                {needsReview && !isEditing && (
+                  <>
+                    {fact.hint && (
+                      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.amber, lineHeight: 1.45, margin: '8px 0 10px' }}>
+                        {fact.hint}
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', gap: 7, marginTop: fact.hint ? 0 : 10 }}>
+                      <button
+                        onClick={() => confirm(fact.id)}
+                        style={{
+                          minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
+                          background: C.navy, color: C.onDark,
+                          fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
+                          padding: '0 12px', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                        }}
+                      >
+                        <Check size={13} /> It's correct
+                      </button>
+                      <button
+                        onClick={() => startEdit(fact)}
+                        style={{
+                          minHeight: 34, borderRadius: LAYOUT.radius.control,
+                          border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.inkSoft,
+                          fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
+                          padding: '0 12px', cursor: 'pointer',
+                        }}
+                      >
+                        Fix it
+                      </button>
+                    </div>
+                  </>
                 )}
-              </div>
 
-              {/* Needs-review hint + actions */}
-              {needsReview && !isEditing && (
-                <>
-                  {fact.hint && (
-                    <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.amber, lineHeight: 1.45, margin: '6px 0 8px' }}>
-                      {fact.hint}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: 7 }}>
+                {isEditing && (
+                  <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
                     <button
-                      onClick={() => confirm(fact.id)}
+                      onClick={() => saveEdit(fact.id)}
                       style={{
-                        minHeight: 32, borderRadius: LAYOUT.radius.control, border: 'none',
-                        background: C.navy, color: '#FFFFFF',
+                        minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
+                        background: C.navy, color: C.onDark,
                         fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 12px', cursor: 'pointer',
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '0 14px', cursor: 'pointer',
                       }}
                     >
-                      <Check size={13} /> It's correct
+                      Save
                     </button>
                     <button
-                      onClick={() => startEdit(fact)}
+                      onClick={() => setEditingId(null)}
                       style={{
-                        minHeight: 32, borderRadius: LAYOUT.radius.control,
-                        border: `1px solid ${C.borderStrong}`, background: '#FFFFFF', color: C.inkSoft,
+                        minHeight: 34, borderRadius: LAYOUT.radius.control,
+                        border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.inkSoft,
                         fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 12px', cursor: 'pointer',
+                        padding: '0 14px', cursor: 'pointer',
                       }}
                     >
-                      Fix it
+                      Cancel
                     </button>
                   </div>
-                </>
-              )}
-
-              {isEditing && (
-                <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
-                  <button
-                    onClick={() => saveEdit(fact.id)}
-                    style={{
-                      minHeight: 32, borderRadius: LAYOUT.radius.control, border: 'none',
-                      background: C.navy, color: '#FFFFFF',
-                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                      padding: '0 14px', cursor: 'pointer',
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    style={{
-                      minHeight: 32, borderRadius: LAYOUT.radius.control,
-                      border: `1px solid ${C.borderStrong}`, background: '#FFFFFF', color: C.inkSoft,
-                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                      padding: '0 14px', cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}
@@ -1044,17 +1048,17 @@ export function VerificationScratchpad({
         onClick={allConfirmed ? onConfirmed : undefined}
         disabled={!allConfirmed}
         style={{
-          width: '100%', minHeight: 46, marginTop: 14,
+          width: '100%', minHeight: 48,
           borderRadius: LAYOUT.radius.panel, border: 'none',
           background: allConfirmed ? C.navy : C.border,
-          color: allConfirmed ? '#FFFFFF' : C.muted,
+          color: allConfirmed ? C.onDark : C.muted,
           fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700,
           cursor: allConfirmed ? 'pointer' : 'not-allowed',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           transition: 'background 0.18s ease',
         }}
       >
-        {allConfirmed ? 'Build my assessment' : `Confirm ${items.length - confirmedCount} more to continue`}
+        {allConfirmed ? 'Build my assessment' : `Confirm ${remaining} more to continue`}
         {allConfirmed && <ArrowRight size={16} />}
       </button>
     </div>
