@@ -2,7 +2,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE, VoiceOrb } from '../../components/shared';
+import { C, LAYOUT, PLANE, S, SANS, SERIF, SHADOW, TYPE, VoiceOrb, typeStyle } from '../../components/shared';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
@@ -20,7 +20,6 @@ import {
   SourceCard,
   VerificationScratchpad,
   WorkflowActionPlan,
-  WorkflowTrustPanel,
 } from '../../components/LokAIWorkflow';
 import {
   getConsumerWorkflowState,
@@ -59,16 +58,32 @@ const CASE_CSS = `
 
 type MobileStageParam = WorkflowStage | 'blocked' | 'human-review' | 'assessment' | 'sources';
 
+/* Legacy/friendlier URL spellings that predate the WorkflowStage names.
+   Kept so existing deep links (the portfolio tour, the dev catalog, anything
+   already shared) keep resolving. */
+const STAGE_ALIASES: Record<string, WorkflowStage> = {
+  blocked: 'packet',
+  'human-review': 'escalation',
+  sources: 'retrieve',
+  assessment: 'assess',
+};
+
+/* Every real WorkflowStage passes through under its own name. This used to be
+   a hand-written allowlist of `if`s and it had silently dropped 'assess' — so
+   `?stage=assess` fell through to the default and rendered *intake* instead of
+   the three-zone answer, which is the single most important screen in the app.
+   The in-app Next button hid it (it's disabled on verify, and the verify → assess
+   hand-off goes through the 'assessment' alias), so only deep links broke.
+   Deriving the set from the union means a new stage can never be forgotten here. */
+const STAGE_NAMES = new Set<string>([
+  'intake', 'clarify', 'verify', 'triage', 'retrieve',
+  'assess', 'plan', 'packet', 'escalation', 'failure', 'audit',
+] satisfies WorkflowStage[]);
+
 function mapStage(value: string | null): WorkflowStage {
-  if (value === 'blocked') return 'packet';
-  if (value === 'human-review') return 'escalation';
-  if (value === 'sources') return 'retrieve';
-  if (value === 'assessment') return 'assess';
-  if (value === 'clarify') return 'clarify';
-  if (value === 'verify') return 'verify';
-  if (value === 'plan') return 'plan';
-  if (value === 'packet') return 'packet';
-  if (value === 'audit') return 'audit';
+  if (!value) return 'intake';
+  if (value in STAGE_ALIASES) return STAGE_ALIASES[value];
+  if (STAGE_NAMES.has(value)) return value as WorkflowStage;
   return 'intake';
 }
 
@@ -552,60 +567,79 @@ function AssessmentView({
 }) {
   const zones = zonesFromTurn(activeTurn);
 
+  /*
+   * L1/L3/L4 rebuild: the answer sits on the page, not inside a card. Zone 0 is
+   * the law speaking — Fraunces at editorial size carries that register with no
+   * eyebrow label above it (the serif *is* the label). Later zones are quiet
+   * sans, separated by a single hairline and whitespace, never boxed or tinted.
+   * Grounding leaves as one tappable line, not a full bordered button.
+   */
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.turn,
-      overflow: 'hidden',
-      boxShadow: SHADOW.sm,
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: S[4] }}>
       {isProgressing && progressLabel && (
-        <div style={{ padding: '4px 8px 0', borderBottom: `1px solid ${C.border}`, background: C.surface2 }}>
-          <TurnStatus
-            label={progressLabel}
-            stages={DEMO_PROGRESS_STAGES}
-            activeIndex={Math.max(0, progressIndex)}
-          />
-        </div>
+        <TurnStatus
+          label={progressLabel}
+          stages={DEMO_PROGRESS_STAGES}
+          activeIndex={Math.max(0, progressIndex)}
+        />
       )}
-      {zones.map(([label, text], index) => (
-        <div key={`${label}-${index}`} style={{ padding: '15px 16px', borderTop: index ? `1px solid ${C.border}` : 'none', background: index ? C.surface2 : '#FFFFFF' }}>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 8px' }}>
-            {label}
-          </p>
-          <p style={{
-            fontFamily: index === 0 ? SERIF : SANS,
-            fontSize: index === 0 ? TYPE.h3.size : TYPE.body.size,
-            color: C.inkSoft,
-            lineHeight: index === 0 ? 1.35 : 1.6,
+
+      {zones.map(([label, text], index) =>
+        index === 0 ? (
+          <p key={`${label}-${index}`} style={{
+            fontFamily: SERIF,
+            fontSize: TYPE.editorial.size,
+            fontWeight: 400,
+            color: C.ink,
+            lineHeight: 1.28,
+            letterSpacing: '-0.01em',
             margin: 0,
           }}>
             {text}
           </p>
-        </div>
-      ))}
-      <div style={{ padding: 14, borderTop: `1px solid ${C.border}`, background: '#FFFFFF' }}>
-        <button
-          type="button"
-          className="lokai-pressable"
-          onClick={onOpenSources}
-          style={{
-            width: '100%',
-            minHeight: 44,
-            borderRadius: LAYOUT.radius.panel,
-            border: `1px solid ${C.navy}`,
-            background: '#FFFFFF',
-            color: C.navy,
-            fontFamily: SANS,
-            fontSize: TYPE.small.size,
-            fontWeight: 800,
-            cursor: 'pointer',
-          }}
-        >
-          View source notes
-        </button>
-      </div>
+        ) : (
+          <div key={`${label}-${index}`} style={{ paddingTop: S[4], borderTop: `1px solid ${C.rule}` }}>
+            <p style={{
+              ...typeStyle('label', { color: C.muted, margin: `0 0 ${S[2]}` }),
+            }}>
+              {label}
+            </p>
+            <p style={{
+              fontFamily: SANS,
+              fontSize: TYPE.body.size,
+              color: C.inkSoft,
+              lineHeight: 1.6,
+              margin: 0,
+            }}>
+              {text}
+            </p>
+          </div>
+        ),
+      )}
+
+      <button
+        type="button"
+        onClick={onOpenSources}
+        style={{
+          alignSelf: 'flex-start',
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', padding: '4px 0',
+          color: C.navy, cursor: 'pointer',
+          ...typeStyle('captionStrong'),
+        }}
+      >
+        View the source trail
+        <ArrowRight size={14} />
+      </button>
+
+      <p style={{
+        ...typeStyle('micro', {
+          color: C.muted, margin: `${S[1]} 0 0`,
+          letterSpacing: 'normal', textTransform: 'none',
+        }),
+      }}>
+        Prepared example, not legal advice — check every fact and source before using a draft.
+      </p>
     </div>
   );
 }
@@ -1035,27 +1069,36 @@ function CaseArtboard() {
               </p>
             </div>
           )}
-          <div style={{
-            background: '#FFFFFF',
-            border: `1px solid ${C.border}`,
-            borderRadius: LAYOUT.radius.turn,
-            padding: 14,
-            boxShadow: SHADOW.xs,
-          }}>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 7px' }}>
-              Current step
-            </p>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
-              {workflow.currentUserStep}
-            </p>
-          </div>
-
-          {/* AI disclaimer — shown always, calm and informational */}
-          <AIDisclaimerBanner />
-
-          {['assess', 'plan', 'packet'].includes(stage) && (
+          {/* L3: on the answer stage the answer leads. The "Current step" card
+             restates what the answer's own "what you can do next" zone already
+             says, and the glossary hint duplicates the inline LegalText terms —
+             both are suppressed here so the answer isn't pushed below the fold.
+             They still render on the earlier stages that have no answer yet. */}
+          {stage !== 'assess' && (
             <div style={{
-              background: '#FFF9F1',
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: LAYOUT.radius.turn,
+              padding: 14,
+              boxShadow: SHADOW.xs,
+            }}>
+              <p style={{ ...typeStyle('label', { color: C.navy, margin: '0 0 7px' }) }}>
+                Current step
+              </p>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+                {workflow.currentUserStep}
+              </p>
+            </div>
+          )}
+
+          {/* AI disclaimer — calm and informational. On the answer stage it moves
+             below the answer (L3) as a quiet line inside AssessmentView, so the
+             answer isn't preceded by a tinted card. */}
+          {stage !== 'assess' && <AIDisclaimerBanner />}
+
+          {['plan', 'packet'].includes(stage) && (
+            <div style={{
+              background: C.cautionSoft,
               border: `1px solid ${C.border}`,
               borderRadius: LAYOUT.radius.panel,
               padding: 14,
@@ -1131,7 +1174,9 @@ function CaseArtboard() {
                     progressLabel={progressLabel}
                     progressIndex={progressIndex}
                   />
-                  <WorkflowTrustPanel workflow={workflow} onOpenSources={() => setSourceOpen(true)} />
+                  {/* Trust detail (claim ledger + coverage) now lives inside the
+                     source sheet, not inline — the assess screen keeps only the
+                     one quiet 'source trail' line (§3.1). */}
                 </>
               )}
               {stage === 'plan'       && (
@@ -1299,8 +1344,9 @@ function CaseArtboard() {
       <LokAISourceDrawer
         open={sourceOpen}
         onClose={() => setSourceOpen(false)}
-        title="Source drawer"
+        title="Source trail"
         sources={workflow.sources}
+        trust={workflow.trust}
         contain
       />
     </div>

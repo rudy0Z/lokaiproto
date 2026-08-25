@@ -293,17 +293,89 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
   );
 }
 
+/**
+ * ClaimLedger — the sheet's lead. LokAI's core bet, made touchable: not a
+ * confidence score but a count of how many claims trace to a real source,
+ * followed by the coverage detail as a plain ledger. Sits on the sheet's
+ * surface (no card of its own — the sheet is the container), separated from
+ * the source list by a hairline.
+ */
+function ClaimLedger({ trust }: { trust: CaseWorkflowState['trust'] }) {
+  const ratio = trust.totalClaims > 0 ? trust.groundedClaims / trust.totalClaims : 0;
+  const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.saffron : C.oxblood;
+  const factValue = trust.factCompleteness === 'needs_one_detail'
+    ? 'Needs one detail'
+    : trust.factCompleteness === 'insufficient' ? 'Insufficient' : 'Complete';
+  const draftValue = trust.draftStatus === 'ai_draft'
+    ? 'AI draft'
+    : trust.draftStatus === 'user_reviewed' ? 'Reviewed' : 'Ready to use';
+
+  const rows: [string, React.ReactNode, boolean][] = [
+    ['What the source supports', <SourceCoveragePill coverage={trust.sourceCoverage} />, false],
+    ['Facts needed', factValue, false],
+    ['Location rule', trust.jurisdictionClarity, true],
+    ['Help needed', RISK_LABEL[trust.riskLevel], false],
+    ['Draft stage', draftValue, false],
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontFamily: SERIF, fontSize: TYPE.display2.size, fontWeight: 400, color: tone, lineHeight: 1 }}>
+            {trust.groundedClaims}
+          </span>
+          <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.muted }}>
+            of {trust.totalClaims} claims trace to a source
+          </span>
+        </div>
+        <div style={{ height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden', margin: '10px 0 8px' }}>
+          <div
+            className="lokai-meter-fill"
+            style={{
+              height: '100%', width: `${Math.round(ratio * 100)}%`, background: tone,
+              borderRadius: LAYOUT.radius.pill, transformOrigin: 'left center',
+              animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both',
+            }}
+          />
+        </div>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: 0 }}>
+          Coverage is claim counts, not model confidence. Expert review is still pending.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {rows.map(([label, value, cap], i) => (
+          <div key={label} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            padding: '10px 0', borderTop: i ? `1px solid ${C.rule}` : 'none',
+          }}>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>{label}</span>
+            {typeof value === 'string'
+              ? <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, textTransform: cap ? 'capitalize' : 'none' }}>{value}</span>
+              : value}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LokAISourceDrawer({
   open,
   onClose,
   title = 'Source trail',
   sources,
+  trust,
   contain = false,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   sources: WorkflowSource[];
+  /** When provided, the sheet leads with a claim ledger summarising coverage —
+     the trust detail that used to sit inline on the answer screen (§3.1/§3.3). */
+  trust?: CaseWorkflowState['trust'];
   /** True when rendered inside a mobile phone artboard — see Sheet's `contain`. */
   contain?: boolean;
 }) {
@@ -348,8 +420,13 @@ export function LokAISourceDrawer({
             <X size={17} color={C.inkSoft} />
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {sources.map(source => <SourceCard key={source.id} source={source} />)}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {trust && <ClaimLedger trust={trust} />}
+          {trust && <div style={{ borderTop: `1px solid ${C.rule}` }} />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {trust && <SmallLabel>Sources behind each claim</SmallLabel>}
+            {sources.map(source => <SourceCard key={source.id} source={source} />)}
+          </div>
         </div>
       </div>
     </Sheet>
