@@ -544,13 +544,15 @@ export function Logo({ size = 40, light = false }: { size?: number; light?: bool
 }
 
 // ─── Voice Orb — full 4-state component ──────────────────────────────────────
+export type VoiceOrbState = 'idle' | 'listening' | 'processing' | 'error';
+
 export function VoiceOrb({
   size  = 52,
   state = 'idle',
   onClick,
 }: {
   size?:    number;
-  state?:   'idle' | 'listening' | 'processing' | 'error';
+  state?:   VoiceOrbState;
   onClick?: () => void;
 }) {
   useEffect(() => { injectSharedStyles(); }, []);

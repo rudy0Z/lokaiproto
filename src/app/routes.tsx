@@ -66,6 +66,12 @@ export const router = createHashRouter([
         ],
       },
 
+      // ── Dev harness + specimens (URL-only, not in any nav) ──────────────
+      // /dev indexes every screen, state, and specimen. /specimen/:id renders
+      // one component alone on a bare canvas for case-study embeds.
+      { path: 'dev',              lazy: lazyPage(() => import('./pages/DevIndex')) },
+      { path: 'specimen/:specimenId', lazy: lazyPage(() => import('./pages/Specimen')) },
+
       // Fallback
       { path: '/', element: <Navigate to="/desktop/dashboard" replace /> }
     ],
