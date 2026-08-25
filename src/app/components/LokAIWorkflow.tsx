@@ -1524,26 +1524,31 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
 }
 
 export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
+  // §3.6: ground-level, serif header as the divider. The handoff-ready bundle is
+  // the one discrete object here, so it keeps a light surface.
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderLeft: `3px solid ${C.oxblood}`,
-      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`,
-      padding: 14,
-      boxShadow: SHADOW.xs,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
-        <ShieldCheck size={17} color={C.oxblood} />
-        <SmallLabel>Professional guidance recommended</SmallLabel>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
+      <div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...typeStyle('label', { color: C.oxblood }) }}>
+          <ShieldCheck size={14} />
+          Professional guidance recommended
+        </span>
+        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '8px 0 0' }}>
+          {workflow.humanReviewSummary}
+        </p>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
-        {workflow.humanReviewSummary}
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{
+        background: C.surface2,
+        borderRadius: LAYOUT.radius.panel,
+        padding: 14,
+        display: 'flex', flexDirection: 'column', gap: 9,
+      }}>
+        <p style={{ ...typeStyle('captionStrong', { color: C.ink, margin: 0 }) }}>
+          Ready to hand off
+        </p>
         {['Issue summary', 'Evidence collected', 'Sources checked', 'Draft packet'].map(item => (
-          <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Check size={13} color={C.green} />
+          <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <Check size={14} color={C.green} strokeWidth={2.4} />
             <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.ink }}>{item}</span>
           </div>
         ))}
@@ -1553,15 +1558,13 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
 }
 
 export function AuditTrailList({ events }: { events: AuditEvent[] }) {
+  // §3.6: ground-level timeline — the serif header is the divider, the events are
+  // a plain vertical list, no outer card.
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.panel,
-      padding: 13,
-      boxShadow: SHADOW.xs,
-    }}>
-      <SmallLabel>Case history</SmallLabel>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
+      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.2 }}>
+        Case history
+      </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {events.map(event => (
           <div key={event.id} style={{ display: 'grid', gridTemplateColumns: '22px 1fr', gap: 9 }}>

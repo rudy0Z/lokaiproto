@@ -188,24 +188,18 @@ function primaryCtaLabel(stage: WorkflowStage, blocksNext: boolean, isVerifyStag
 // Decision: We want users to trust the AI but understand it can miss details.
 // We show this always — not only in error states — so it’s educational, not alarming.
 function AIDisclaimerBanner() {
+  // A quiet line, not a tinted card — informational, never competing with the
+  // stage's actual content for attention (§3.6/L3).
   return (
-    <div style={{
-      margin: '0 0 14px',
-      padding: '10px 14px',
-      background: '#FFF8F0',
-      border: '1px solid rgba(233,133,43,0.22)',
-      borderRadius: LAYOUT.radius.panel,
+    <p style={{
+      ...typeStyle('micro', {
+        color: C.muted, margin: 0,
+        letterSpacing: 'normal', textTransform: 'none',
+        lineHeight: 1.5,
+      }),
     }}>
-      <p style={{
-        fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
-        color: C.amber, margin: '0 0 3px',
-      }}>
-        Check before you use this
-      </p>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
-        This is a prepared example, not legal advice. Check every fact and source note before using a draft.
-      </p>
-    </div>
+      Prepared example, not legal advice — check every fact and source before using a draft.
+    </p>
   );
 }
 
@@ -1074,26 +1068,11 @@ function CaseArtboard() {
              says, and the glossary hint duplicates the inline LegalText terms —
              both are suppressed here so the answer isn't pushed below the fold.
              They still render on the earlier stages that have no answer yet. */}
-          {!['assess', 'failure'].includes(stage) && (
-            <div style={{
-              background: C.surface,
-              border: `1px solid ${C.border}`,
-              borderRadius: LAYOUT.radius.turn,
-              padding: 14,
-              boxShadow: SHADOW.xs,
-            }}>
-              <p style={{ ...typeStyle('label', { color: C.navy, margin: '0 0 7px' }) }}>
-                Current step
-              </p>
-              <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
-                {workflow.currentUserStep}
-              </p>
-            </div>
-          )}
-
-          {/* AI disclaimer — calm and informational. On the answer stage it moves
-             below the answer (L3) as a quiet line inside AssessmentView, so the
-             answer isn't preceded by a tinted card. */}
+          {/* §3.6: the "Current step" card was removed — the header already names
+             the stage (L7), and each stage's own content carries the next action.
+             The disclaimer is a quiet line, not a tinted card competing for the top
+             of every screen (assess renders its own below the answer; failure is
+             the dark stop state). */}
           {!['assess', 'failure'].includes(stage) && <AIDisclaimerBanner />}
 
           {['plan', 'packet'].includes(stage) && (
