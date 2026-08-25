@@ -120,10 +120,13 @@ function UserBubble({ text, time }: { text: string; time: string }) {
   return (
     <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.2}}
       style={{ display:'flex', justifyContent:'flex-end', marginBottom:20 }}>
-      <div style={{ maxWidth:'72%', background:C.terracotta, borderRadius: `${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.xs} ${LAYOUT.radius.turn}`, padding:'14px 18px' }}>
-        <p style={{ fontFamily:SANS, fontSize: TYPE.title.size, color:'#fff', lineHeight:1.55, margin:0 }}>{text}</p>
+      {/* §3.7: was a filled terracotta bubble with white text — the most saturated
+         element on screen, pulling the eye to the question instead of the answer.
+         Quieted to a light surface with ink text so the answer stays the focus. */}
+      <div style={{ maxWidth:'72%', background:C.surface2, border:`1px solid ${C.border}`, borderRadius: `${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.xs} ${LAYOUT.radius.turn}`, padding:'13px 17px' }}>
+        <p style={{ fontFamily:SANS, fontSize: TYPE.title.size, color:C.ink, lineHeight:1.55, margin:0 }}>{text}</p>
         <div style={{ marginTop:5, textAlign:'right' }}>
-          <span style={{ fontFamily:SANS, fontSize: TYPE.micro.size, color:'rgba(255,255,255,.78)' }}>{time}</span>
+          <span style={{ fontFamily:SANS, fontSize: TYPE.micro.size, color:C.muted }}>{time}</span>
         </div>
       </div>
     </motion.div>
@@ -489,7 +492,7 @@ export default function Chat() {
           {/* Chat column */}
           <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
             <div ref={chatRef} className="chat-scroll"
-              style={{ flex:1, overflowY:'auto', padding:'28px 0 140px' }}>
+              style={{ flex:1, overflowY:'auto', padding:'28px 0 176px' }}>
               <div style={{ maxWidth:600, margin:'0 auto', padding:'0 24px' }}>
 
                 {scenario.id !== 'consumer' && (
