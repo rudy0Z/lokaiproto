@@ -100,11 +100,23 @@ export interface ResponseTurn {
   payload: TurnPayload;
 }
 
+/* The working card's stages are the conversation's middle (audit F1/F5) —
+   so they speak in ACTIONS LokAI actually takes, naming the statute it
+   checks. "Checking the facts" was removed deliberately: in this product
+   the facts are the USER's to confirm (the verification gate), and the
+   working card must not imply the model verified them. */
 export const DEMO_PROGRESS_STAGES = [
-  'Understanding your issue',
-  'Checking the facts',
-  'Reviewing the source',
-  'Preparing a clear answer',
+  'Reading what you shared',
+  'Checking the Consumer Protection Act, 2019',
+  'Matching the law to your facts',
+  'Preparing your answer',
+] as const;
+
+/** The shorter confirm-after-clarify beat — one honest step, not a re-run
+ *  of the full arc for an answer the user just steered to. */
+export const CLARIFY_RESOLVE_STAGES = [
+  'Recording your answer',
+  'Preparing your answer',
 ] as const;
 
 const CPA_CITATIONS: TurnCitation[] = [
@@ -150,6 +162,28 @@ export const PREPARED_TURNS: ResponseTurn[] = [
         ],
         cta: 'Prepare demand notice',
         glossaryIds: ['deficiency', 'legalNotice', 'districtCommission'],
+      },
+    },
+  },
+  {
+    id: 'consumer-clarify',
+    scenarioId: 'consumer',
+    mode: 'clarify',
+    title: 'One date shapes your options',
+    emotionalIntent: 'cared_friction',
+    trigger: /when did you buy|purchase date/i,
+    language: 'en',
+    citations: [CPA_CITATIONS[0]],
+    groundedClaims: 2,
+    totalClaims: 3,
+    draftAllowed: false,
+    payload: {
+      mode: 'clarify',
+      data: {
+        question: 'When did you buy the mixer?',
+        whyItMatters:
+          'The law gives you two years from purchase to take a consumer complaint further. Your date decides which doors are still open.',
+        unlocks: 'Pick the closest answer below, or type it — LokAI takes the next step from there.',
       },
     },
   },

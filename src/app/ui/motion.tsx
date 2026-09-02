@@ -75,6 +75,8 @@ export interface FadeRiseProps {
   y?: number;
   /** MS. Default 240. */
   duration?: number;
+  /** Inside an <AnimatePresence>, leave with a soft fade instead of snapping. */
+  exit?: boolean;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -83,7 +85,7 @@ export interface FadeRiseProps {
  * The one entrance. Opacity 0→1 with an 8px rise. Under reduced motion the
  * transform drops and a short opacity fade carries the state change.
  */
-export function FadeRise({ children, delay = 0, y = 8, duration = 240, style, className }: FadeRiseProps) {
+export function FadeRise({ children, delay = 0, y = 8, duration = 240, exit: withExit, style, className }: FadeRiseProps) {
   const reduce = useReducedMotion();
   const seconds = duration / 1000;
 
@@ -92,6 +94,11 @@ export function FadeRise({ children, delay = 0, y = 8, duration = 240, style, cl
       className={className}
       initial={reduce ? { opacity: 0 } : { opacity: 0, y }}
       animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      exit={withExit
+        ? (reduce
+          ? { opacity: 0, transition: { duration: 0.15, ease: 'linear' } }
+          : { opacity: 0, y: -4, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } })
+        : undefined}
       transition={reduce
         ? { duration: 0.15, ease: 'linear', delay }
         : { duration: seconds, ease: [0.22, 1, 0.36, 1], delay }}

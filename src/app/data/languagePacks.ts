@@ -140,6 +140,96 @@ export function localizeConsumerExplain(language: DemoLanguage): ResponseTurn {
   };
 }
 
+/* ─── The clarify middle, localized ─────────────────────────────────────────
+ * The chat's first exchange on the consumer matter asks ONE question (the
+ * purchase date) because the answer genuinely routes the next turn: inside
+ * the two-year window → the full explanation; outside it → the statute
+ * expiry stop; unsure → the honest partial answer. A chat that asks and
+ * *uses* the answer is the conversation middle the audit asked for (F1).
+ *
+ * Localization scope: the question, why-it-matters, and option labels ship
+ * in all four prepared languages. The two non-explain FOLLOW-UP turns
+ * (statute expiry, source gap) are English-only today — adding their packs
+ * is the same three-file change as every language (see SCRIPT_RAIL note),
+ * so until then non-Latin chats are offered only the localized explain
+ * path rather than an English stop state in a Hindi conversation. */
+
+export interface ClarifyOption {
+  label: string;
+  nextTurnId: 'consumer-explain' | 'statute-expiry-stop' | 'source-gap-disclose';
+}
+
+const CONSUMER_CLARIFY_I18N: Record<
+  DemoLanguage,
+  {
+    title: string;
+    question: string;
+    whyItMatters: string;
+    unlocks: string;
+    options: ClarifyOption[];
+  }
+> = {
+  en: {
+    title: 'One date shapes your options',
+    question: 'When did you buy the mixer?',
+    whyItMatters:
+      'The law gives you two years from purchase to take a consumer complaint further. Your date decides which doors are still open.',
+    unlocks: 'Pick the closest answer below, or type it — LokAI takes the next step from there.',
+    options: [
+      { label: 'In the last two years', nextTurnId: 'consumer-explain' },
+      { label: 'More than two years ago', nextTurnId: 'statute-expiry-stop' },
+      { label: 'I’m not sure of the exact date', nextTurnId: 'source-gap-disclose' },
+    ],
+  },
+  hi: {
+    title: 'एक तारीख़ आपके विकल्प तय करती है',
+    question: 'आपने मिक्सर कब खरीदा था?',
+    whyItMatters:
+      'कानून खरीद की तारीख़ से दो साल तक उपभोक्ता शिकायत का रास्ता खोलता है। आपकी तारीख़ तय करती है कि अब कौन-से रास्ते खुले हैं।',
+    unlocks: 'नीचे सबसे सही जवाब चुनें, या लिखकर बताएं — आगे कदम LokAI उठाएगा।',
+    options: [{ label: 'पिछले दो साल के भीतर', nextTurnId: 'consumer-explain' }],
+  },
+  mr: {
+    title: 'एक तारीख तुमचे पर्याय ठरवते',
+    question: 'तुम्ही मिक्सर कधी विकत घेतला होता?',
+    whyItMatters:
+      'कायदा खरेदीच्या तारखेपासून दोन वर्षांपर्यंत ग्राहक तक्रारीचा मार्ग खुला ठेवतो. तुमची तारीख ठरवते की आता कोणते मार्ग उपलब्ध आहेत.',
+    unlocks: 'खालील योग्य उत्तर निवडा, किंवा लिहून सांगा — पुढील पाऊल LokAI उचलेल.',
+    options: [{ label: 'गेल्या दोन वर्षांत', nextTurnId: 'consumer-explain' }],
+  },
+  ta: {
+    title: 'ஒரு தேதி உங்கள் வழிகளை தீர்மானிக்கிறது',
+    question: 'மிக்சரை எப்போது வாங்கினீர்கள்?',
+    whyItMatters:
+      'வாங்கிய தேதியிலிருந்து இரண்டு ஆண்டுகளுக்குள் நுகர்வோர் புகார் செய்யலாம். உங்கள் தேதி என்ன வழிகள் இன்னும் திறந்திருக்கின்றன என்பதை முடிவு செய்கிறது.',
+    unlocks: 'கீழே பொருத்தமான பதிலைத் தேர்ந்தெடுக்கவும், அல்லது எழுதிக் கூறவும் — அடுத்த படியை LokAI எடுக்கும்.',
+    options: [{ label: 'கடந்த இரண்டு ஆண்டுகளில்', nextTurnId: 'consumer-explain' }],
+  },
+};
+
+export function localizeConsumerClarify(language: DemoLanguage): ResponseTurn {
+  const base = getTurnById('consumer-clarify')!;
+  const pack = CONSUMER_CLARIFY_I18N[language];
+  return {
+    ...base,
+    language,
+    title: pack.title,
+    payload: {
+      mode: 'clarify',
+      data: {
+        question: pack.question,
+        whyItMatters: pack.whyItMatters,
+        unlocks: pack.unlocks,
+      },
+    },
+  };
+}
+
+/** The tappable answers under the clarify turn, in the reader's language. */
+export function clarifyOptionsFor(language: DemoLanguage): ClarifyOption[] {
+  return CONSUMER_CLARIFY_I18N[language].options;
+}
+
 export const SCRIPT_RAIL: { id: DemoLanguage; label: string; native: string }[] = [
   { id: 'en', label: 'English', native: 'English' },
   { id: 'hi', label: 'Hindi', native: 'हिन्दी' },

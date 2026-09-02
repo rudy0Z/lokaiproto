@@ -26,6 +26,7 @@ export function AppScreen({
   onBack,
   onNewChat,
   scrollClearance,
+  scrollViewportRef,
   showWordmark = true,
   showNewChat = true,
 }: {
@@ -36,6 +37,8 @@ export function AppScreen({
   onBack?: () => void;
   onNewChat?: () => void;
   scrollClearance?: string;
+  /** Passthrough to <Screen>'s scroll viewport — chat auto-scroll reads it. */
+  scrollViewportRef?: React.RefObject<HTMLDivElement | null>;
   /** Passthrough to the top bar — Home hides both (it is the chat canvas). */
   showWordmark?: boolean;
   showNewChat?: boolean;
@@ -56,6 +59,7 @@ export function AppScreen({
         </>
       }
       scrollClearance={scrollClearance}
+      scrollViewportRef={scrollViewportRef}
     >
       {children}
     </Screen>

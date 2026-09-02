@@ -24,11 +24,18 @@ function prefersReducedMotion(): boolean {
 /**
  * Deterministic staged progress then resolve to the target turn.
  * Skip jumps to the final turn; Replay restarts from stage 0.
+ *
+ * `opts.stages` / `opts.stageMs` let a caller run a shorter or different
+ * beat (the clarify chain's confirm-after-answer uses two stages) — the
+ * default remains the full prepared arc.
  */
 export function runProgressThen(
   targetTurn: ResponseTurn,
   onStage?: (index: number, label: string) => void,
+  opts?: { stages?: readonly string[]; stageMs?: number },
 ): ProgressController {
+  const stages = opts?.stages ?? DEMO_PROGRESS_STAGES;
+  const stageMs = opts?.stageMs ?? STAGE_MS;
   let cancelled = false;
   let skipped = false;
   let resolveFn: (turn: ResponseTurn) => void = () => {};
@@ -44,14 +51,14 @@ export function runProgressThen(
 
   const run = async () => {
     if (prefersReducedMotion() || skipped) {
-      onStage?.(DEMO_PROGRESS_STAGES.length - 1, DEMO_PROGRESS_STAGES[DEMO_PROGRESS_STAGES.length - 1]);
+      onStage?.(stages.length - 1, stages[stages.length - 1]);
       finish();
       return;
     }
-    for (let i = 0; i < DEMO_PROGRESS_STAGES.length; i++) {
+    for (let i = 0; i < stages.length; i++) {
       if (cancelled || skipped) break;
-      onStage?.(i, DEMO_PROGRESS_STAGES[i]);
-      await new Promise((r) => window.setTimeout(r, STAGE_MS));
+      onStage?.(i, stages[i]);
+      await new Promise((r) => window.setTimeout(r, stageMs));
     }
     finish();
   };

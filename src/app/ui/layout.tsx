@@ -53,6 +53,9 @@ export interface ScreenProps {
   /** Extra bottom padding on the scroll area — set when a floating composer
    *  overlays the content (default already clears a standard composer). */
   scrollClearance?: string;
+  /** Ref to the scroll viewport — chat surfaces read scroll position so
+   *  auto-scroll never yanks the user away from content they scrolled up to. */
+  scrollViewportRef?: React.RefObject<HTMLDivElement | null>;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -65,6 +68,7 @@ export function Screen({
   action,
   footer,
   scrollClearance,
+  scrollViewportRef,
   style,
   className,
 }: ScreenProps) {
@@ -97,6 +101,7 @@ export function Screen({
         )}
 
         <div
+          ref={scrollViewportRef}
           style={{
             flex: 1,
             overflowY: 'auto',

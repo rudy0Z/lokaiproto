@@ -17,9 +17,11 @@ import {
 import {
   type DemoLanguage,
   type ResponseTurn,
+  getTurnById,
   resolvePreparedTurn,
 } from '../data/responseTurns';
-import { localizeConsumerExplain } from '../data/languagePacks';
+import { CLARIFY_RESOLVE_STAGES } from '../data/responseTurns';
+import { localizeConsumerClarify, localizeConsumerExplain } from '../data/languagePacks';
 import {
   DEMO_PROGRESS_STAGES,
   runProgressThen,
@@ -81,6 +83,17 @@ interface DemoContextValue {
 
   /** Resolve input through progress → prepared turn */
   runPreparedInput: (input: string) => Promise<ResponseTurn>;
+  /**
+   * The conversation's middle (audit F1): first exchange on the consumer
+   * matter runs progress → the clarify turn, so the chat ASKS one real
+   * question before answering. Returns the clarify turn; the caller renders
+   * `clarifyOptionsFor(language)` under it and resolves the tapped answer
+   * through `resolveClarify`. Every later exchange (and every guardrail
+   * scene) behaves like runPreparedInput.
+   */
+  runPreparedConversation: (input: string) => Promise<ResponseTurn>;
+  /** The user answered the clarify turn: short progress → the mapped follow-up. */
+  resolveClarify: (nextTurnId: string) => Promise<ResponseTurn>;
   /** Jump straight to scenario's primary turn (with progress) */
   runScenario: (scenarioId?: string) => Promise<ResponseTurn>;
 }
@@ -109,6 +122,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [progressLabel, setProgressLabel] = useState<string | null>(null);
   const [isProgressing, setIsProgressing] = useState(false);
   const progressRef = useRef<ProgressController | null>(null);
+  /* The clarify middle runs ONCE per conversation — after the user has
+     answered it, later exchanges resolve straight to their turns. */
+  const clarifyAnsweredRef = useRef(false);
 
   const scenario = useMemo(() => getDemoScenario(scenarioId), [scenarioId]);
 
@@ -190,6 +206,46 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     return finishTurn(turn);
   }, [scenarioId, language, finishTurn]);
 
+  const runPreparedConversation = useCallback(async (input: string) => {
+    if (clarifyAnsweredRef.current || scenarioId !== 'consumer') {
+      return runPreparedInput(input);
+    }
+    clarifyAnsweredRef.current = true;
+    const target = localizeConsumerClarify(language);
+    setIsProgressing(true);
+    setProgressIndex(0);
+    setProgressLabel(DEMO_PROGRESS_STAGES[0]);
+    const controller = runProgressThen(target, (index, label) => {
+      setProgressIndex(index);
+      setProgressLabel(label);
+    });
+    progressRef.current = controller;
+    const turn = await controller.promise;
+    addAuditEvent('Clarify asked: purchase date (routes the next step)');
+    return finishTurn(turn);
+  }, [scenarioId, language, finishTurn, addAuditEvent, runPreparedInput]);
+
+  const resolveClarify = useCallback(async (nextTurnId: string) => {
+    let target = getTurnById(nextTurnId)!;
+    if (target.id === 'consumer-explain' && language !== 'en') {
+      target = localizeConsumerExplain(language);
+    }
+    setIsProgressing(true);
+    setProgressIndex(0);
+    setProgressLabel(CLARIFY_RESOLVE_STAGES[0]);
+    const controller = runProgressThen(
+      target,
+      (index, label) => {
+        setProgressIndex(index);
+        setProgressLabel(label);
+      },
+      { stages: CLARIFY_RESOLVE_STAGES },
+    );
+    progressRef.current = controller;
+    const turn = await controller.promise;
+    return finishTurn(turn);
+  }, [language, finishTurn]);
+
   const runScenario = useCallback(async (id?: string) => {
     const sid = id ?? scenarioId;
     if (id && id !== scenarioId) {
@@ -260,13 +316,15 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     skipProgress,
     replayProgress,
     runPreparedInput,
+    runPreparedConversation,
+    resolveClarify,
     runScenario,
   }), [
     scenarioId, scenario, selectScenario, language, stage, facts,
     confirmFact, correctFact, draftApproved, setDraftApproved, draftAllowed, selectedTermId,
     openTerm, closeTerm, auditEvents, addAuditEvent, activeTurn, legacyResponse,
     progressIndex, progressLabel, isProgressing, skipProgress, replayProgress,
-    runPreparedInput, runScenario,
+    runPreparedInput, runPreparedConversation, resolveClarify, runScenario,
   ]);
 
   return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;

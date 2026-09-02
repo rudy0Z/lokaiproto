@@ -98,30 +98,11 @@ function nextStage(stage: WorkflowStage) {
   return flow[Math.min(index + 1, flow.length - 1)];
 }
 
-/** Main journey steps for Goal Gradient rail (excludes failure / human-review). */
+/** Main journey steps — the ordering that drives StageTransition's direction
+ *  (forward slides right-to-left, backward the reverse). The step COUNTER is
+ *  gone: the chat's working card is the journey's arc now, and "Step N of 6"
+ *  was the wizard vocabulary inside a chat-first product (audit F3). */
 const JOURNEY_STEPS: WorkflowStage[] = ['intake', 'clarify', 'verify', 'assess', 'plan', 'packet'];
-
-const STAGE_STEP_LABEL: Partial<Record<WorkflowStage, string>> = {
-  intake: 'Describe the issue',
-  clarify: 'Answer one question',
-  verify: 'Confirming facts',
-  assess: 'Review assessment',
-  plan: 'Action plan',
-  packet: 'Review demand notice',
-  audit: 'Audit trail',
-  escalation: 'Human review',
-  failure: 'Safe recovery',
-};
-
-function journeyProgress(stage: WorkflowStage): { n: number; m: number; label: string } | null {
-  const idx = JOURNEY_STEPS.indexOf(stage);
-  if (idx < 0) return null;
-  return {
-    n: idx + 1,
-    m: JOURNEY_STEPS.length,
-    label: STAGE_STEP_LABEL[stage] ?? stage,
-  };
-}
 
 /* StageTransition — the direction-aware stage crossfade — was promoted into
    the design system (src/app/ui/motion.tsx) so desktop and any future
@@ -165,11 +146,9 @@ function AIDisclaimerBanner() {
 function HeaderBar({
   stageLabel,
   matterLabel = 'Consumer refund case',
-  stepRail,
 }: {
   stageLabel: string;
   matterLabel?: string;
-  stepRail?: { n: number; m: number; label: string } | null;
 }) {
   const navigate = useNavigate();
   return (
@@ -206,18 +185,6 @@ function HeaderBar({
         <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {stageLabel}
         </p>
-        {stepRail && (
-          <p style={{
-            fontFamily: SANS,
-            fontSize: TYPE.micro.size,
-            fontWeight: 600,
-            color: C.navy,
-            margin: '4px 0 0',
-            letterSpacing: '0.01em',
-          }}>
-            Step {stepRail.n} of {stepRail.m} · {stepRail.label}
-          </p>
-        )}
       </div>
     </div>
   );
@@ -624,7 +591,7 @@ function OverviewView({ onStage }: { onStage: (stage: MobileStageParam) => void 
 // ─── Autonomy Dial — how much should LokAI do on this matter? ─────────────────
 // A guardrail made visible: the user picks how far LokAI goes before the
 // drafting stage, instead of the product deciding silently on their behalf.
-type AutonomyLevel = 'guide' | 'prepare' | 'track';
+export type AutonomyLevel = 'guide' | 'prepare' | 'track';
 
 const AUTONOMY_OPTIONS: { level: AutonomyLevel; label: string; hint: string; Icon: typeof Compass }[] = [
   { level: 'guide', label: 'Guide me', hint: "Explain only — LokAI won't draft anything.", Icon: Compass },
@@ -632,7 +599,11 @@ const AUTONOMY_OPTIONS: { level: AutonomyLevel; label: string; hint: string; Ico
   { level: 'track', label: 'Keep me on track', hint: "Adds a reminder when the seller's response window ends.", Icon: BellRinging },
 ];
 
-function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (level: AutonomyLevel) => void }) {
+/* Exported for the chat's tool sheets (chat-first, 2026-08-28): the packet
+   flow renders inside a bottom sheet on the home surface with the same
+   autonomy states it has here. These are pre-migration components — they
+   move onto the primitives in the seam pass. */
+export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (level: AutonomyLevel) => void }) {
   const active = AUTONOMY_OPTIONS.find(o => o.level === value);
   return (
     <div style={{
@@ -679,7 +650,7 @@ function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (le
 }
 
 // ─── Intent Preview — the plan, before LokAI acts on it ────────────────────────
-function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket; onApprove: () => void; onBack: () => void }) {
+export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket; onApprove: () => void; onBack: () => void }) {
   const basis = packet.fields.find(f => f.id === 'basis')?.value;
   return (
     <div style={{
@@ -735,7 +706,7 @@ function IntentPreviewCard({ packet, onApprove, onBack }: { packet: FilingPacket
 }
 
 // ─── Guide-only mode — explains, never drafts ──────────────────────────────────
-function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
+export function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
   return (
     <div style={{
       background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
@@ -756,7 +727,7 @@ function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
 // ─── Tracking banner — the one deadline-aware moment, layered on Prepare/Track ─
 // Clickable once a reply exists, so the "Keep me on track" promise has a real
 // destination instead of describing a feature that never arrives.
-function TrackingBanner({ onClick }: { onClick: () => void }) {
+export function TrackingBanner({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -996,7 +967,6 @@ function CaseArtboard() {
       <HeaderBar
         stageLabel={!isSupportedMatter ? 'Not built in this prototype' : isOverview ? 'Consumer refund case' : workflow.stageLabel}
         matterLabel={isSupportedMatter ? (isOverview ? 'Your matter' : 'Consumer refund case') : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
-        stepRail={isSupportedMatter && !failure && !isOverview ? journeyProgress(stage) : null}
       />
 
       {/* Language continuity — prepared packs cover EN/HI/MR/TA for the consumer matter */}

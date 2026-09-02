@@ -1,22 +1,41 @@
 ﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronRight, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle, MapPin } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { BrandLogo, LogoMark, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
-import { LANGUAGE_REGISTRY, type LanguageEntry } from '../../data/languagePacks';
+import { LANGUAGE_REGISTRY, type LanguageEntry, clarifyOptionsFor, type ClarifyOption } from '../../data/languagePacks';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
 import { Composer, Turn, TurnStatus } from '../../components/ai/Turn';
 import { IconArrowRight } from '../../ui/icons';
 import { DEMO_PROGRESS_STAGES, type ResponseTurn } from '../../data/responseTurns';
 import {
-  Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow,
-  Text, Label, Amount, Button, T, M, S, ICON, ICON_STROKE, typeStyle, useSystemStyles,
+  Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow, FadeRise,
+  Text, Label, Amount, Button, T, M, S, ICON, ICON_STROKE, typeStyle, useHaptic, useSystemStyles,
 } from '../../ui';
 import { Sheet } from '../../components/Sheet';
 import { useDemo } from '../../context/DemoContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
 import { DeviceFrame } from '../../components/mobile/DeviceFrame';
 import { AppScreen } from '../../components/mobile/AppScreen';
+import { DemandNoticePaper } from '../../components/mobile/DemandNoticePaper';
+import {
+  AuditTrailList,
+  EvidenceLocker,
+  FirstActionChecklist,
+  HumanReviewCard,
+  ReviewGate,
+  VerificationScratchpad,
+  WorkflowActionPlan,
+} from '../../components/LokAIWorkflow';
+import {
+  AutonomyDial,
+  GuideOnlyCard,
+  IntentPreviewCard,
+  TrackingBanner,
+  type AutonomyLevel,
+} from './MobileConsumerCase';
+import { factToVerification, getConsumerWorkflowState, getEvidenceLocker } from '../../data/caseWorkflow';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED CHROME — exported for all mobile screens
@@ -491,23 +510,42 @@ function ConsumerCaseStart() {
  * reply. Which chips appear is driven by the response mode, so a refusal offers
  * a human and an explanation offers the facts + the plan.
  */
-function nextStepChips(turn: ResponseTurn): { label: string; route: string }[] {
+/* The tools a response's chips can open. Chat-first (2026-08-28): the guided
+   stages are bottom sheets opened FROM the conversation — never routes the
+   user is marched through before an answer exists. */
+type Tool = 'verify' | 'plan' | 'packet' | 'audit' | 'escalation';
+
+const TOOL_LABELS: Record<Tool, string> = {
+  verify: 'Verify the facts',
+  plan: 'Action plan',
+  packet: 'Demand notice',
+  audit: 'What LokAI did',
+  escalation: 'Talk to a person',
+};
+
+function nextStepChips(turn: ResponseTurn): { label: string; tool: Tool }[] {
   switch (turn.mode) {
     case 'explain':
+      return [
+        { label: 'Verify the facts', tool: 'verify' },
+        { label: 'Prepare the demand notice', tool: 'packet' },
+        { label: 'See the full plan', tool: 'plan' },
+      ];
+    case 'confirm':
+      return [{ label: 'Prepare the demand notice', tool: 'packet' }];
     case 'disclose':
       return [
-        { label: 'Verify the facts', route: '/mobile/case/consumer?stage=verify' },
-        { label: 'See the action plan', route: '/mobile/case/consumer?stage=plan' },
+        { label: 'Talk to a person', tool: 'escalation' },
+        { label: 'What LokAI checked', tool: 'audit' },
       ];
     case 'stop':
-      return [{ label: 'Talk to a person', route: '/mobile/case/consumer?stage=escalation' }];
+      return [{ label: 'Talk to a person', tool: 'escalation' }];
     default:
       return [];
   }
 }
 
-function NextSteps({ turn }: { turn: ResponseTurn }) {
-  const navigate = useNavigate();
+function NextSteps({ turn, onOpenTool }: { turn: ResponseTurn; onOpenTool: (tool: Tool) => void }) {
   const chips = nextStepChips(turn);
   if (chips.length === 0) return null;
   return (
@@ -517,7 +555,7 @@ function NextSteps({ turn }: { turn: ResponseTurn }) {
           key={c.label}
           type="button"
           className="lokai-pressable"
-          onClick={() => navigate(c.route)}
+          onClick={() => onOpenTool(c.tool)}
           style={{
             ...typeStyle('small'),
             fontWeight: 600,
@@ -541,39 +579,172 @@ function NextSteps({ turn }: { turn: ResponseTurn }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 type ChatItem =
   | { id: number; role: 'user'; text: string }
-  | { id: number; role: 'status' }
-  | { id: number; role: 'turn'; turn: ResponseTurn };
+  | { id: number; role: 'working' }
+  | { id: number; role: 'done'; claims: { grounded: number; total: number } }
+  | { id: number; role: 'note'; text: string }
+  | { id: number; role: 'turn'; turn: ResponseTurn }
+  | { id: number; role: 'clarify'; turn: ResponseTurn; options: ClarifyOption[] };
 
 /**
- * Home IS the conversation (chat-first, resolved 2026-08-28).
+ * The audit line — the working card's residue.
  *
- * The old home resolved the user's message into a real three-tiered response
- * and then threw them into a fixed `?stage=clarify` step — so the answer they
- * came for was never shown, and the app read as a prefilled wizard. Now the
- * message and the response live here: you type, LokAI replies inline with the
- * `Turn` (the three named zones + sources + grounding), and the guided steps
- * appear as chips you *open* from the reply. The stepper is a set of tools, not
- * a gate.
+ * While LokAI works, the card names its stages ("Checking the Consumer
+ * Protection Act, 2019…"). When the answer lands, the card does not
+ * disappear; it collapses to this one quiet line that stays above the
+ * answer as its provenance marker, and opens the full audit trail on tap.
+ * Answer modes with grounding get it; a clarify (LokAI asking, not
+ * answering) does not. No duration badges — the demo's timing is staging,
+ * not latency, and fake precision would say otherwise.
+ */
+function AuditLine({ claims, onOpen }: { claims: { grounded: number; total: number }; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="lokai-pressable"
+      style={{
+        display: 'flex', alignItems: 'center', gap: S[2],
+        background: 'none', border: 'none', padding: 0,
+        cursor: 'pointer', textAlign: 'left', width: '100%',
+      }}
+    >
+      <Check size={14} color="var(--role-ok)" style={{ flexShrink: 0 }} />
+      <Text role="caption" tone="quiet" measured={false} style={{ flex: 1 }}>
+        Checked the Consumer Protection Act, 2019 · {claims.grounded} of {claims.total} claims trace to a source
+      </Text>
+      <ChevronRight size={13} color="var(--role-ink-faint)" style={{ flexShrink: 0 }} />
+    </button>
+  );
+}
+
+/** The tappable answers under a clarify turn — tap one, or type instead. */
+function ClarifyOptions({ options, onAnswer }: { options: ClarifyOption[]; onAnswer: (option: ClarifyOption) => void }) {
+  return (
+    <Stack gap={2}>
+      <Row gap={2} wrap>
+        {options.map((opt) => (
+          <button
+            key={opt.nextTurnId}
+            type="button"
+            className="lokai-pressable"
+            onClick={() => onAnswer(opt)}
+            style={{
+              ...typeStyle('small'),
+              fontWeight: 600,
+              color: T.anchor,
+              background: T.raised,
+              border: `1px solid ${T.hairline}`,
+              borderRadius: LAYOUT.radius.pill,
+              padding: '9px 16px',
+              cursor: 'pointer',
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </Row>
+      <Text role="meta" tone="faint" measured={false}>…or type your answer above.</Text>
+    </Stack>
+  );
+}
+
+/**
+ * Home IS the conversation (chat-first, resolved 2026-08-28; tool sheets +
+ * clarify middle added in the upgrade pass).
+ *
+ * The full arc now lives in one stream: you describe the problem, the working
+ * card names the stages LokAI is running (the conversation's middle, audit
+ * F1/F5), ONE clarify question is asked because its answer genuinely routes
+ * the next turn (inside the two-year window → full answer; outside → the
+ * statute-expiry stop; unsure → the honest partial), and the answer arrives
+ * with its provenance line and chips that OPEN the tools — verify, plan,
+ * demand notice, audit, escalation — as bottom sheets. The wizard routes
+ * still exist for deep links; nothing in the chat navigates to them.
  */
 export function HomeArtboard() {
   useSystemStyles();
+  const haptic = useHaptic();
   const { selectedLanguage } = useConversations();
-  const { runPreparedInput, progressLabel, progressIndex } = useDemo();
+  const {
+    runPreparedConversation, resolveClarify,
+    progressLabel, progressIndex, skipProgress,
+    facts, confirmFact, correctFact, addAuditEvent,
+    draftApproved, setDraftApproved, draftAllowed,
+    language,
+  } = useDemo();
   const navigate = useNavigate();
   const [items, setItems] = useState<ChatItem[]>([]);
   const idRef = useRef(0);
   const nextId = () => ++idRef.current;
   const bottomRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const atBottom = useRef(true);
+
+  /* Auto-scroll only when the user is already at the bottom — scrolling up to
+     re-read the answer must never be yanked forward by a new item. */
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    const onScroll = () => {
+      atBottom.current = vp.scrollHeight - vp.scrollTop - vp.clientHeight < 80;
+    };
+    vp.addEventListener('scroll', onScroll, { passive: true });
+    return () => vp.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (atBottom.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [items]);
 
+  /* A working item becomes the audit line for answer modes with grounding;
+     for a clarify (LokAI asking, not answering) it simply leaves as the
+     question enters. Morphing in place — same id — avoids any scroll jump. */
+  const resolveWorking = (workingId: number, turn: ResponseTurn) => {
+    setItems((prev) => {
+      const resolved: (ChatItem | null)[] = prev.map((i) => {
+        if (i.id !== workingId) return i;
+        if (turn.mode === 'explain' || turn.mode === 'disclose' || turn.mode === 'stop') {
+          return { id: workingId, role: 'done', claims: { grounded: turn.groundedClaims, total: turn.totalClaims } };
+        }
+        return null;
+      });
+      const kept = resolved.filter((i): i is ChatItem => i !== null);
+      const tail: ChatItem = turn.mode === 'clarify'
+        ? { id: nextId(), role: 'clarify', turn, options: clarifyOptionsFor(language) }
+        : { id: nextId(), role: 'turn', turn };
+      return [...kept, tail];
+    });
+  };
+
   const send = async (text: string) => {
-    const statusId = nextId();
-    setItems((prev) => [...prev, { id: nextId(), role: 'user', text }, { id: statusId, role: 'status' }]);
-    const turn = await runPreparedInput(text);
-    setItems((prev) => [...prev.filter((i) => i.id !== statusId), { id: nextId(), role: 'turn', turn }]);
+    const workingId = nextId();
+    setItems((prev) => [...prev, { id: nextId(), role: 'user', text }, { id: workingId, role: 'working' }]);
+    const turn = await runPreparedConversation(text);
+    resolveWorking(workingId, turn);
+  };
+
+  const answerClarify = async (option: ClarifyOption) => {
+    const workingId = nextId();
+    setItems((prev) => [...prev, { id: nextId(), role: 'user', text: option.label }, { id: workingId, role: 'working' }]);
+    const turn = await resolveClarify(option.nextTurnId);
+    resolveWorking(workingId, turn);
+  };
+
+  /* Tool sheets — the guided stages, opened from the chat. */
+  const [tool, setTool] = useState<Tool | null>(null);
+  const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
+  const [previewApproved, setPreviewApproved] = useState(false);
+  const workflow = getConsumerWorkflowState();
+
+  const finishVerify = () => {
+    setTool(null);
+    haptic();
+    addAuditEvent('All facts confirmed from the chat');
+    setItems((prev) => [...prev, {
+      id: nextId(),
+      role: 'note',
+      text: 'All facts confirmed — LokAI can prepare the demand notice for your review.',
+    }]);
   };
 
   /* Deep-linkable, like ?doc= on the notice reader: ?ask=<text> opens straight
@@ -592,10 +763,56 @@ export function HomeArtboard() {
 
   const empty = items.length === 0;
 
+  const renderItem = (item: ChatItem) => {
+    switch (item.role) {
+      case 'user':
+        return (
+          <Row justify="end">
+            <div style={{ background: T.anchorTint, borderRadius: LAYOUT.radius.card, padding: `${S[2]} ${S[3]}`, maxWidth: '82%' }}>
+              <Text role="body" tone="anchor" measured={false}>{item.text}</Text>
+            </div>
+          </Row>
+        );
+      case 'working':
+        return (
+          <TurnStatus
+            label={progressLabel ?? 'Working through the prepared steps'}
+            stages={DEMO_PROGRESS_STAGES}
+            activeIndex={Math.max(0, progressIndex)}
+            onSkip={skipProgress}
+          />
+        );
+      case 'done':
+        return <AuditLine claims={item.claims} onOpen={() => setTool('audit')} />;
+      case 'note':
+        return (
+          <Row gap={2} align="flex-start">
+            <Check size={14} color="var(--role-ok)" style={{ flexShrink: 0, paddingTop: 2 }} />
+            <Text role="caption" tone="quiet" measured={false}>{item.text}</Text>
+          </Row>
+        );
+      case 'clarify':
+        return (
+          <Stack gap={2}>
+            <Turn turn={item.turn} />
+            <ClarifyOptions options={item.options} onAnswer={answerClarify} />
+          </Stack>
+        );
+      default:
+        return (
+          <Stack gap={3}>
+            <Turn turn={item.turn} />
+            <NextSteps turn={item.turn} onOpenTool={setTool} />
+          </Stack>
+        );
+    }
+  };
+
   return (
     <AppScreen
       action={<Composer compact placeholder="Describe what happened…" onSubmit={send} />}
       scrollClearance={M.zoneGap}
+      scrollViewportRef={viewportRef}
       showWordmark={false}
       showNewChat={!empty}
       onNewChat={() => setItems([])}
@@ -627,36 +844,98 @@ export function HomeArtboard() {
         </>
       ) : (
         <Stack gap={4}>
-          {items.map((item) => {
-            if (item.role === 'user') {
-              return (
-                <Row key={item.id} justify="end">
-                  <div style={{ background: T.anchorTint, borderRadius: LAYOUT.radius.card, padding: `${S[2]} ${S[3]}`, maxWidth: '82%' }}>
-                    <Text role="body" tone="anchor" measured={false}>{item.text}</Text>
-                  </div>
-                </Row>
-              );
-            }
-            if (item.role === 'status') {
-              return (
-                <TurnStatus
-                  key={item.id}
-                  label={progressLabel ?? 'Working through the prepared steps'}
-                  stages={DEMO_PROGRESS_STAGES}
-                  activeIndex={Math.max(0, progressIndex)}
-                />
-              );
-            }
-            return (
-              <Stack key={item.id} gap={3}>
-                <Turn turn={item.turn} />
-                <NextSteps turn={item.turn} />
-              </Stack>
-            );
-          })}
+          <AnimatePresence initial={false}>
+            {items.map((item) => (
+              <FadeRise key={item.id} exit>
+                {renderItem(item)}
+              </FadeRise>
+            ))}
+          </AnimatePresence>
           <div ref={bottomRef} />
         </Stack>
       )}
+
+      <Sheet
+        open={tool !== null}
+        onClose={() => setTool(null)}
+        label={tool ? TOOL_LABELS[tool] : 'Tool'}
+        contain
+        maxHeight="88%"
+      >
+        <Stack gap={4} style={{ padding: `${S[4]} ${S[5]} ${S[6]}`, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {tool === 'verify' && (
+            <>
+              <EvidenceLocker items={getEvidenceLocker()} />
+              <VerificationScratchpad
+                /* Live facts from DemoContext (mapped state→status) — the same
+                   store the case journey reads, so a confirmation settles it
+                   everywhere. The gated CTA stays the product decision; here
+                   completing it returns to the chat with a confirmation line. */
+                facts={facts.map(factToVerification)}
+                onFactConfirm={confirmFact}
+                onFactCorrect={correctFact}
+                onConfirmed={finishVerify}
+              />
+            </>
+          )}
+          {tool === 'plan' && (
+            <WorkflowActionPlan steps={workflow.actionPlan} interactive onPacket={() => setTool('packet')} />
+          )}
+          {tool === 'packet' && (
+            <>
+              <AutonomyDial value={autonomy} onChange={setAutonomy} />
+              {autonomy === 'guide' ? (
+                <GuideOnlyCard packet={workflow.filingPacket} />
+              ) : !previewApproved ? (
+                <IntentPreviewCard
+                  packet={workflow.filingPacket}
+                  onApprove={() => setPreviewApproved(true)}
+                  onBack={() => setTool('plan')}
+                />
+              ) : (
+                <>
+                  {/* The notice AS PAPER is the one focal object; the consent
+                     gate sits under it; the exit checklist appears only after
+                     approval. No-direct-send: the user is the sender. */}
+                  <DemandNoticePaper packet={workflow.filingPacket} />
+                  <ReviewGate
+                    draftText={[
+                      'LokAI — Consumer demand notice draft (review before sending)',
+                      '',
+                      'Subject: Damaged mixer grinder — request for replacement or refund',
+                      '',
+                      'I purchased a mixer grinder from HomeKart. It arrived with a cracked jar',
+                      'and is unsafe to run. I asked the seller for a repair, replacement, or',
+                      'refund and the request was refused.',
+                      '',
+                      'Applicable law: Consumer Protection Act, 2019 — Sections 2(10), 2(11), 35.',
+                      '',
+                      'I am keeping the invoice, defect photos, warranty, and seller messages as',
+                      'evidence and request a resolution within a reasonable period.',
+                      '',
+                      '— Prepared with LokAI. Please review every detail before sending.',
+                    ].join('\n')}
+                    onPrint={() => window.print()}
+                    approved={draftApproved}
+                    onApprove={setDraftApproved}
+                  />
+                  {draftAllowed && draftApproved && (
+                    <FirstActionChecklist
+                      compact
+                      onComplete={() => addAuditEvent('Exit checklist completed — user owns next actions outside LokAI')}
+                    />
+                  )}
+                  {autonomy === 'track' && draftApproved && (
+                    <TrackingBanner onClick={() => { setTool(null); navigate('/mobile/case/consumer?notice=offer'); }} />
+                  )}
+                </>
+              )}
+            </>
+          )}
+          {tool === 'audit' && <AuditTrailList events={workflow.auditTrail} />}
+          {tool === 'escalation' && <HumanReviewCard workflow={workflow} />}
+        </Stack>
+      </Sheet>
     </AppScreen>
   );
 }

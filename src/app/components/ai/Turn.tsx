@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowCounterClockwise, BookOpen, CaretDown, Check, Copy, Info, SpeakerHigh } from '@phosphor-icons/react';
 import { C, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
 import { Sheet } from '../Sheet';
+import { FadeRise } from '../../ui';
 import { LegalText } from '../demo/LegalTerms';
 import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
@@ -439,38 +440,43 @@ function Zone({
   children,
   large,
   script,
+  revealMs = 240,
 }: {
   label: string;
   children: React.ReactNode;
   large?: boolean;
   script: ReturnType<typeof scriptProps>;
+  /** Entrance duration — the craft's revealStepMs, so the mode paces its own arrival. */
+  revealMs?: number;
 }) {
   return (
-    <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
-      <div style={{
-        fontFamily: SANS,
-        fontSize: TYPE.label.size,
-        fontWeight: 700,
-        color: C.muted,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        marginBottom: 8,
-      }}>
-        {label}
-      </div>
-      <div
-        {...(script.lang ? { lang: script.lang } : {})}
-        style={{
+    <FadeRise duration={revealMs} y={6}>
+      <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
+        <div style={{
           fontFamily: SANS,
-          fontSize: large ? 20 : 14,
-          color: large ? C.ink : C.inkSoft,
-          lineHeight: large ? 1.45 : 1.65,
-          ...script.style,
-        }}
-      >
-        {children}
+          fontSize: TYPE.label.size,
+          fontWeight: 700,
+          color: C.muted,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          marginBottom: 8,
+        }}>
+          {label}
+        </div>
+        <div
+          {...(script.lang ? { lang: script.lang } : {})}
+          style={{
+            fontFamily: SANS,
+            fontSize: large ? 20 : 14,
+            color: large ? C.ink : C.inkSoft,
+            lineHeight: large ? 1.45 : 1.65,
+            ...script.style,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </FadeRise>
   );
 }
 
