@@ -109,11 +109,94 @@
 
   /* Font roles */
   --font-display: "Fraunces", Georgia, serif;
-  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-  --font-deva: "Noto Sans Devanagari", "Inter", sans-serif;
-  --font-tamil: "Noto Sans Tamil", "Inter", sans-serif;
+  --font-deva: "Noto Sans Devanagari", "Hanken Grotesk", sans-serif;
+  --font-tamil: "Noto Sans Tamil", "Hanken Grotesk", sans-serif;
 }
+
+/* ── Semantic role layer ──────────────────────────────────────────────────
+ *
+ * The block above names colors by what they ARE (--navy, --saffron). This
+ * block names them by what they DO. Call sites use only this layer, via the
+ * `T` object in src/app/ui/theme.ts.
+ *
+ * Why the indirection: a theme swap (§2.2, "the cream becomes the ink") is a
+ * re-pointing of these ~20 roles and nothing else. A component written
+ * against `--role-ink` needs no conditional to work in either palette; a
+ * component written against `--navy` needs one at every call site. That is
+ * the entire reason dark mode has been blocked on tokenization.
+ *
+ * Rules:
+ *   - Role names describe function, never appearance. `--role-anchor`, not
+ *     `--role-navy`. If a role's name would change when the palette changes,
+ *     it is named wrong.
+ *   - `--role-stop-*` is deliberately the tonal OPPOSITE of the ground (L8).
+ *     In light theme the ground is warm and the stop is dark; in dark theme
+ *     they swap. The contrast relationship is the constant.
+ *   - Anything animated by motion/react must use a literal from `C` instead,
+ *     since CSS variables do not interpolate.
+ */
+:root {
+  /* Ground & surfaces */
+  --role-ground:        var(--surface-bg);
+  --role-raised:        var(--surface-card);
+  --role-sunken:        var(--surface-raised);
+
+  /* Ink */
+  --role-ink:           var(--text-primary);
+  --role-ink-quiet:     var(--text-secondary);
+  --role-ink-faint:     var(--text-tertiary);
+  --role-ink-inverse:   var(--text-on-dark);
+
+  /* Structure — hairlines carry hierarchy, boxes do not (L4) */
+  --role-hairline:      var(--lokai-border);
+  --role-hairline-firm: var(--border-strong);
+
+  /* Anchor — the one dark, saturated role. Composer, single primary CTA,
+     stop ground. Nowhere else (L5). */
+  --role-anchor:        var(--navy);
+  --role-anchor-deep:   var(--navy-dark);
+  --role-anchor-tint:   var(--navy-tint);
+  --role-on-anchor:     var(--text-on-dark);
+
+  /* Flag — needs-review / caution fills only. Never chrome. */
+  --role-flag:          var(--caution);
+  --role-flag-fill:     var(--caution-soft);
+
+  /* Attest — grounding, citation, source provenance */
+  --role-attest:        var(--oxblood);
+  --role-attest-fill:   var(--oxblood-soft);
+
+  /* Outcome */
+  --role-ok:            var(--success);
+  --role-ok-fill:       var(--success-soft);
+  --role-halt:          var(--danger);
+  --role-halt-fill:     var(--danger-soft);
+
+  /* Focus — the only saffron that clears 3:1 (WCAG 2.2 1.4.11) */
+  --role-focus:         var(--saffron-accessible);
+
+  /* A document's own page — a hair warmer than the ground, so a rendered
+     legal notice reads as a physical page laid on the desk, not a UI card. */
+  --role-paper:         #FBF9F3;
+
+  /* Scrim behind a drawer or sheet. Warm-black, not neutral — a cool scrim
+     over warm paper reads as a screen dimming rather than as shade. */
+  --role-scrim:         rgba(24, 23, 19, 0.32);
+
+  /* Stop ground — L8: always the tonal opposite of --role-ground */
+  --role-stop-ground:   var(--navy-dark);
+  --role-stop-ink:      var(--text-on-dark);
+  --role-stop-ink-quiet: rgba(255, 255, 255, 0.68);
+  --role-stop-hairline: rgba(255, 255, 255, 0.16);
+}
+
+/* Dark theme — not yet designed (§2.2 is a direction, not measured values).
+   Declared here as the single place it will land so no call site has to
+   change when it does. Do not enable until every value is contrast-measured
+   against all four scripts. */
+/* [data-theme="dark"] { ... } */
 
 /* ── Global base ─────────────────────────────────────────────────────────── */
 

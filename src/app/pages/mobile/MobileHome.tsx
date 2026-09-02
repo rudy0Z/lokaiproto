@@ -1,14 +1,22 @@
-﻿import React, { useState } from 'react';
-import { ChevronDown, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import { BrandLogo, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
+﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronRight, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle, MapPin } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router';
+import { BrandLogo, LogoMark, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { LANGUAGE_REGISTRY, type LanguageEntry } from '../../data/languagePacks';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
-import { Composer } from '../../components/ai/Turn';
+import { Composer, Turn, TurnStatus } from '../../components/ai/Turn';
+import { IconArrowRight } from '../../ui/icons';
+import { DEMO_PROGRESS_STAGES, type ResponseTurn } from '../../data/responseTurns';
+import {
+  Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow,
+  Text, Label, Amount, Button, T, M, S, ICON, ICON_STROKE, typeStyle, useSystemStyles,
+} from '../../ui';
 import { Sheet } from '../../components/Sheet';
 import { useDemo } from '../../context/DemoContext';
 import { ARTBOARD, IS_EMBED } from '../../embed';
+import { DeviceFrame } from '../../components/mobile/DeviceFrame';
+import { AppScreen } from '../../components/mobile/AppScreen';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED CHROME — exported for all mobile screens
@@ -162,6 +170,47 @@ export function HomeIndicator({ light = false }: { light?: boolean }) {
   );
 }
 
+/**
+ * Scales the phone mock down to fit whatever viewport it is shown in.
+ *
+ * The artboard is a true 844px-tall device viewport. On a short laptop that is
+ * taller than the window, so the old fixed frame ran off the top and bottom and
+ * collided with the browser chrome. Here the frame renders at natural size and
+ * the whole thing is `transform: scale()`d to the largest factor that still fits
+ * (never above 1 — we scale down, never up). `offsetWidth/Height` report the
+ * unscaled layout size even while transformed, so the measurement is stable.
+ */
+function FrameScaler({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      if (!w || !h) return;
+      const margin = 24;
+      const k = Math.min(1, (window.innerWidth - margin) / w, (window.innerHeight - margin) / h);
+      setNat({ w, h });
+      setScale(k);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  return (
+    <div style={nat ? { width: nat.w * scale, height: nat.h * scale, flexShrink: 0 } : { flexShrink: 0 }}>
+      <div ref={ref} style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 'max-content' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function MobileRouteCanvas({ children }: { children: React.ReactNode }) {
   /* Embedded: the iframe IS the phone — fill it edge to edge, no mock canvas. */
   if (IS_EMBED) {
@@ -178,10 +227,12 @@ export function MobileRouteCanvas({ children }: { children: React.ReactNode }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      overflow: 'auto',
-      padding: '24px 0',
+      overflow: 'hidden',
+      padding: '12px',
     }}>
-      {children}
+      <FrameScaler>
+        <DeviceFrame>{children}</DeviceFrame>
+      </FrameScaler>
     </div>
   );
 }
@@ -327,166 +378,6 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
 // HOME SCREEN — redesigned
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Greeting Section ─────────────────────────────────────────────────────────
-/**
- * Jurisdiction leads, not the date.
- *
- * Was a hardcoded "Saturday, 25 March · Mumbai" — a stale decoration that
- * also contradicted the prepared matter (whose purchase date is June 2026),
- * with location as an afterthought. Jurisdiction is a founding pillar here:
- * LokAI exists for people facing rules they did not know applied to them,
- * so which forum's rules are in play belongs above the fold, before they
- * ask something the product cannot answer for their district.
- */
-function GreetingSection() {
-  const today = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long',
-  });
-
-  return (
-    <div style={{ padding: '28px 20px 16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-        <MapPin size={13} color={C.navy} strokeWidth={2} />
-        <span style={{
-          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
-          color: C.navy, letterSpacing: '0.06em', textTransform: 'uppercase',
-        }}>
-          {DEMO_JURISDICTION.short}
-        </span>
-      </div>
-
-      <p style={{
-        fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
-        color: C.ink, margin: '0 0 7px', lineHeight: 1.2,
-        letterSpacing: '-0.3px',
-      }}>
-        <span>Good morning, </span>
-        <span style={{ fontWeight: 700 }}>Priya</span>
-      </p>
-
-      <p style={{
-        fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted,
-        margin: 0, lineHeight: 1.5,
-      }}>
-        {today} · Guidance follows {DEMO_JURISDICTION.country} consumer rules
-      </p>
-    </div>
-  );
-}
-
-// ─── Active Case Timeline Card ─────────────────────────────────────────────────
-// Shown when the user has a case in progress. Persistent top-of-feed anchor.
-const CASE_STEPS = [
-  { id: 'intake',  label: 'Intake'   },
-  { id: 'clarify', label: 'Clarify'  },
-  { id: 'assess',  label: 'Analysis' },
-  { id: 'plan',    label: 'Plan'     },
-  { id: 'packet',  label: 'Packet'   },
-];
-
-function ActiveCaseCard({ convId, title, completedSteps, isBlocked }: {
-  convId: string;
-  title: string;
-  completedSteps: string[];
-  isBlocked: boolean;
-}) {
-  const navigate = useNavigate();
-  const lastDone = CASE_STEPS.reduce((acc, s, i) =>
-    completedSteps.includes(s.id) ? i : acc, -1);
-  const nextStep = CASE_STEPS[lastDone + 1];
-
-  return (
-    <div
-      onClick={() => navigate(`/mobile/case/consumer?stage=${nextStep?.id || 'intake'}`)}
-      style={{
-        margin: '0 20px 20px',
-        borderRadius: LAYOUT.radius.card,
-        padding: '16px 18px',
-        background: [
-          'radial-gradient(ellipse 80% 90% at 0% 100%, rgba(255,227,184,0.52), transparent 68%)',
-          '#FFFFFF',
-        ].join(', '),
-        border: `1.5px solid ${C.navy}`,
-        boxShadow: SHADOW.md,
-        cursor: 'pointer',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
-            Case in progress
-          </p>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {title}
-          </p>
-        </div>
-        <div style={{
-          width: 32, height: 32, borderRadius: LAYOUT.radius.full,
-          background: isBlocked ? 'rgba(184,54,28,0.08)' : '#EEF2F8',
-          border: `1px solid ${isBlocked ? C.red : C.navy}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <ArrowRight size={14} color={isBlocked ? C.red : C.navy} />
-        </div>
-      </div>
-
-      {/* Step progress dots */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {CASE_STEPS.map((step, i) => {
-          const done    = completedSteps.includes(step.id);
-          const current = i === lastDone + 1;
-          const blocked = current && isBlocked;
-          return (
-            <React.Fragment key={step.id}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: 22, height: 22, borderRadius: LAYOUT.radius.full,
-                  background: done ? C.navy : blocked ? C.red : current ? 'rgba(16,42,76,0.12)' : '#F0EDE8',
-                  border: `1.5px solid ${done ? C.navy : blocked ? C.red : current ? C.navy : C.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'background 0.2s ease, border-color 0.2s ease',
-                }}>
-                  {done ? (
-                    <Check size={10} color="#FFFFFF" strokeWidth={2.5} />
-                  ) : (
-                    <Circle size={8} color={current ? C.navy : '#C0BDB6'} strokeWidth={2} />
-                  )}
-                </div>
-                <span style={{
-                  fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: current || done ? 600 : 400,
-                  color: done ? C.navy : current ? C.ink : C.muted,
-                  whiteSpace: 'nowrap',
-                }}>
-                  {step.label}
-                </span>
-              </div>
-              {i < CASE_STEPS.length - 1 && (
-                <div style={{
-                  flex: 1, height: 1.5, borderRadius: LAYOUT.radius.xs,
-                  background: done ? C.navy : C.border,
-                  marginBottom: 16,
-                  transition: 'background 0.3s ease',
-                }} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-
-      {/* Blocked warning */}
-      {isBlocked && (
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.red, margin: '10px 0 0', lineHeight: 1.4 }}>
-          ⚠ A detail is needed before LokAI can continue. Tap to resolve.
-        </p>
-      )}
-    </div>
-  );
-}
-
 // ─── Language-Aware Suggestion Chips ──────────────────────────────────────────
 // These morph based on selected language so users in regional languages
 // see tappable prompts in their own script, lowering the barrier to type.
@@ -533,11 +424,9 @@ function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: strin
   useLokaiSharedStyles();
   const chips = LANG_CHIPS[lang] ?? LANG_CHIPS['en'];
   return (
-    <div style={{ padding: '0 20px 20px' }}>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
-        Quick start
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+    <Stack gap={2}>
+      <Label>Quick start</Label>
+      <Row gap={2} wrap>
         {chips.map(chip => (
           <button
             key={chip.label}
@@ -545,417 +434,230 @@ function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: strin
             className="lokai-chip"
             onClick={() => onSelect(chip.question)}
             style={{
-              fontFamily: SANS,
-              fontSize: TYPE.small.size,
+              ...typeStyle('small'),
               fontWeight: 500,
-              color: C.navy,
-              background: '#FFFFFF',
-              border: `1px solid ${C.border}`,
+              color: T.anchor,
+              background: T.raised,
+              border: `1px solid ${T.hairline}`,
               borderRadius: LAYOUT.radius.pill,
               padding: '8px 14px',
               cursor: 'pointer',
-              lineHeight: 1.3,
             }}
           >
             {chip.label}
           </button>
         ))}
-      </div>
-    </div>
+      </Row>
+    </Stack>
   );
 }
 
 
-// ─── Legal Signal Band — hero card ────────────────────────────────────────────
-function LegalSignalBand() {
-  return (
-    <div style={{
-      margin: '0 20px 24px',
-      borderRadius: LAYOUT.radius.plane,
-      padding: '18px 18px 16px',
-      background: [
-        'radial-gradient(ellipse 90% 80% at 50% 0%, rgba(221,231,255,0.92), transparent 66%)',
-        'radial-gradient(ellipse 70% 70% at 45% 100%, rgba(255,227,184,0.72), transparent 72%)',
-        '#FFFFFF',
-      ].join(', '),
-      border: `1px solid ${C.border}`,
-      boxShadow: SHADOW.xs,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        position: 'absolute', inset: 0, opacity: 0.18,
-        backgroundImage: 'linear-gradient(rgba(16,42,76,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(16,42,76,0.08) 1px, transparent 1px)',
-        backgroundSize: '38px 38px',
-      }} />
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          height: '24px', padding: '0 10px',
-          borderRadius: LAYOUT.radius.pill,
-          background: 'rgba(255,255,255,0.70)',
-          border: '1px solid rgba(16,42,76,0.10)',
-          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700,
-          letterSpacing: '0.08em', textTransform: 'uppercase' as const,
-          color: C.navy,
-        }}>
-          <span style={{ width: 5, height: 5, borderRadius: LAYOUT.radius.full, background: C.saffron }} />
-          Verified source trail
-        </div>
-        <p style={{
-          fontFamily: SERIF,
-          fontSize: TYPE.editorial.size,
-          lineHeight: 1.08,
-          letterSpacing: '-0.4px',
-          color: C.ink,
-          margin: '14px 0 10px',
-        }}>
-          Ask once. Understand the next legal step.
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-          {['हिन्दी', 'मराठी', 'தமிழ்', 'বাংলা'].map(label => (
-            <span key={label} style={{
-              fontFamily: SANS,
-              fontSize: TYPE.micro.size,
-              color: C.inkSoft,
-              background: 'rgba(255,255,255,0.62)',
-              border: `1px solid ${C.border}`,
-              borderRadius: LAYOUT.radius.pill,
-              padding: '4px 9px',
-            }}>
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+/* LegalSignalBand deleted — it was a triple-gradient card with a 38px grid
+   overlay, the only grid texture on mobile, fighting the paper metaphor and
+   adding a fourth stacked block to the empty state. Its one real message is now
+   a quiet line in the empty state (see HomeArtboard); the language pills it
+   carried duplicated the language chip already in the top nav. */
 
 function ConsumerCaseStart() {
-
   const navigate = useNavigate();
   return (
-    <button
-      onClick={() => navigate('/mobile/case/consumer')}
-      style={{
-        width: '100%',
-        minHeight: 112,
-        background: '#FFFFFF',
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.turn,
-        boxShadow: SHADOW.sm,
-        padding: 16,
-        cursor: 'pointer',
-        textAlign: 'left',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        marginBottom: 24,
-      }}
-    >
-      <div style={{
-        width: 46,
-        height: 46,
-        borderRadius: LAYOUT.radius.panel,
-        background: '#EEF2F8',
-        border: `1px solid ${C.border}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <FileText size={19} color={C.navy} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          fontFamily: SANS,
-          fontSize: TYPE.micro.size,
-          fontWeight: 700,
-          color: C.muted,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          margin: '0 0 5px',
+    <Card onClick={() => navigate('/mobile/case/consumer')}>
+      <Row gap={3} align="center">
+        <span style={{
+          width: 46, height: 46, borderRadius: LAYOUT.radius.panel,
+          background: T.anchorTint, color: T.anchor,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          Guided case
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 700, color: C.ink, margin: '0 0 5px' }}>
-          Start Consumer Refund Case
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
-          Step-by-step help for a defective product or refund refusal.
-        </p>
-      </div>
-      <ArrowRight size={17} color={C.navy} />
-    </button>
+          <FileText size={ICON.feature} strokeWidth={ICON_STROKE} />
+        </span>
+        <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
+          <Label>Guided case</Label>
+          <Text role="title" measured={false}>Start Consumer Refund Case</Text>
+          <Text role="caption" tone="quiet" measured={false}>Step-by-step help for a defective product or refund refusal.</Text>
+        </Stack>
+        <ArrowRight size={ICON.ui} strokeWidth={ICON_STROKE} color="var(--role-anchor)" />
+      </Row>
+    </Card>
   );
 }
-
-// ─── Section header ────────────────────────────────────────────────────────────
-function SectionHead({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'baseline',
-      justifyContent: 'space-between', marginBottom: '12px',
-    }}>
-      <span style={{
-        fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink,
-        letterSpacing: '-0.15px',
-      }}>{title}</span>
-      {action && (
-        <button onClick={onAction} style={{
-          fontFamily: SANS, fontSize: TYPE.small.size, color: C.navy,
-          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-        }}>
-          {action} →
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ─── Your Conversations — real matter history, not a status card ──────────────
-type ConversationRowItem = { id: string; dotColor: string; title: string; time: string; lang: string };
-
-const STATUS_DOT_COLOR: Record<Conversation['status'], string> = {
-  'Ready to File':     C.green,
-  'In Progress':       C.navy,
-  'Action Required':   '#C4724A',
-  'Out of Scope':      C.muted,
-};
-
-/** Reads the language off the latest assistant reply so the dot list reflects the real conversation, not invented copy. */
-function toConversationRowItem(conv: Conversation): ConversationRowItem {
-  const lastAssistant = [...conv.messages].reverse().find(m => m.role === 'assistant');
-  let lang = 'English';
-  if (lastAssistant) {
-    try {
-      const parsed = JSON.parse(lastAssistant.content) as { responseLanguage?: string };
-      if (parsed.responseLanguage) lang = getLangLabel(parsed.responseLanguage);
-    } catch {
-      // Non-JSON content (legacy message) — keep the English default.
-    }
-  }
-  return {
-    id: conv.id,
-    dotColor: STATUS_DOT_COLOR[conv.status],
-    title: conv.title,
-    time: conv.since,
-    lang,
-  };
-}
-
-// ─── Past Matters — shared between the active-matter and empty-home states ────
-function PastMattersList({ items }: { items: ConversationRowItem[] }) {
-  const navigate = useNavigate();
-  if (items.length === 0) return null;
-  return (
-    <div style={{ marginBottom: '24px' }}>
-      <SectionHead title="Past Matters" action="See all" onAction={() => navigate('/mobile/case/consumer?stage=audit')} />
-      <div style={{ background: '#FFFFFF', borderRadius: LAYOUT.radius.card, padding: '0 16px', border: `1px solid ${C.border}` }}>
-        {items.map((conv, i) => {
-          // Route to the matter that was actually tapped. Only 'consumer' has a
-          // built journey; every other id lands on the designed unsupported-matter
-          // boundary rather than opening the consumer case under its title.
-          const toCase = () => navigate(`/mobile/case/${conv.id}`);
-          return (
-            <div key={conv.id} onClick={toCase}>
-              <ConversationRow conv={conv} isLast={i === items.length - 1} onOpen={toCase} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function ConversationRow({ conv, isLast, onOpen }: { conv: ConversationRowItem; isLast: boolean; onOpen: () => void }) {
-  return (
-    <div style={{
-      height: '64px',
-      display: 'flex', alignItems: 'center', gap: '12px',
-      borderBottom: isLast ? 'none' : `1px solid ${C.border}`,
-      cursor: 'pointer',
-    }}>
-      {/* Colored dot */}
-      <div style={{
-        width: '10px', height: '10px', borderRadius: LAYOUT.radius.full,
-        background: conv.dotColor, flexShrink: 0,
-      }} />
-
-      {/* Text column */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
-          color: C.ink, lineHeight: 1.3,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {conv.title}
-        </div>
-        <div style={{
-          fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
-          marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>
-          {conv.time} · {conv.lang}
-        </div>
-      </div>
-
-      {/* Right arrow */}
-      <button
-        onClick={onOpen}
-        style={{
-          fontFamily: SANS, fontSize: TYPE.h4.size, color: '#C8C4BC', flexShrink: 0, lineHeight: 1,
-          border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-        }}
-      >
-        ›
-      </button>
-    </div>
-  );
-}
-
 
 /**
- * Floating composer — the real one, above the bottom nav.
+ * The next steps offered under a response, as in-chat destinations.
  *
- * This was a `<button>` that navigated to the case, dressed up to look like
- * an input: a decorative mic `<div>`, a static placeholder `<span>`, and a
- * decorative send arrow. Three inert controls in one component, which
- * .design-os/03-direction.md explicitly rejects — and it meant mobile had
- * no working text input and no reachable mic anywhere, while the fully
- * built voice-enabled Composer sat in two desktop-only call sites.
- *
- * Now it renders that same Composer. Voice is an input mode available from
- * the home surface, not a screen you navigate away to.
+ * This is the chat-first model's key move: the guided stages (verify, plan,
+ * packet, escalation) are things you OPEN from the conversation once the answer
+ * is on the table — not a wizard you are marched through before you ever see a
+ * reply. Which chips appear is driven by the response mode, so a refusal offers
+ * a human and an explanation offers the facts + the plan.
  */
-function FloatingComposer() {
-  const navigate = useNavigate();
-  const { runPreparedInput } = useDemo();
+function nextStepChips(turn: ResponseTurn): { label: string; route: string }[] {
+  switch (turn.mode) {
+    case 'explain':
+    case 'disclose':
+      return [
+        { label: 'Verify the facts', route: '/mobile/case/consumer?stage=verify' },
+        { label: 'See the action plan', route: '/mobile/case/consumer?stage=plan' },
+      ];
+    case 'stop':
+      return [{ label: 'Talk to a person', route: '/mobile/case/consumer?stage=escalation' }];
+    default:
+      return [];
+  }
+}
 
+function NextSteps({ turn }: { turn: ResponseTurn }) {
+  const navigate = useNavigate();
+  const chips = nextStepChips(turn);
+  if (chips.length === 0) return null;
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: '80px',      // 64px bottom-nav + 16px gap
-      left: '16px',
-      right: '16px',
-      zIndex: 20,
-    }}>
-      <Composer
-        compact
-        placeholder="Tell us your problem…"
-        onSubmit={(text) => {
-          /* Resolve through the shared response engine, then land on the
-             clarify beat. Intake's modality picker would be redundant —
-             they have already told us the problem. */
-          void runPreparedInput(text);
-          navigate('/mobile/case/consumer?stage=clarify');
-        }}
-      />
-    </div>
+    <Row gap={2} wrap>
+      {chips.map((c) => (
+        <button
+          key={c.label}
+          type="button"
+          className="lokai-pressable"
+          onClick={() => navigate(c.route)}
+          style={{
+            ...typeStyle('small'),
+            fontWeight: 600,
+            color: T.anchor,
+            background: T.anchorTint,
+            border: 'none',
+            borderRadius: LAYOUT.radius.pill,
+            padding: '9px 16px',
+            cursor: 'pointer',
+          }}
+        >
+          {c.label}
+        </button>
+      ))}
+    </Row>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOME ARTBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
+type ChatItem =
+  | { id: number; role: 'user'; text: string }
+  | { id: number; role: 'status' }
+  | { id: number; role: 'turn'; turn: ResponseTurn };
+
+/**
+ * Home IS the conversation (chat-first, resolved 2026-08-28).
+ *
+ * The old home resolved the user's message into a real three-tiered response
+ * and then threw them into a fixed `?stage=clarify` step — so the answer they
+ * came for was never shown, and the app read as a prefilled wizard. Now the
+ * message and the response live here: you type, LokAI replies inline with the
+ * `Turn` (the three named zones + sources + grounding), and the guided steps
+ * appear as chips you *open* from the reply. The stepper is a set of tools, not
+ * a gate.
+ */
 export function HomeArtboard() {
-  const { selectedLanguage, setSelectedLanguage, conversations, activeId, getConversation } = useConversations();
-  const [langSheetOpen, setLangSheetOpen] = useState(false);
+  useSystemStyles();
+  const { selectedLanguage } = useConversations();
+  const { runPreparedInput, progressLabel, progressIndex } = useDemo();
   const navigate = useNavigate();
+  const [items, setItems] = useState<ChatItem[]>([]);
+  const idRef = useRef(0);
+  const nextId = () => ++idRef.current;
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // The one live matter is whichever the app explicitly activated — not a scan
-  // for "any conversation that looks in-progress." A citizen has one case open
-  // at a time; the rest is history.
-  const activeCase = getConversation(activeId ?? '');
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [items]);
 
-  // Everything else is matter history — most recent first, capped so the list
-  // stays a glance, not a second dashboard.
-  const historyItems = conversations
-    .filter(c => c.id !== activeCase?.id)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 3)
-    .map(toConversationRowItem);
-
-  // Derive display label for the language chip (shared map — persists across screens)
-  const langLabel = getLangLabel(selectedLanguage);
-
-  const handleSuggestionTap = (question: string) => {
-    // Navigate to consumer case flow — in a real app this would pre-fill the intake
-    void question;
-    navigate('/mobile/case/consumer');
+  const send = async (text: string) => {
+    const statusId = nextId();
+    setItems((prev) => [...prev, { id: nextId(), role: 'user', text }, { id: statusId, role: 'status' }]);
+    const turn = await runPreparedInput(text);
+    setItems((prev) => [...prev.filter((i) => i.id !== statusId), { id: nextId(), role: 'turn', turn }]);
   };
 
+  /* Deep-linkable, like ?doc= on the notice reader: ?ask=<text> opens straight
+     into the conversation with that message answered — for case-study captures
+     and the dev catalog. */
+  const [params] = useSearchParams();
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    const ask = params.get('ask');
+    if (!ask) return;
+    started.current = true;
+    void send(ask);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
+  const empty = items.length === 0;
+
   return (
-    <div style={{
-      ...ARTBOARD,
-      background: [
-        'radial-gradient(ellipse 100% 42% at 50% 0%, rgba(221,231,255,0.60), transparent 70%)',
-        'linear-gradient(180deg, #FBF8F1 0%, #F8F5EE 100%)',
-      ].join(', '),
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      position: 'relative',
-    }}>
-      <StatusBar />
-      <TopNav
-        onLanguageTap={() => setLangSheetOpen(true)}
-        bg="transparent"
-        langLabel={langLabel}
-      />
-
-      {/* ── Scrollable body — content ends 136px from bottom for floating input ── */}
-      <div style={{
-        flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        background: C.bg, scrollbarWidth: 'none',
-      } as React.CSSProperties}>
-
-        {/* Greeting */}
-        <GreetingSection />
-
-        {activeCase && activeCase.id === 'consumer' ? (
-          // Active state: a matter is already open. ActiveCaseCard is the one
-          // entry point back into it — the onboarding sections below would
-          // just be a second, redundant way in, so they're left out here.
-          <div style={{ padding: '0 0 136px' }}>
-            <ActiveCaseCard
-              convId={activeCase.id}
-              title={activeCase.title}
-              completedSteps={activeCase.completedSteps}
-              isBlocked={activeCase.isBlocked}
-            />
-            <div style={{ padding: '0 20px' }}>
-              <PastMattersList items={historyItems} />
-            </div>
+    <AppScreen
+      action={<Composer compact placeholder="Describe what happened…" onSubmit={send} />}
+      scrollClearance={M.zoneGap}
+      showWordmark={false}
+      showNewChat={!empty}
+      onNewChat={() => setItems([])}
+    >
+      {empty ? (
+        <>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: S[3], textAlign: 'center', minHeight: 0 }}>
+            <LogoMark size={52} />
+            <Text role="answer" style={{ textAlign: 'center' }}>What can I help you sort out?</Text>
+            <Text tone="quiet" style={{ textAlign: 'center' }}>
+              Tell me a consumer problem in your own words. A refund refused, a
+              damaged product, or a notice you can’t read.
+            </Text>
           </div>
-        ) : (
-          // Empty state: nothing active yet. This is the only point where the
-          // trust intro, quick-start chips, and the "start a case" CTA earn
-          // their place — they're an onboarding surface, not a permanent one.
-          <div style={{ padding: '0 0 136px' }}>
-            <LegalSignalBand />
-            <SuggestionChips lang={selectedLanguage} onSelect={handleSuggestionTap} />
-            <div style={{ padding: '0 20px' }}>
-              <ConsumerCaseStart />
-              <PastMattersList items={historyItems} />
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* ── Fixed chrome at bottom ── */}
-      <BottomNav active="home" />
-      <HomeIndicator />
+          <SuggestionChips lang={selectedLanguage} onSelect={send} />
 
-      {/* ── Floating composer — real input + mic, above the bottom nav ── */}
-      <FloatingComposer />
-
-      {/* ── Language bottom sheet — always mounted; Sheet animates open/exit ── */}
-      <LanguageBottomSheet
-        open={langSheetOpen}
-        selected={selectedLanguage}
-        onSelect={(code) => { setSelectedLanguage(code); setLangSheetOpen(false); }}
-        onClose={() => setLangSheetOpen(false)}
-      />
-    </div>
+          {/* The founding feature reached directly — "a notice you can't read" is
+              named in the empty state above, so it gets its own quiet door. */}
+          <Button
+            variant="quiet"
+            size="sm"
+            onClick={() => navigate('/mobile/notice')}
+            iconAfter={<IconArrowRight size={ICON.inline} />}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            Read a notice you can’t understand
+          </Button>
+        </>
+      ) : (
+        <Stack gap={4}>
+          {items.map((item) => {
+            if (item.role === 'user') {
+              return (
+                <Row key={item.id} justify="end">
+                  <div style={{ background: T.anchorTint, borderRadius: LAYOUT.radius.card, padding: `${S[2]} ${S[3]}`, maxWidth: '82%' }}>
+                    <Text role="body" tone="anchor" measured={false}>{item.text}</Text>
+                  </div>
+                </Row>
+              );
+            }
+            if (item.role === 'status') {
+              return (
+                <TurnStatus
+                  key={item.id}
+                  label={progressLabel ?? 'Working through the prepared steps'}
+                  stages={DEMO_PROGRESS_STAGES}
+                  activeIndex={Math.max(0, progressIndex)}
+                />
+              );
+            }
+            return (
+              <Stack key={item.id} gap={3}>
+                <Turn turn={item.turn} />
+                <NextSteps turn={item.turn} />
+              </Stack>
+            );
+          })}
+          <div ref={bottomRef} />
+        </Stack>
+      )}
+    </AppScreen>
   );
 }
 

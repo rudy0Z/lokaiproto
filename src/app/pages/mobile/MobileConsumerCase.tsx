@@ -1,16 +1,15 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, BellRing, Camera, Compass, FileText, Mic, PenLine, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BellRinging, Camera, Compass, FileText, Microphone, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
+import { IconChevronRight } from '../../ui/icons';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, PLANE, S, SANS, SERIF, SHADOW, TYPE, VoiceOrb, typeStyle } from '../../components/shared';
+import { Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rule, Stack, StageTransition, Text } from '../../ui';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
 import {
   AuditTrailList,
   EvidenceLocker,
-  FailureStateCard,
-  FilingPacketPreview,
   HumanReviewCard,
   LokAIProgressList,
   LokAISourceDrawer,
@@ -28,12 +27,18 @@ import {
   getFailureTrustSignals,
   getNoticeAssessment,
   getVerificationFacts,
+  factToVerification,
   type FailureKind,
   type FilingPacket,
   type NoticeAssessmentKind,
   type WorkflowStage,
 } from '../../data/caseWorkflow';
 import { ARTBOARD } from '../../embed';
+import { DemandNoticePaper } from '../../components/mobile/DemandNoticePaper';
+import { MobileStopScreen } from '../../components/mobile/MobileStopScreen';
+import { MobileTopBar } from '../../components/mobile/MobileTopBar';
+import { MatterDrawer } from '../../components/mobile/MatterDrawer';
+import { useDrawer } from '../../context/DrawerContext';
 import { LegalText } from '../../components/demo/LegalTerms';
 import { GuardrailGallery } from '../../components/demo/GuardrailGallery';
 import { useDemo } from '../../context/DemoContext';
@@ -118,55 +123,9 @@ function journeyProgress(stage: WorkflowStage): { n: number; m: number; label: s
   };
 }
 
-/**
- * Stage transition — direction-aware, with a real exit.
- *
- * The stage content was a keyed <div> with a CSS enter-animation. Because
- * the key forces a remount, React destroyed the outgoing stage in the same
- * tick, so an exit animation was structurally impossible — and moving
- * backward played the identical entrance as moving forward, giving the user
- * no spatial cue about which way they had just travelled.
- *
- * AnimatePresence mode="wait" lets the old stage leave before the new one
- * enters, and JOURNEY_STEPS gives the ordering needed to flip the slide
- * sign. Non-journey stages (failure, escalation, audit) have no index, so
- * they cross-fade without direction rather than guessing one.
- *
- * Critically damped (bounce: 0) — this is a state change the product drove,
- * not a surface the user flung, so overshoot would be unearned.
- */
-function StageTransition({
-  stageKey,
-  direction,
-  children,
-}: {
-  stageKey: string;
-  direction: number;
-  children: React.ReactNode;
-}) {
-  const reduce = useReducedMotion();
-  const offset = 16 * direction;
-
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={stageKey}
-        aria-live="polite"
-        initial={reduce ? { opacity: 0 } : { opacity: 0, x: offset }}
-        animate={reduce ? { opacity: 1 } : { opacity: 1, x: 0 }}
-        exit={reduce ? { opacity: 0 } : { opacity: 0, x: -offset }}
-        transition={
-          reduce
-            ? { duration: 0.15, ease: 'linear' }
-            : { type: 'spring', bounce: 0, duration: 0.32 }
-        }
-        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
-}
+/* StageTransition — the direction-aware stage crossfade — was promoted into
+   the design system (src/app/ui/motion.tsx) so desktop and any future
+   multi-step surface use the same recipe. */
 
 function primaryCtaLabel(stage: WorkflowStage, blocksNext: boolean, isVerifyStage: boolean): string {
   if (isVerifyStage) return 'Confirm these facts';
@@ -303,7 +262,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
 
   const tiles: { id: IntakeModality; label: string; Icon: typeof FileText }[] = [
     { id: 'text', label: 'Prepared text', Icon: FileText },
-    { id: 'voice', label: 'Sample voice', Icon: Mic },
+    { id: 'voice', label: 'Sample voice', Icon: Microphone },
     { id: 'notice', label: 'Sample notice', Icon: Camera },
   ];
 
@@ -325,7 +284,10 @@ function IntakeView({ onNext }: { onNext: () => void }) {
     }
     voice.reset();
     if (id === 'notice') {
-      navigate('/mobile/case/consumer?stage=packet&notice=offer');
+      /* The founding feature — reading a notice you can't understand — is its
+         own in-chat surface (§3.8a), not the seller-reply assessment this tile
+         used to open (?stage=packet&notice=offer, a different flow entirely). */
+      navigate('/mobile/notice');
     }
   };
 
@@ -334,14 +296,13 @@ function IntakeView({ onNext }: { onNext: () => void }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{
-        background: '#FFFFFF',
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.plane,
-        padding: 18,
-        boxShadow: SHADOW.sm,
-      }}>
-        <p style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, lineHeight: 1.08, color: C.ink, margin: '0 0 10px' }}>
+      {/* De-carded (2026-08-27): content on the ground, no bordered outer box.
+          The serif heading is the focal move; the tiles and prepared text sit
+          directly on the page. */}
+      <div>
+        {/* `answer` size (22px), not `pronounce` (28px) — 28 is reserved for the
+            refusal sentence and the home greeting. See ROLE_TYPE in ui/theme.ts. */}
+        <p style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, lineHeight: 1.15, color: C.ink, margin: '0 0 10px' }}>
           Start with what happened.
         </p>
         <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 16px' }}>
@@ -485,45 +446,36 @@ function IntakeView({ onNext }: { onNext: () => void }) {
 }
 
 function ClarifyView({ onNext }: { onNext: () => void }) {
+  /* De-carded (2026-08-27): the question sits on the ground, the serif IS the
+     focal move (L1/L4). One caps label, then the answer options as clean
+     rounded controls — the selected one gets the anchor tint, no bordered
+     outer card wrapping it all. */
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.card,
-      padding: 18,
-      boxShadow: SHADOW.sm,
-    }}>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px' }}>
-        One detail needed
-      </p>
-      <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400, color: C.ink, lineHeight: 1.12, margin: '0 0 14px' }}>
-        Have you already complained to the seller in writing?
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <Stack gap={4}>
+      <Stack gap={2}>
+        <Label>One detail needed</Label>
+        <Text role="answer">Have you already complained to the seller in writing?</Text>
+      </Stack>
+      <Stack gap={2}>
         {['Yes, I have proof', 'No, only verbal complaint', 'Not sure'].map((label, index) => (
           <button
             key={label}
             onClick={onNext}
+            className="lokai-pressable"
             style={{
-              width: '100%',
-              minHeight: 48,
-              borderRadius: LAYOUT.radius.panel,
-              border: `1px solid ${index === 1 ? C.navy : C.border}`,
+              width: '100%', minHeight: 52,
+              borderRadius: LAYOUT.radius.control,
+              border: `1.5px solid ${index === 1 ? C.navy : C.border}`,
               background: index === 1 ? '#EEF2F8' : '#FFFFFF',
-              color: C.ink,
-              fontFamily: SANS,
-              fontSize: TYPE.body.size,
-              fontWeight: 700,
-              textAlign: 'left',
-              padding: '0 14px',
-              cursor: 'pointer',
+              color: C.ink, fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
+              textAlign: 'left', padding: `0 ${S[4]}`, cursor: 'pointer',
             }}
           >
             {label}
           </button>
         ))}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -562,14 +514,23 @@ function AssessmentView({
   const zones = zonesFromTurn(activeTurn);
 
   /*
-   * L1/L3/L4 rebuild: the answer sits on the page, not inside a card. Zone 0 is
-   * the law speaking — Fraunces at editorial size carries that register with no
-   * eyebrow label above it (the serif *is* the label). Later zones are quiet
-   * sans, separated by a single hairline and whitespace, never boxed or tinted.
-   * Grounding leaves as one tappable line, not a full bordered button.
+   * L1/L3/L4, now built from the system rather than hand-composed.
+   *
+   * Two things changed on 2026-08-26 beyond the visual:
+   *
+   * 1. Zone 0 drops from `editorial` (28px) to the `answer` role (22px). At
+   *    28px a two-sentence finding ate ~45% of a 390px fold and pushed the
+   *    actionable guidance below it. 28px is now the `pronounce` role, reserved
+   *    for the refusal sentence and the home greeting — the largest type in the
+   *    app appears only when it stops, or when it greets you.
+   *
+   * 2. <Text> resolves the script. This block previously hardcoded SERIF and
+   *    lineHeight 1.28 in every language, so the flagship screen rendered Hindi
+   *    in a face with no Devanagari glyphs at Latin leading — the founding
+   *    thesis failing on the one screen the case study leads with.
    */
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: S[4] }}>
+    <Stack gap={4}>
       {isProgressing && progressLabel && (
         <TurnStatus
           label={progressLabel}
@@ -580,61 +541,83 @@ function AssessmentView({
 
       {zones.map(([label, text], index) =>
         index === 0 ? (
-          <p key={`${label}-${index}`} style={{
-            fontFamily: SERIF,
-            fontSize: TYPE.editorial.size,
-            fontWeight: 400,
-            color: C.ink,
-            lineHeight: 1.28,
-            letterSpacing: '-0.01em',
-            margin: 0,
-          }}>
-            {text}
-          </p>
+          /* The serif IS the label — no eyebrow above it (L4). */
+          <Text key={`${label}-${index}`} role="answer">{text}</Text>
         ) : (
-          <div key={`${label}-${index}`} style={{ paddingTop: S[4], borderTop: `1px solid ${C.rule}` }}>
-            <p style={{
-              ...typeStyle('label', { color: C.muted, margin: `0 0 ${S[2]}` }),
-            }}>
-              {label}
-            </p>
-            <p style={{
-              fontFamily: SANS,
-              fontSize: TYPE.body.size,
-              color: C.inkSoft,
-              lineHeight: 1.6,
-              margin: 0,
-            }}>
-              {text}
-            </p>
-          </div>
+          <Stack key={`${label}-${index}`} gap={2}>
+            <Rule />
+            <Label>{label}</Label>
+            <Text tone="quiet">{text}</Text>
+          </Stack>
         ),
       )}
 
-      <button
-        type="button"
+      {/* Grounding leaves as one tappable line, not a card or a spec table. */}
+      <Button
+        variant="quiet"
+        size="sm"
         onClick={onOpenSources}
-        style={{
-          alignSelf: 'flex-start',
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'none', border: 'none', padding: '4px 0',
-          color: C.navy, cursor: 'pointer',
-          ...typeStyle('captionStrong'),
-        }}
+        iconAfter={<ArrowRight size={ICON.inline} strokeWidth={ICON_STROKE} />}
+        style={{ alignSelf: 'flex-start' }}
       >
         View the source trail
-        <ArrowRight size={14} />
-      </button>
+      </Button>
 
-      <p style={{
-        ...typeStyle('micro', {
-          color: C.muted, margin: `${S[1]} 0 0`,
-          letterSpacing: 'normal', textTransform: 'none',
-        }),
-      }}>
+      <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
         Prepared example, not legal advice — check every fact and source before using a draft.
-      </p>
-    </div>
+      </Text>
+    </Stack>
+  );
+}
+
+/**
+ * The case workspace — the hub the matter opens on (chat-first, 2026-08-28).
+ *
+ * The case used to LAND on the intake modality picker (three tiles + prefilled
+ * text), which read as a form with no clear input. Now the problem is described
+ * in the chat, so opening the matter shows where it stands and the tools you can
+ * work on — verify, plan, notice, documents, audit — each as a door with its
+ * live state, not a linear stepper you are marched through. The steps still
+ * exist; they are reached from here or from the chat, on demand.
+ */
+function OverviewView({ onStage }: { onStage: (stage: MobileStageParam) => void }) {
+  const navigate = useNavigate();
+  const facts = getVerificationFacts();
+  const needsReview = facts.filter((f) => f.status === 'needs_review').length;
+  const docs = getEvidenceLocker();
+  const gathered = docs.filter((d) => d.status === 'uploaded').length;
+  const flagged = docs.filter((d) => d.status === 'conflicting').length;
+
+  const tools: { label: string; note: string; flag?: boolean; onClick: () => void }[] = [
+    { label: 'Verify the facts', note: needsReview > 0 ? `${needsReview} to confirm` : `${facts.length} confirmed`, flag: needsReview > 0, onClick: () => onStage('verify') },
+    { label: 'Action plan', note: 'Your next steps, in order', onClick: () => onStage('plan') },
+    { label: 'Demand notice', note: 'AI draft, ready to review', onClick: () => onStage('packet') },
+    { label: 'Documents', note: `${gathered} gathered${flagged ? ` · ${flagged} to check` : ''}`, flag: flagged > 0, onClick: () => navigate('/mobile/files') },
+    { label: 'What LokAI did', note: 'The full audit trail', onClick: () => onStage('audit') },
+  ];
+
+  return (
+    <Stack gap={5}>
+      <Stack gap={2}>
+        <Label>Where your case stands</Label>
+        <Text role="answer">
+          You can ask the seller for a repair, replacement, or refund, and follow up with a demand notice if they refuse.
+        </Text>
+      </Stack>
+
+      <HairlineList>
+        {tools.map((t) => (
+          <HairlineRow
+            key={t.label}
+            onClick={t.onClick}
+            trailing={<IconChevronRight size={ICON.inline} color="var(--role-ink-faint)" />}
+          >
+            <Text role="bodyStrong" measured={false}>{t.label}</Text>
+            <Text role="caption" tone={t.flag ? 'flag' : 'quiet'} measured={false}>{t.note}</Text>
+          </HairlineRow>
+        ))}
+      </HairlineList>
+    </Stack>
   );
 }
 
@@ -645,8 +628,8 @@ type AutonomyLevel = 'guide' | 'prepare' | 'track';
 
 const AUTONOMY_OPTIONS: { level: AutonomyLevel; label: string; hint: string; Icon: typeof Compass }[] = [
   { level: 'guide', label: 'Guide me', hint: "Explain only — LokAI won't draft anything.", Icon: Compass },
-  { level: 'prepare', label: 'Prepare with me', hint: 'Review-gated drafts, same as today.', Icon: PenLine },
-  { level: 'track', label: 'Keep me on track', hint: "Adds a reminder when the seller's response window ends.", Icon: BellRing },
+  { level: 'prepare', label: 'Prepare with me', hint: 'Review-gated drafts, same as today.', Icon: PencilSimple },
+  { level: 'track', label: 'Keep me on track', hint: "Adds a reminder when the seller's response window ends.", Icon: BellRinging },
 ];
 
 function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChange: (level: AutonomyLevel) => void }) {
@@ -779,7 +762,7 @@ function TrackingBanner({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%',
-        background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)', borderLeft: `3px solid ${C.saffron}`,
+        background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)',
         borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`, padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
       }}
     >
@@ -812,7 +795,7 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
 
   return (
     <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.navy}`,
+      background: '#FFFFFF', border: `1px solid ${C.border}`,
       borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn}`, padding: 18, boxShadow: SHADOW.sm,
       display: 'flex', flexDirection: 'column', gap: 12,
     }}>
@@ -876,8 +859,10 @@ function CaseArtboard() {
   const isSupportedMatter = !matterId || matterId === 'consumer';
   const [sourceOpen, setSourceOpen] = useState(false);
   const { selectedLanguage } = useConversations();
+  const { open: drawerOpen, closeDrawer } = useDrawer();
   const {
     scenario,
+    facts,
     confirmFact,
     correctFact,
     setDraftApproved,
@@ -898,6 +883,9 @@ function CaseArtboard() {
   const notice = params.get('notice') as NoticeAssessmentKind | null;
   const rawStage = params.get('stage');
   const stage = failure ? 'failure' : mapStage(rawStage);
+  /* Chat-first: opening the matter with no stage (or the retired `intake`
+     alias) lands on the workspace hub, not the old modality picker. */
+  const isOverview = !failure && !notice && (!rawStage || rawStage === 'intake');
   const showDemoControls = params.get('demo') === '1' || params.get('capture') === '1';
 
   useEffect(() => {
@@ -974,6 +962,25 @@ function CaseArtboard() {
     }
   }, [stage, scenario.id, activeTurn, isProgressing, runScenario]);
 
+  /* A stop state is not a card inside the lit case chrome — it is the whole
+     artboard going dark (L6/L8). Early-return the full-bleed stop screen before
+     any of the normal StatusBar/TopNav/HeaderBar/cream-ground chrome renders,
+     so nothing bright frames the refusal. */
+  if (stage === 'failure' && failureState) {
+    return (
+      <MobileStopScreen
+        failure={failureState}
+        onBack={() => navigate('/mobile/case/consumer?stage=assess')}
+        onSafeAction={() => goStage(
+          failureState.riskLevel === 'human_required' ? 'human-review' : 'intake',
+        )}
+        /* Self-service failures let the user proceed; review-recommended and
+           human-required do not offer a loud "continue anyway". */
+        onContinue={failureState.riskLevel === 'self_service' ? () => goStage('intake') : undefined}
+      />
+    );
+  }
+
   return (
     <div style={{
       ...ARTBOARD,
@@ -985,11 +992,11 @@ function CaseArtboard() {
     }}>
       <style>{CASE_CSS}</style>
       <StatusBar />
-      <TopNav bg="transparent" onLanguageTap={() => navigate('/mobile/home')} langLabel={getLangLabel(selectedLanguage)} />
+      <MobileTopBar />
       <HeaderBar
-        stageLabel={isSupportedMatter ? workflow.stageLabel : 'Not built in this prototype'}
-        matterLabel={isSupportedMatter ? 'Consumer refund case' : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
-        stepRail={isSupportedMatter && !failure ? journeyProgress(stage) : null}
+        stageLabel={!isSupportedMatter ? 'Not built in this prototype' : isOverview ? 'Consumer refund case' : workflow.stageLabel}
+        matterLabel={isSupportedMatter ? (isOverview ? 'Your matter' : 'Consumer refund case') : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
+        stepRail={isSupportedMatter && !failure && !isOverview ? journeyProgress(stage) : null}
       />
 
       {/* Language continuity — prepared packs cover EN/HI/MR/TA for the consumer matter */}
@@ -1046,6 +1053,16 @@ function CaseArtboard() {
             </>
           ) : !isSupportedMatter ? (
             <UnsupportedMatterCard matterId={matterId ?? ''} />
+          ) : isOverview ? (
+            <>
+              <OverviewView onStage={goStage} />
+              {/* One primary (the answer) + one quiet escape — the tool rows above
+                 are the rest of the actions, so the bottom does not fight them. */}
+              <Stack gap={2}>
+                <Button onClick={() => goStage('assessment')}>See the full assessment</Button>
+                <Button variant="quiet" onClick={() => goStage('human-review')}>Talk to a person</Button>
+              </Stack>
+            </>
           ) : (
             <>
           {isGuardrailScene && (
@@ -1068,14 +1085,7 @@ function CaseArtboard() {
              says, and the glossary hint duplicates the inline LegalText terms —
              both are suppressed here so the answer isn't pushed below the fold.
              They still render on the earlier stages that have no answer yet. */}
-          {/* §3.6: the "Current step" card was removed — the header already names
-             the stage (L7), and each stage's own content carries the next action.
-             The disclaimer is a quiet line, not a tinted card competing for the top
-             of every screen (assess renders its own below the answer; failure is
-             the dark stop state). */}
-          {!['assess', 'failure'].includes(stage) && <AIDisclaimerBanner />}
-
-          {['plan', 'packet'].includes(stage) && (
+          {stage === 'plan' && (
             <div style={{
               background: C.cautionSoft,
               border: `1px solid ${C.border}`,
@@ -1087,15 +1097,6 @@ function CaseArtboard() {
                 Tap the highlighted term for a simple meaning.
               </p>
             </div>
-          )}
-
-          {stage === 'failure' && failureState && (
-            <FailureStateCard
-              failure={failureState}
-              onSafeAction={() => goStage(
-                failureState.riskLevel === 'human_required' ? 'human-review' : 'intake',
-              )}
-            />
           )}
 
           {notice && (
@@ -1135,13 +1136,18 @@ function CaseArtboard() {
                 <>
                   <EvidenceLocker items={getEvidenceLocker()} />
                   <VerificationScratchpad
-                    facts={getVerificationFacts()}
+                    /* Live facts from DemoContext (mapped state→status), not the
+                       static snapshot — so confirming a fact here settles it
+                       everywhere that reads the matter's facts. */
+                    facts={facts.map(factToVerification)}
                     onFactConfirm={(id) => confirmFact(id)}
                     onFactCorrect={(id, value) => correctFact(id, value)}
-                    onConfirmed={() => {
-                      setDraftApproved(true);
-                      goStage('assessment');
-                    }}
+                    /* Confirming facts advances the stage and nothing else.
+                       This used to also call setDraftApproved(true), which
+                       pre-approved the draft before one existed and bypassed
+                       ReviewGate — the component whose entire purpose is that
+                       no draft leaves unread. Approval belongs to the gate. */
+                    onConfirmed={() => goStage('assessment')}
                   />
                 </>
               )}
@@ -1181,8 +1187,16 @@ function CaseArtboard() {
                     />
                   ) : (
                     <>
-                      <WorkflowActionPlan steps={workflow.actionPlan} onPacket={() => goStage('packet')} />
-                      <FilingPacketPreview packet={workflow.filingPacket} />
+                      {/* §Critique-3 de-box: the packet stage was ~9 stacked
+                         containers (a repeated action plan, a bordered field
+                         "preview", the gate, a checklist, a tracking banner, a
+                         CTA grid) — the most authoritative step read as the
+                         most anxious. Now: the notice AS PAPER is the one focal
+                         object, the consent gate sits under it, and the exit
+                         checklist appears only AFTER approval so nothing stacks
+                         ahead of the decision. The action-plan repeat is gone
+                         (it belongs to the plan stage). */}
+                      <DemandNoticePaper packet={workflow.filingPacket} />
                       {/* No-direct-send review gate — the visible human-in-the-loop checkpoint */}
                       <ReviewGate
                         draftText={[
@@ -1205,11 +1219,16 @@ function CaseArtboard() {
                         approved={draftApproved}
                         onApprove={setDraftApproved}
                       />
-                      <FirstActionChecklist
-                        compact
-                        onComplete={() => addAuditEvent('Exit checklist completed — user owns next actions outside LokAI')}
-                      />
-                      {autonomy === 'track' && <TrackingBanner onClick={() => goNotice('offer')} />}
+                      {/* Only after the gate is approved — the exit steps are a
+                         reward for reviewing, not a pre-condition stacked above
+                         the notice. */}
+                      {draftApproved && (
+                        <FirstActionChecklist
+                          compact
+                          onComplete={() => addAuditEvent('Exit checklist completed — user owns next actions outside LokAI')}
+                        />
+                      )}
+                      {autonomy === 'track' && draftApproved && <TrackingBanner onClick={() => goNotice('offer')} />}
                     </>
                   )}
                 </>
@@ -1219,51 +1238,26 @@ function CaseArtboard() {
             </>
           )}
 
+          {/* Disclaimer as one quiet line directly above the CTA (L3, answer-first):
+             it no longer sits at the top pushing each stage's content below the fold.
+             assess and packet carry their own; failure is the dark stop state. */}
+          {!['assess', 'failure', 'packet'].includes(stage) && <AIDisclaimerBanner />}
+
           {/* The forward/Review CTA row is suppressed on a stop state — a refusal
              must not put a navy "Continue" under "don't rely on AI here" (L6).
              The StopState carries its own safe-action CTA instead. */}
           {stage !== 'failure' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <button
-              onClick={() => goStage(nextStage(stage))}
-              disabled={blocksNext}
-              aria-disabled={blocksNext}
-              style={{
-                minHeight: 44,
-                borderRadius: LAYOUT.radius.panel,
-                border: 'none',
-                background: blocksNext ? C.border : C.navy,
-                color: blocksNext ? C.muted : '#FFFFFF',
-                fontFamily: SANS,
-                fontSize: TYPE.caption.size,
-                fontWeight: 800,
-                cursor: blocksNext ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {primaryCtaLabel(stage, blocksNext, isVerifyStage)}
-            </button>
-            <button
-              onClick={() => goStage('human-review')}
-              style={{
-                minHeight: 44,
-                borderRadius: LAYOUT.radius.panel,
-                border: `1px solid ${C.border}`,
-                background: '#FFFFFF',
-                color: C.inkSoft,
-                fontFamily: SANS,
-                fontSize: TYPE.caption.size,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}
-            >
-              <ShieldCheck size={14} />
-              Review
-            </button>
-          </div>
+            /* One primary CTA; the human-review escape is a quiet text link,
+               not an outlined twin (the double-button was the generic tell).
+               System Button, so it inherits the app's shape and press. */
+            <Stack gap={2}>
+              <Button onClick={() => goStage(nextStage(stage))} disabled={blocksNext}>
+                {primaryCtaLabel(stage, blocksNext, isVerifyStage)}
+              </Button>
+              <Button variant="quiet" onClick={() => goStage('human-review')}>
+                Ask for human review
+              </Button>
+            </Stack>
           )}
 
           {showDemoControls && (
@@ -1329,8 +1323,9 @@ function CaseArtboard() {
         </StageTransition>
       </div>
 
-      <BottomNav active="chat" />
       <HomeIndicator />
+
+      <MatterDrawer open={drawerOpen} onClose={closeDrawer} />
 
       <LokAISourceDrawer
         open={sourceOpen}

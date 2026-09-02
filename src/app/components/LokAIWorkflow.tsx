@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check, ChevronRight, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
+﻿import React, { useEffect, useState } from 'react';
+import { ArrowRight, Check, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
 import { C, LAYOUT, MONO, S, SANS, SERIF, SHADOW, TYPE, typeStyle } from './shared';
 import { Sheet } from './Sheet';
 import type {
@@ -7,14 +7,19 @@ import type {
   CaseWorkflowState,
   EvidenceItem,
   FailureState,
-  FilingPacket,
   NoticeAssessment,
-  RiskLevel,
   SourceCoverage,
   VerificationFact,
   WorkflowActionStep,
   WorkflowSource,
 } from '../data/caseWorkflow';
+import {
+  DRAFT_STATUS_LABEL,
+  EVIDENCE_STATUS_VIEW,
+  FACT_COMPLETENESS_LABEL,
+  RISK_VIEW,
+  SOURCE_COVERAGE_VIEW,
+} from '../data/statusVocabulary';
 
 const CSS = `
   @keyframes lokaiProgressIn {
@@ -44,43 +49,6 @@ const CSS = `
     box-shadow: 0 0 0 3px rgba(232,131,42,0.16);
   }
 `;
-
-/**
- * Count-up number. Deliberately animates the grounding score so trust reads as
- * *earned* rather than asserted. Honors prefers-reduced-motion by snapping.
- */
-export function NumberTicker({ value, durationMs = 900, suffix = '' }: { value: number; durationMs?: number; suffix?: string }) {
-  const [display, setDisplay] = useState(0);
-  const rafRef = useRef<number | undefined>(undefined);
-  // Animate from wherever the number currently sits, not from zero. Without
-  // this, a live score change (74 → 88 when the last fact is confirmed) reads
-  // as a collapse to zero and a re-climb, which says the opposite of what the
-  // interaction means.
-  const fromRef = useRef(0);
-
-  useEffect(() => {
-    const reduce = typeof window !== 'undefined'
-      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) { setDisplay(value); fromRef.current = value; return; }
-
-    const from = fromRef.current;
-    const delta = value - from;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / durationMs);
-      // easeOutCubic
-      const eased = 1 - Math.pow(1 - t, 3);
-      const next = Math.round(from + eased * delta);
-      setDisplay(next);
-      fromRef.current = next;
-      if (t < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [value, durationMs]);
-
-  return <>{display}{suffix}</>;
-}
 
 /** Shows observable source coverage, never model confidence. */
 export function GroundingMeter({ grounded, total, note, live = false }: { grounded: number; total: number; note?: string; live?: boolean }) {
@@ -125,24 +93,14 @@ export function GroundingMeter({ grounded, total, note, live = false }: { ground
   );
 }
 
-const COVERAGE_LABEL: Record<SourceCoverage, string> = {
-  direct: 'Direct',
-  related: 'Related',
-  missing: 'Missing',
-  conflicting: 'Conflicting',
-};
-
+/* Labels for coverage, risk, evidence and draft states live in
+   data/statusVocabulary.ts — one vocabulary app-wide (audit V4). Only the
+   colors stay local, since these predate the Badge primitive. */
 const COVERAGE_COLOR: Record<SourceCoverage, string> = {
   direct: C.green,
   related: C.navy,
   missing: C.amber,
   conflicting: C.oxblood,
-};
-
-const RISK_LABEL: Record<RiskLevel, string> = {
-  self_service: 'Self-service',
-  review_recommended: 'Review recommended',
-  human_required: 'Human required',
 };
 
 function SmallLabel({ children }: { children: React.ReactNode }) {
@@ -227,7 +185,7 @@ export function SourceCoveragePill({ coverage }: { coverage: SourceCoverage }) {
       padding: '3px 8px',
       whiteSpace: 'nowrap',
     }}>
-      {COVERAGE_LABEL[coverage]}
+      {SOURCE_COVERAGE_VIEW[coverage].label}
     </span>
   );
 }
@@ -303,18 +261,14 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
 function ClaimLedger({ trust }: { trust: CaseWorkflowState['trust'] }) {
   const ratio = trust.totalClaims > 0 ? trust.groundedClaims / trust.totalClaims : 0;
   const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.saffron : C.oxblood;
-  const factValue = trust.factCompleteness === 'needs_one_detail'
-    ? 'Needs one detail'
-    : trust.factCompleteness === 'insufficient' ? 'Insufficient' : 'Complete';
-  const draftValue = trust.draftStatus === 'ai_draft'
-    ? 'AI draft'
-    : trust.draftStatus === 'user_reviewed' ? 'Reviewed' : 'Ready to use';
+  const factValue = FACT_COMPLETENESS_LABEL[trust.factCompleteness];
+  const draftValue = DRAFT_STATUS_LABEL[trust.draftStatus];
 
   const rows: [string, React.ReactNode, boolean][] = [
     ['What the source supports', <SourceCoveragePill coverage={trust.sourceCoverage} />, false],
     ['Facts needed', factValue, false],
     ['Location rule', trust.jurisdictionClarity, true],
-    ['Help needed', RISK_LABEL[trust.riskLevel], false],
+    ['Help needed', RISK_VIEW[trust.riskLevel].label, false],
     ['Draft stage', draftValue, false],
   ];
 
@@ -620,138 +574,6 @@ export function WorkflowActionPlan({
   );
 }
 
-export function WorkflowTrustPanel({ workflow, onOpenSources }: { workflow: CaseWorkflowState; onOpenSources?: () => void }) {
-  const t = workflow.trust;
-  const factValue = t.factCompleteness === 'needs_one_detail'
-    ? 'Needs one detail'
-    : t.factCompleteness === 'insufficient' ? 'Insufficient' : 'Complete';
-  const draftValue = t.draftStatus === 'ai_draft'
-    ? 'AI draft'
-    : t.draftStatus === 'user_reviewed' ? 'Reviewed' : 'Ready to use';
-
-  return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.panel,
-      padding: 13,
-      boxShadow: SHADOW.xs,
-    }}>
-      <SmallLabel>Trust check</SmallLabel>
-
-      {/* Observable claim-to-source coverage; never a confidence percentage. */}
-      <GroundingMeter grounded={t.groundedClaims} total={t.totalClaims} />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {/* Source coverage — colored pill, not plain text */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>What the source supports</span>
-          <SourceCoveragePill coverage={t.sourceCoverage} />
-        </div>
-        {([
-          ['Facts needed', factValue],
-          ['Location rule', t.jurisdictionClarity],
-          ['Help needed', RISK_LABEL[t.riskLevel]],
-          ['Draft stage', draftValue],
-        ] as [string, string][]).map(([label, value]) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>{label}</span>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, textTransform: label === 'Location rule' ? 'capitalize' : 'none' }}>
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
-      {onOpenSources && (
-        <button
-          onClick={onOpenSources}
-          style={{
-            marginTop: 12,
-            width: '100%',
-            minHeight: 40,
-            borderRadius: LAYOUT.radius.control,
-            border: `1px solid ${C.border}`,
-            background: C.surface2,
-            color: C.navy,
-            fontFamily: SANS,
-            fontSize: TYPE.caption.size,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          View source trail
-        </button>
-      )}
-    </div>
-  );
-}
-
-export function FilingPacketPreview({ packet, compact = false }: { packet: FilingPacket; compact?: boolean }) {
-  return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.panel,
-      padding: compact ? 12 : 16,
-      boxShadow: SHADOW.xs,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-        <div>
-          <SmallLabel>Filing packet</SmallLabel>
-          <h3 style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 800, color: C.ink, margin: 0 }}>
-            {packet.title}
-          </h3>
-        </div>
-        <span style={{
-          fontFamily: SANS,
-          fontSize: TYPE.label.size,
-          fontWeight: 700,
-          color: C.amber,
-          background: '#FFF3E8',
-          border: '1px solid rgba(233,133,43,0.24)',
-          borderRadius: LAYOUT.radius.pill,
-          padding: '4px 8px',
-          whiteSpace: 'nowrap',
-        }}>
-          AI draft
-        </span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {packet.fields.slice(0, compact ? 4 : packet.fields.length).map(field => (
-          <div key={field.id} style={{
-            background: '#F8F5EE',
-            border: `1px solid ${C.border}`,
-            borderRadius: LAYOUT.radius.control,
-            padding: '8px 10px',
-          }}>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 3px' }}>
-              {field.label}
-            </p>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
-              {field.value}
-            </p>
-          </div>
-        ))}
-      </div>
-      {!compact && (
-        <div style={{ marginTop: 12 }}>
-          <SmallLabel>Evidence checklist</SmallLabel>
-          <ul style={{ margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {packet.evidenceChecklist.map(item => (
-              <li key={item} style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45 }}>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '12px 0 0' }}>
-        {packet.reviewNotice}
-      </p>
-    </div>
-  );
-}
-
 /**
  * VerificationScratchpad — the anti-hallucination gate. Before LokAI builds the
  * assessment, the citizen confirms (or corrects) every fact the model extracted.
@@ -759,14 +581,16 @@ export function FilingPacketPreview({ packet, compact = false }: { packet: Filin
  * stays locked until all facts are confirmed: the human owns the inputs, which
  * neutralises the AI-misread-a-date liability that sinks legal AI.
  */
-const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg: string; label: string; labelColor: string }> = {
-  uploaded:    { border: C.green,   bg: '#F5F9F6', label: 'Uploaded',          labelColor: C.green },
-  missing:     { border: C.border,  bg: C.surface2, label: 'Not uploaded yet',  labelColor: C.muted },
-  conflicting: { border: C.saffron, bg: '#FFF8F0', label: 'Conflicts a fact',  labelColor: C.amber },
+/* Colors only — the labels come from data/statusVocabulary.ts so the same
+   state never ships under two names (audit V4). */
+const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg: string; labelColor: string }> = {
+  uploaded:    { border: C.green,   bg: '#F5F9F6', labelColor: C.green },
+  missing:     { border: C.border,  bg: C.surface2, labelColor: C.muted },
+  conflicting: { border: C.saffron, bg: '#FFF8F0', labelColor: C.amber },
 };
 
 /**
- * Evidence Locker — the other half of grounding. WorkflowTrustPanel already
+ * Evidence Locker — the other half of grounding. The claim ledger already
  * shows whether the *law* is well-sourced; this shows whether the *evidence*
  * holds together. Checked against the same evidenceChecklist the filing
  * packet uses, so "what's needed" never drifts from "what's actually there."
@@ -787,7 +611,7 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
             Evidence locker
           </h3>
           <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
-            {uploadedCount} of {items.length} uploaded
+            {uploadedCount} of {items.length} gathered
           </span>
         </div>
         <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '6px 0 0' }}>
@@ -811,7 +635,7 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
                     {item.label}
                   </p>
                   <span style={{ ...typeStyle('label', { color: style.labelColor, whiteSpace: 'nowrap', flexShrink: 0 }) }}>
-                    {style.label}
+                    {EVIDENCE_STATUS_VIEW[item.status].label}
                   </span>
                 </div>
                 {item.extractedFacts && item.extractedFacts.length > 0 && (
@@ -852,29 +676,32 @@ export function VerificationScratchpad({
   onFactConfirm?: (id: string) => void;
   onFactCorrect?: (id: string, value: string) => void;
 }) {
-  const [items, setItems] = useState<VerificationFact[]>(() => facts.map(f => ({ ...f })));
+  /* Controlled, not copied (2026-08-27). This used to seed a local `items`
+     array from the `facts` prop once and mutate that copy, so it ignored every
+     later change to the prop — confirming a fact updated the scratchpad's own
+     state but nothing else, and a fact corrected elsewhere never reflected
+     here. Now `facts` IS the state: confirm/fix call up to DemoContext, which
+     re-renders this with the fact settled. Only the edit UI (which row, the
+     draft text) is local, because that genuinely belongs to this component. */
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
 
-  const confirmedCount = items.filter(i => i.status === 'confirmed').length;
-  const allConfirmed = confirmedCount === items.length;
+  const confirmedCount = facts.filter(i => i.status === 'confirmed').length;
+  const allConfirmed = confirmedCount === facts.length;
 
   const confirm = (id: string) => {
-    setItems(prev => prev.map(i => (i.id === id ? { ...i, status: 'confirmed' } : i)));
     onFactConfirm?.(id);
   };
 
   const startEdit = (item: VerificationFact) => { setEditingId(item.id); setDraft(item.value); };
 
   const saveEdit = (id: string) => {
-    const value = draft.trim() || items.find((i) => i.id === id)?.value || '';
-    setItems(prev => prev.map(i =>
-      i.id === id ? { ...i, value, status: 'confirmed' } : i));
+    const value = draft.trim() || facts.find((i) => i.id === id)?.value || '';
     setEditingId(null);
     onFactCorrect?.(id, value);
   };
 
-  const remaining = items.length - confirmedCount;
+  const remaining = facts.length - confirmedCount;
 
   /*
    * §3.2 rebuild. The signature component — "the user owns the facts, not the
@@ -903,7 +730,7 @@ export function VerificationScratchpad({
       <GroundingMeter
         live
         grounded={confirmedCount}
-        total={items.length}
+        total={facts.length}
         note={allConfirmed
           ? 'These facts are yours now. The assessment is built on what you confirmed, not on what the AI guessed.'
           : `Confirm or fix ${remaining} flagged fact${remaining === 1 ? '' : 's'} before LokAI builds the assessment. Coverage is claim counts, not model confidence.`}
@@ -911,7 +738,7 @@ export function VerificationScratchpad({
 
       {/* Fact list — hairline rows, value leads, label quiet beneath */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {items.map((fact, i) => {
+        {facts.map((fact, i) => {
           const isEditing = editingId === fact.id;
           const needsReview = fact.status === 'needs_review';
           return (
@@ -1596,72 +1423,5 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
         ))}
       </div>
     </div>
-  );
-}
-
-export function GuidancePreferences() {
-  const items = ['Ask one question at a time', 'Show source before drafting', 'Keep steps phone-friendly'];
-  return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.panel,
-      padding: 13,
-      boxShadow: SHADOW.xs,
-    }}>
-      <SmallLabel>Guidance preferences</SmallLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(item => (
-          <div key={item} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft }}>{item}</span>
-            <span style={{
-              width: 28,
-              height: 16,
-              borderRadius: LAYOUT.radius.pill,
-              background: '#EEF2F8',
-              border: `1px solid ${C.border}`,
-              position: 'relative',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                position: 'absolute',
-                top: 2,
-                right: 2,
-                width: 10,
-                height: 10,
-                borderRadius: LAYOUT.radius.full,
-                background: C.navy,
-              }} />
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function InlineLinkButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        minHeight: 40,
-        border: `1px solid ${C.navy}`,
-        borderRadius: LAYOUT.radius.control,
-        background: '#FFFFFF',
-        color: C.navy,
-        fontFamily: SANS,
-        fontSize: TYPE.caption.size,
-        fontWeight: 800,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 7,
-        padding: '0 12px',
-        cursor: 'pointer',
-      }}
-    >
-      {children}
-      <ChevronRight size={14} />
-    </button>
   );
 }

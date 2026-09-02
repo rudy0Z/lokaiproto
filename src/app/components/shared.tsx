@@ -2,11 +2,11 @@
 import { AnimatePresence, motion } from 'motion/react';
 
 // ─── Font constants ───────────────────────────────────────────────────────────
-export const EDITORIAL = '"Fraunces", Georgia, serif';
-export const SANS = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+export const EDITORIAL = '"Fraunces Variable", "Fraunces", Georgia, serif';
+export const SANS = '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 export const MONO = '"JetBrains Mono", ui-monospace, "SF Mono", monospace';
-export const DEVANAGARI = '"Noto Sans Devanagari", "Inter", sans-serif';
-export const TAMIL = '"Noto Sans Tamil", "Inter", sans-serif';
+export const DEVANAGARI = '"Noto Sans Devanagari", "Hanken Grotesk", sans-serif';
+export const TAMIL = '"Noto Sans Tamil", "Hanken Grotesk", sans-serif';
 /* No BENGALI const — the face is not loaded in fonts.css, so declaring it
    would promise a script the app cannot actually render. Bengali is listed
    in LANGUAGE_REGISTRY as `prepared: false` instead. Add the const and the
@@ -33,11 +33,14 @@ export const SERIF = EDITORIAL;
 export const TYPE = {
   // Display — editorial (Fraunces) only. Latin-only by design; Indic scripts
   // lead with SANS at raised size/weight (Fraunces has no Devanagari/Tamil).
-  display1:    { family: EDITORIAL, size: '3.5rem',    weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em' },
-  display2:    { family: EDITORIAL, size: '2.25rem',   weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em' },
-  editorial:   { family: EDITORIAL, size: '1.75rem',   weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em' },
-  editorialSm: { family: EDITORIAL, size: '1.375rem',  weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em' },
-  // UI hierarchy — Inter. One size = one role. Do not invent px at call sites.
+  // Fraunces Variable, softened: SOFT rounds the terminals and a moderate opsz
+  // drops the stroke contrast so the display serif reads warm, not brittle, on a
+  // calm page. wght is carried here too so font-variation-settings doesn't reset it.
+  display1:    { family: EDITORIAL, size: '3.5rem',    weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em',  fontVariationSettings: "'wght' 300, 'opsz' 40, 'SOFT' 55, 'WONK' 0" },
+  display2:    { family: EDITORIAL, size: '2.25rem',   weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em', fontVariationSettings: "'wght' 300, 'opsz' 36, 'SOFT' 55, 'WONK' 0" },
+  editorial:   { family: EDITORIAL, size: '1.75rem',   weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 30, 'SOFT' 60, 'WONK' 0" },
+  editorialSm: { family: EDITORIAL, size: '1.375rem',  weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 28, 'SOFT' 60, 'WONK' 0" },
+  // UI hierarchy — Hanken Grotesk. One size = one role. Do not invent px at call sites.
   h3:          { family: SANS, size: '1.25rem',   weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
   lead:        { family: SANS, size: '1.125rem',  weight: 500, lineHeight: 1.35 },
   h4:          { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
@@ -66,6 +69,7 @@ export function typeStyle(
     lineHeight: t.lineHeight,
     ...('letterSpacing' in t && t.letterSpacing ? { letterSpacing: t.letterSpacing } : {}),
     ...('textTransform' in t && t.textTransform ? { textTransform: t.textTransform } : {}),
+    ...('fontVariationSettings' in t && t.fontVariationSettings ? { fontVariationSettings: t.fontVariationSettings } : {}),
     ...overrides,
   };
 }
@@ -248,12 +252,32 @@ export const WASH = {
 } as const;
 
 // ─── Shadow System ────────────────────────────────────────────────────────────
+/*
+ * Contact shadows, not glows (reworked 2026-08-27).
+ *
+ * The old scale leaned on wide, soft blurs — `0 8px 24px` on every card — which
+ * is the generic "Material float" look and one of the clearest tells of
+ * vibecoded UI. Real paper on a desk casts a TIGHT contact shadow: the object
+ * sits close to the surface, the shadow hugs its edge, and it is warm, not grey.
+ *
+ * The rule these enforce: a surface gets a border OR a shadow, never both. An
+ * outline plus a drop shadow is two separators doing one job — decoration. A
+ * card is either a flat outlined plane (border, no shadow) or a physical object
+ * resting on the page (contact shadow, no border). We chose the latter for
+ * cards and paper, so the border comes off wherever one of these lands.
+ *
+ * Every value is a two-layer shadow: a 1px key that draws the contact edge, and
+ * one soft ambient layer kept deliberately tight (≤12px) so nothing floats.
+ */
 export const SHADOW = {
-  xs:    '0 1px 2px rgba(26,25,22,0.04)',
-  sm:    '0 1px 2px rgba(26,25,22,0.035), 0 3px 10px rgba(26,25,22,0.045)',
-  md:    '0 2px 5px rgba(26,25,22,0.04), 0 8px 24px rgba(26,25,22,0.065)',
-  lg:    '0 14px 42px rgba(26,25,22,0.10), 0 3px 10px rgba(26,25,22,0.04)',
-  float: '0 22px 60px rgba(26,25,22,0.13), 0 6px 18px rgba(26,25,22,0.07)',
+  xs:    '0 1px 1px rgba(26,25,22,0.05)',
+  /** Contact — a card or exhibit resting on the page. */
+  sm:    '0 1px 1px rgba(26,25,22,0.05), 0 2px 4px rgba(26,25,22,0.05)',
+  /** Lifted — a document raised a little off the page. */
+  md:    '0 1px 2px rgba(26,25,22,0.06), 0 4px 10px rgba(26,25,22,0.06)',
+  /** A drawer or sheet over the page. */
+  lg:    '0 2px 6px rgba(26,25,22,0.06), 0 10px 28px rgba(26,25,22,0.10)',
+  float: '0 4px 10px rgba(26,25,22,0.07), 0 16px 36px rgba(26,25,22,0.12)',
   /** Specialty elevations — still tokens, never raw strings at call sites */
   inset: 'inset 0 1px 0 rgba(255,255,255,0.8)',
   insetSoft: 'inset 0 1px 0 rgba(255,255,255,0.7)',
@@ -261,6 +285,38 @@ export const SHADOW = {
   navySoft: '0 4px 14px rgba(16,42,76,0.2)',
   navy: '0 4px 12px rgba(16,42,76,0.28)',
   overlay: '0 24px 72px rgba(11,30,55,0.24)',
+} as const;
+
+// ─── Device chrome ────────────────────────────────────────────────────────────
+/**
+ * The phone the mobile screens are drawn on, in the dev/standalone view only.
+ *
+ * Deliberately NOT part of LAYOUT.radius or SHADOW. Those scales describe UI
+ * surfaces inside the product; this describes a physical object the product is
+ * displayed on. Mixing them would put a 56px radius in a scale whose largest
+ * real value is 22px, and the next person would reach for it on a card.
+ *
+ * Why it exists: the artboard is 390x844 — 19.5:9, the exact logical viewport
+ * of an iPhone 12-14 — but it was rendered as a hard-edged rectangle sitting
+ * directly on a cream gradient. With nothing to give it scale it read as a
+ * tall web column rather than a phone. The ratio was never the problem.
+ *
+ * Never applied when IS_EMBED: inside the portfolio the iframe *is* the phone
+ * and PrototypeFrame draws its own bezel, so this would double-frame.
+ */
+export const DEVICE = {
+  bezel:        '12px',
+  radiusOuter:  '56px',
+  radiusScreen: '44px',
+  /** Off-axis so the bezel catches light along one edge like a machined case. */
+  surface:      'linear-gradient(152deg, #33333A 0%, #141417 46%, #0E0E11 72%, #26262C 100%)',
+  rim:          'inset 0 0 0 1px rgba(255,255,255,0.09)',
+  shadow:       '0 34px 84px -30px rgba(14,18,26,0.58), 0 10px 28px -14px rgba(14,18,26,0.38)',
+  islandW:      110,
+  islandH:      32,
+  islandTop:    11,
+  islandFill:   '#08080A',
+  buttonFill:   'rgba(255,255,255,0.14)',
 } as const;
 
 // ─── Badge style token ────────────────────────────────────────────────────────
@@ -382,6 +438,26 @@ const SHARED_ANIM_CSS = `
 .lokai-pressable:active:not(:disabled) {
   background: #EDEAE4;
 }
+/* Tap-row feedback for HairlineRow. The surface lives on the <button> itself
+   with NO inline background, so these :active rules actually win — the row
+   previously set background:'none' inline, which beat every class and made the
+   press state impossible to see (feels laggy before the sheet springs). Two
+   variants because a flagged row already carries a fill it must darken from,
+   not replace. Uses role tokens so it re-themes with everything else. */
+.lokai-row {
+  background: transparent;
+  transition: background ${MOTION.press} ${MOTION.ease};
+}
+.lokai-row:active:not(:disabled) {
+  background: var(--role-sunken);
+}
+.lokai-row-flag {
+  background: var(--role-flag-fill);
+  transition: background ${MOTION.press} ${MOTION.ease};
+}
+.lokai-row-flag:active:not(:disabled) {
+  background: rgba(138,69,0,0.16);
+}
 .lokai-chip {
   transition:
     background ${MOTION.press} ${MOTION.ease},
@@ -486,30 +562,37 @@ export function CitationStamp({ text }: { text: string }) {
 }
 
 // ─── Logo Mark — "L" in a circle ──────────────────────────────────────────────
-export function LogoMark({ size = 34, light = false }: { size?: number; light?: boolean }) {
-  const borderColor = light ? 'rgba(255,255,255,0.64)' : C.navy;
-  const textColor   = light ? '#FFFFFF' : C.navy;
-  const floretSize = Math.round(size * 0.58);
+/**
+ * The mark — a navy rounded-square tile carrying a serif "L".
+ *
+ * Replaces the floret-in-a-circle, which read as fussy and generic at any size.
+ * A confident monogram tile is the app-icon shape a phone user expects, ties
+ * directly to the Fraunces "Lok" of the wordmark, and holds up from 20px in the
+ * drawer to a 96px onboarding hero without redrawing. On a dark ground the tile
+ * lightens rather than inverting, so the mark never becomes a hole in the page.
+ */
+export function LogoMark({ size = 40, light = false }: { size?: number; light?: boolean }) {
+  const tile  = light ? 'rgba(255,255,255,0.14)' : C.navy;
+  const glyph = light ? '#FFFFFF' : '#F7F4ED';
   return (
     <div style={{
-      width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-      border: `1.5px solid ${borderColor}`,
-      background: light ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.36)',
+      width: `${size}px`, height: `${size}px`,
+      borderRadius: `${Math.round(size * 0.28)}px`,
+      background: tile,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexShrink: 0,
-      boxShadow: light ? 'inset 0 1px 0 rgba(255,255,255,0.08)' : '0 1px 2px rgba(16,42,76,0.08)',
+      boxShadow: light ? 'inset 0 0 0 1px rgba(255,255,255,0.14)' : '0 2px 6px rgba(16,42,76,0.18)',
     }}>
-      <svg
-        width={floretSize}
-        height={floretSize}
-        viewBox="58 6 36 40"
-        fill="none"
-        style={{ flexShrink: 0, color: textColor }}
-      >
-        <path d="M76 8C82 17 82 35 76 44C70 35 70 17 76 8Z" stroke="currentColor" strokeWidth="2.0" />
-        <path d="M59 26C65 18 87 18 93 26C87 34 65 34 59 26Z" stroke="currentColor" strokeWidth="2.0" />
-        <circle cx="76" cy="26" r="3.2" fill="currentColor" opacity={0.65} />
-      </svg>
+      <span style={{
+        fontFamily: EDITORIAL,
+        fontSize: `${Math.round(size * 0.6)}px`,
+        fontWeight: 500,
+        lineHeight: 1,
+        color: glyph,
+        transform: `translateY(${Math.round(size * 0.02)}px)`,
+      }}>
+        L
+      </span>
     </div>
   );
 }
@@ -541,6 +624,21 @@ export function BrandLogo({ size = 36, light = false }: { size?: number; light?:
 // ─── Full Logo (mark + wordmark) ──────────────────────────────────────────────
 export function Logo({ size = 40, light = false }: { size?: number; light?: boolean }) {
   return <BrandLogo size={size} light={light} />;
+}
+
+/** Google's four-colour "G", for the prepared "Continue with Google" button on
+ *  onboarding. Lives here (a token-definition file) so the brand hexes don't
+ *  read as drifted palette colour at a screen call site. Demo only — the button
+ *  runs no real OAuth. */
+export function GoogleG({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden style={{ flexShrink: 0 }}>
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
 }
 
 // ─── Voice Orb — full 4-state component ──────────────────────────────────────

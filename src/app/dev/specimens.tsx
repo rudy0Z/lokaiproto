@@ -6,6 +6,7 @@ import { getTurnById } from '../data/responseTurns';
 import { getVerificationFacts } from '../data/caseWorkflow';
 import type { ResponseMode } from '../data/responseTurns';
 import type { VoiceOrbState } from '../components/shared';
+import { SystemAnswerSpecimen, SystemStopSpecimen, SystemDrawerSpecimen } from './systemSpecimen';
 
 /**
  * Specimen registry — one component, rendered alone at natural size on a bare
@@ -34,6 +35,9 @@ export interface Specimen {
   source: string;
   /** Natural render width; the frame sizes to this. */
   width?: number;
+  /** Render inside a phone DeviceFrame. Only for specimens that draw a whole
+   *  artboard with its own StatusBar, so the Dynamic Island lands correctly. */
+  frame?: boolean;
   /** Frames for a looping specimen. Length drives the loop; index is passed to render. */
   frames?: string[];
   render: (frame: number) => React.ReactNode;
@@ -84,6 +88,46 @@ function MissingTurn({ id }: { id: string }) {
 }
 
 export const SPECIMENS: Specimen[] = [
+  /* System proof — the three properties that were silently false before
+     src/app/ui existed. Keep these first: if one breaks, nothing below it
+     is trustworthy either. */
+  {
+    id: 'system-answer',
+    label: 'Answer screen — built from primitives',
+    group: 'System',
+    note: 'One container, one caps label, one CTA. Zero inline styles.',
+    source: 'src/app/ui — the layout kit and primitives, composed',
+    width: 390,
+    render: () => <SystemAnswerSpecimen />,
+  },
+  {
+    id: 'system-script',
+    label: 'The same screen in Hindi',
+    group: 'System',
+    note: 'Different face, different leading, +1px optical size — no call-site change.',
+    source: 'src/app/ui/script.ts — <Text> resolves the script itself',
+    width: 390,
+    render: () => <SystemAnswerSpecimen lang="hi" />,
+  },
+  {
+    id: 'nav-drawer',
+    label: 'Navigation drawer',
+    group: 'System',
+    note: 'ChatGPT/Gemini pattern, one departure: the active matter is the anchor, not "New chat".',
+    source: 'Mobile · the drawer behind the ☰ on every screen',
+    width: 390,
+    render: () => <SystemDrawerSpecimen />,
+  },
+  {
+    id: 'system-stop',
+    label: 'The same system, refusing',
+    group: 'System',
+    note: 'tone="stop" inverts the whole artboard — chrome included, not a dark card on cream.',
+    source: 'src/app/ui/layout.tsx — <Screen tone="stop">',
+    width: 390,
+    render: () => <SystemStopSpecimen />,
+  },
+
   {
     id: 'response-mode-cycle',
     label: 'Response-mode taxonomy (loop)',

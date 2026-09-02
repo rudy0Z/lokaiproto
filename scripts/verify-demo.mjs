@@ -162,9 +162,19 @@ if (!sharedSrc.includes('typeStyle') || !sharedSrc.includes('caption:') || !shar
 const bareRadius = /borderRadius\s*:\s*(?:['"]?\d+(?:px)?['"]?)/;
 const bareFont = /fontSize\s*:\s*['"]?\d+/;
 const bareShadow = /boxShadow\s*:\s*['"`](?!none)/;
+/* Files that DEFINE the system may speak in literals; everything downstream
+   of them may not. Keep this list identical to SYSTEM_FILES in ui-debt.mjs. */
+const systemFiles = [
+  'app/components/shared.tsx',
+  'app/ui/theme.ts',
+  'app/ui/script.ts',
+  'app/ui/primitives.tsx',
+  'app/ui/layout.tsx',
+  'app/ui/motion.tsx',
+];
 for (const file of files) {
   const rel = relative(root, file).replace(/\\/g, '/');
-  if (rel.endsWith('app/components/shared.tsx')) continue;
+  if (systemFiles.some((s) => rel.endsWith(s))) continue;
   const content = await readFile(file, 'utf8');
   for (const line of content.split('\n')) {
     if (bareRadius.test(line) && !line.includes('LAYOUT.radius')) {
@@ -181,12 +191,172 @@ for (const file of files) {
     }
   }
   for (const line of content.split('\n')) {
-    if (bareShadow.test(line) && !line.includes('SHADOW.') && !/boxShadow\s*:\s*['"`]none['"`]/.test(line)) {
+    if (bareShadow.test(line) && !line.includes('SHADOW.') && !line.includes('DEVICE.') && !/boxShadow\s*:\s*['"`]none['"`]/.test(line)) {
       failures.push(`${rel} bare boxShadow — use SHADOW.*`);
       break;
     }
   }
 }
+
+// ─── WCAG contrast gate — the role layer must hold in BOTH themes ────────────
+/* The palette is semantic (`--role-*`); a theme is a re-pointing of those
+   roles and nothing else. This gate computes real WCAG 2.x contrast ratios
+   from the CSS custom properties in index.css and fails the build when a
+   text or UI pair drops below threshold — in either theme. A hand-picked
+   hex (from a human or a model) cannot ship past it: the fix belongs in the
+   role value, never at a call site. */
+
+function parseCssScope(css) {
+  /* Strip comments and @imports first: the selector match below is exact, and
+     the tokens file opens with two @imports ahead of its first :root. */
+  const cleaned = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/@import[^;]+;/g, '');
+  const root = {};
+  const dark = {};
+  const blockRe = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = blockRe.exec(cleaned)) !== null) {
+    const selectors = m[1].trim();
+    const parts = selectors.split(',').map((s) => s.trim());
+    const target = parts.includes(':root')
+      ? root
+      : parts.includes('[data-theme="dark"]')
+        ? dark
+        : null;
+    if (!target) continue;
+    for (const decl of m[2].split(';')) {
+      const i = decl.indexOf(':');
+      if (i === -1) continue;
+      const prop = decl.slice(0, i).trim();
+      if (prop.startsWith('--')) target[prop] = decl.slice(i + 1).trim();
+    }
+  }
+  return { root, dark, hasDark: Object.keys(dark).length > 0 };
+}
+
+function resolveVarChain(value, scope, root, seen = new Set()) {
+  if (!value) return value;
+  return value.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*?)\s*)?\)/g, (all, name, fallback) => {
+    if (seen.has(name)) return fallback !== undefined ? fallback.trim() : '';
+    seen.add(name);
+    const next = scope[name] ?? root[name];
+    if (next === undefined) return fallback !== undefined ? fallback.trim() : '';
+    return resolveVarChain(next, scope, root, seen);
+  });
+}
+
+function parseCssColor(input) {
+  if (!input) return null;
+  const s = input.trim().toLowerCase();
+  if (s === 'transparent') return [0, 0, 0, 0];
+  if (s.startsWith('#')) {
+    const hex = s.slice(1);
+    if (![3, 4, 6, 8].includes(hex.length)) return null;
+    const wide = hex.length >= 6;
+    const pair = (h) => (wide ? h : h + h);
+    const r = parseInt(pair(hex.slice(0, wide ? 2 : 1)), 16);
+    const g = parseInt(pair(hex.slice(wide ? 2 : 1, wide ? 4 : 2)), 16);
+    const b = parseInt(pair(hex.slice(wide ? 4 : 2, wide ? 6 : 3)), 16);
+    const a = hex.length === 4 || hex.length === 8
+      ? parseInt(pair(hex.slice(-1 * (wide ? 2 : 1))), 16) / 255
+      : 1;
+    return [r, g, b, a];
+  }
+  const fn = s.match(/^rgba?\(([^)]*)\)$/);
+  if (!fn) return null;
+  const parts = fn[1].split(/[,\s/]+/).filter(Boolean);
+  if (parts.length < 3) return null;
+  const ch = (p) => (p.endsWith('%') ? Math.round(parseFloat(p) * 2.55) : Math.round(parseFloat(p)));
+  const al = (p) => (p.endsWith('%') ? parseFloat(p) / 100 : parseFloat(p));
+  return [ch(parts[0]), ch(parts[1]), ch(parts[2]), parts[3] !== undefined ? al(parts[3]) : 1];
+}
+
+function wcagLuminance([r, g, b]) {
+  const ch = (c) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+}
+
+function wcagContrast(fg, bg) {
+  const l1 = wcagLuminance(fg);
+  const l2 = wcagLuminance(bg);
+  const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function compositeOver(fg, bg) {
+  if (fg[3] >= 1) return fg;
+  return [
+    Math.round(fg[0] * fg[3] + bg[0] * (1 - fg[3])),
+    Math.round(fg[1] * fg[3] + bg[1] * (1 - fg[3])),
+    Math.round(fg[2] * fg[3] + bg[2] * (1 - fg[3])),
+    1,
+  ];
+}
+
+function runContrastGate(cssContent, failures) {
+  const { root, dark, hasDark } = parseCssScope(cssContent);
+  /* Text pairs hold at AA (4.5). The last two are UI-indicator pairs
+     (anchor-inked icons, the focus ring) — WCAG 2.2 1.4.11 needs 3.0. */
+  const pairs = [
+    ['ink', 'ground', 4.5], ['ink-quiet', 'ground', 4.5], ['ink-faint', 'ground', 4.5],
+    ['ink', 'raised', 4.5], ['ink-quiet', 'raised', 4.5], ['ink-faint', 'raised', 4.5],
+    ['on-anchor', 'anchor', 4.5],
+    ['stop-ink', 'stop-ground', 4.5], ['stop-ink-quiet', 'stop-ground', 4.5],
+    ['flag', 'ground', 4.5], ['attest', 'ground', 4.5], ['ok', 'ground', 4.5], ['halt', 'ground', 4.5],
+    ['anchor', 'ground', 3.0], ['focus', 'ground', 3.0],
+  ];
+  const roleColor = (name, scope) => {
+    const raw = scope?.[`--role-${name}`] ?? root[`--role-${name}`];
+    if (raw === undefined) return { error: `--role-${name} is not defined` };
+    const resolved = resolveVarChain(raw, scope ?? {}, root);
+    const parsed = parseCssColor(resolved);
+    if (!parsed) return { error: `--role-${name} resolves to "${resolved}" — not a parseable color` };
+    return { color: parsed };
+  };
+  const checkTheme = (label, scope) => {
+    for (const [fgName, bgName, min] of pairs) {
+      const fg = roleColor(fgName, scope);
+      const bg = roleColor(bgName, scope);
+      if (fg.error || bg.error) {
+        failures.push(`contrast[${label}]: ${fg.error ?? bg.error}`);
+        continue;
+      }
+      const ratio = wcagContrast(compositeOver(fg.color, bg.color), bg.color);
+      if (ratio < min) {
+        failures.push(
+          `contrast[${label}]: --role-${fgName} on --role-${bgName} = ${ratio.toFixed(2)}:1 < ${min}`
+          + ' — fix the role value in src/styles/index.css, never a call site.',
+        );
+      }
+    }
+  };
+  checkTheme('light', root);
+  if (hasDark) {
+    const required = ['ground', 'ink', 'ink-quiet', 'ink-faint', 'anchor', 'on-anchor', 'stop-ground', 'stop-ink', 'stop-ink-quiet'];
+    const missing = required.filter((n) => dark[`--role-${n}`] === undefined);
+    if (missing.length) {
+      failures.push(
+        `contrast[dark]: [data-theme="dark"] exists but is incomplete — missing roles: ${missing.join(', ')}.`
+        + ' Define every role for dark or remove the block; a partial theme must not half-pass.',
+      );
+    } else {
+      checkTheme('dark', dark);
+    }
+  } else {
+    console.log('NOTE contrast gate: [data-theme="dark"] not yet defined — light theme enforced only.');
+  }
+}
+
+const indexCss = await readFile(join(sourceRoot, 'styles', 'index.css'), 'utf8');
+runContrastGate(indexCss, failures);
+
+// UI debt ratchet — raw colour / family / leading may only decrease per file.
+const { checkDebt } = await import('./ui-debt.mjs');
+failures.push(...(await checkDebt()));
 
 if (failures.length) {
   console.error(failures.map((failure) => `FAIL ${failure}`).join('\n'));
@@ -201,3 +371,5 @@ console.log('PASS no groundingScore or fabricated confidence percentages remain.
 console.log('PASS Indian channels (1915, e-Daakhil, registered post) and consumer-only scope honesty hold.');
 console.log('PASS dead theme.css / components/ui stay deleted; drifted palette hexes absent from live pages.');
 console.log('PASS layout/hierarchy/typography tokens enforced (no bare radius, fontSize, or boxShadow).');
+console.log('PASS WCAG contrast gate: every role pair holds at AA (4.5:1 text / 3:1 UI) in the defined themes.');
+console.log('PASS UI debt ratchet: raw colour / font-family / line-height counts at or below budget.');

@@ -1,0 +1,99 @@
+{
+  "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
+  "measuredAt": "2026-09-02",
+  "totalDebt": 661,
+  "files": {
+    "src/app/App.tsx": {
+      "rawFamily": 1
+    },
+    "src/app/CaptureLayout.tsx": {
+      "rawColor": 1,
+      "rawFamily": 6,
+      "rawLeading": 1
+    },
+    "src/app/components/ai/Turn.tsx": {
+      "rawColor": 5,
+      "rawFamily": 24,
+      "rawLeading": 7
+    },
+    "src/app/components/CommandPalette.tsx": {
+      "rawColor": 3,
+      "rawFamily": 1
+    },
+    "src/app/components/demo/GuardrailGallery.tsx": {
+      "rawColor": 1,
+      "rawFamily": 11,
+      "rawLeading": 6
+    },
+    "src/app/components/demo/LegalTerms.tsx": {
+      "rawColor": 3,
+      "rawFamily": 6,
+      "rawLeading": 5
+    },
+    "src/app/components/LokAIWorkflow.tsx": {
+      "rawColor": 35,
+      "rawFamily": 76,
+      "rawLeading": 34
+    },
+    "src/app/components/SettingsPanel.tsx": {
+      "rawColor": 12,
+      "rawFamily": 12,
+      "rawLeading": 3
+    },
+    "src/app/components/Sheet.tsx": {
+      "rawColor": 1
+    },
+    "src/app/components/Sidebar.tsx": {
+      "rawColor": 21,
+      "rawFamily": 1,
+      "rawLeading": 1
+    },
+    "src/app/dev/specimens.tsx": {
+      "rawFamily": 1
+    },
+    "src/app/pages/Chat.tsx": {
+      "rawColor": 14,
+      "rawFamily": 26,
+      "rawLeading": 10
+    },
+    "src/app/pages/DevIndex.tsx": {
+      "rawFamily": 8,
+      "rawLeading": 3
+    },
+    "src/app/pages/Documents.tsx": {
+      "rawColor": 18,
+      "rawFamily": 12,
+      "rawLeading": 2
+    },
+    "src/app/pages/Draft.tsx": {
+      "rawColor": 19,
+      "rawFamily": 25,
+      "rawLeading": 10
+    },
+    "src/app/pages/Home.tsx": {
+      "rawColor": 24,
+      "rawFamily": 12,
+      "rawLeading": 3
+    },
+    "src/app/pages/mobile/MobileConsumerCase.tsx": {
+      "rawColor": 23,
+      "rawFamily": 48,
+      "rawLeading": 22
+    },
+    "src/app/pages/mobile/MobileHome.tsx": {
+      "rawColor": 8,
+      "rawFamily": 9
+    },
+    "src/app/pages/mobile/MobileVoiceActive.tsx": {
+      "rawFamily": 1
+    },
+    "src/app/pages/Notice.tsx": {
+      "rawColor": 40,
+      "rawFamily": 32,
+      "rawLeading": 10
+    },
+    "src/app/pages/Specimen.tsx": {
+      "rawFamily": 4
+    }
+  }
+}

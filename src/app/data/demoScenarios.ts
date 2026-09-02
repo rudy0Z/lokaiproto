@@ -15,6 +15,15 @@ export interface DemoFact {
   label: string;
   value: string;
   state: EvidenceState;
+  /**
+   * Why LokAI flagged this fact for the citizen to check. Only meaningful on a
+   * `disputed` fact — it is the "why" the verification gate shows above the
+   * confirm/fix choice. This is now the single source of that text; the verify
+   * screen derives its VerificationFact list from these scenario facts (see
+   * getVerificationFacts in caseWorkflow.ts), so the fact content lives in
+   * exactly one place.
+   */
+  hint?: string;
 }
 
 export interface DemoSource {
@@ -119,7 +128,17 @@ export const DEMO_SCENARIOS: Record<string, DemoScenario> = {
     statusBody: 'The purchase, defect, and seller response are clear. LokAI can explain the general route and prepare a draft for Priya to review.',
     allowedActions: ['Explain the general rule', 'Prepare a complaint draft', 'Show the source basis'],
     facts: [
-      { id: 'purchase-date', label: 'Purchase date', value: '6 June 2026', state: 'confirmed' },
+      /* The canonical facts for the consumer matter — the ONE source (unified
+         2026-08-27). The verify screen's VerificationFact list derives from
+         here (getVerificationFacts maps state→status), DemoContext seeds its
+         live `facts` from here, and confirming a fact on ?stage=verify now
+         flows back through DemoContext to every screen reading it. Previously a
+         second 5-fact list lived in caseWorkflow with different ids, so the two
+         disagreed. `disputed` is the flagged one and carries its own `hint`. */
+      {
+        id: 'purchase-date', label: 'Purchase date', value: '6 June 2026', state: 'disputed',
+        hint: 'The invoice reads 6 June 2026, but the seller chat refers to an 8 June order. Confirm which is right — the reply window is counted from this date.',
+      },
       { id: 'amount', label: 'Amount paid', value: '₹8,999', state: 'confirmed' },
       { id: 'defect', label: 'Problem', value: 'Mixer arrived damaged', state: 'confirmed' },
       { id: 'seller-response', label: 'Seller response', value: 'Replacement refused in writing', state: 'confirmed' },

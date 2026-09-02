@@ -50,11 +50,16 @@ export const router = createHashRouter([
         path: '/mobile',
         Component: MobileShell,
         children: [
-          { index: true, element: <Navigate to="/mobile/home" replace /> },
+          { index: true, element: <Navigate to="/mobile/onboarding" replace /> },
+
+          // Onboarding — the first screen: purpose + language + prepared sign-in
+          { path: 'onboarding',         lazy: lazyPage(() => import('./pages/mobile/MobileOnboarding')) },
 
           // Main screens
           { path: 'home',               lazy: lazyPage(() => import('./pages/mobile/MobileHome')) },
           { path: 'chat/:language',      element: <Navigate to="/mobile/case/consumer" replace /> },
+          // Notice Interpreter — the founding feature, in-chat (§3.8a)
+          { path: 'notice',             lazy: lazyPage(() => import('./pages/mobile/MobileNoticeInterpret')) },
           { path: 'voice',              lazy: lazyPage(() => import('./pages/mobile/MobileVoiceActive')) },
           { path: 'profile',            lazy: lazyPage(() => import('./pages/mobile/MobileProfile')) },
           { path: 'case',               element: <Navigate to="/mobile/case/consumer" replace /> },

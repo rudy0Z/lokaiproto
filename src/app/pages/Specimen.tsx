@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, MONO, SANS, TYPE } from '../components/shared';
 import { getSpecimen } from '../dev/specimens';
 import { useSpecimenLoop } from '../hooks/useSpecimenLoop';
+import { DeviceFrame } from '../components/mobile/DeviceFrame';
 
 /**
  * /specimen/:id — one component, alone, on a transparent canvas at natural
@@ -67,9 +68,17 @@ export default function Specimen() {
           </p>
         </div>
       )}
-      <div style={{ width: '100%', maxWidth: specimen.width ?? 420 }}>
-        {specimen.render(looping ? frame : 0)}
-      </div>
+      {/* `frame` marks a specimen that renders a whole artboard WITH its own
+          chrome (StatusBar), so a device frame reads right and the Dynamic
+          Island sits in the status bar's gap. The system-proof specimens are
+          chrome-less component demos, so they render bare. */}
+      {specimen.frame ? (
+        <DeviceFrame>{specimen.render(looping ? frame : 0)}</DeviceFrame>
+      ) : (
+        <div style={{ width: '100%', maxWidth: specimen.width ?? 420 }}>
+          {specimen.render(looping ? frame : 0)}
+        </div>
+      )}
     </div>
   );
 }

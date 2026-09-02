@@ -1,326 +1,138 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Settings, ChevronRight, Bell, Shield, HelpCircle } from 'lucide-react';
-import { C, GRAD, LAYOUT, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
-import { StatusBar, BottomNav, HomeIndicator, MobileRouteCanvas } from './MobileHome';
+import { Bell, CaretRight, GlobeSimple, Moon, ShieldCheck, UserCircle } from '@phosphor-icons/react';
+import {
+  Stack, Row, HairlineList, HairlineRow,
+  Text, Label, Button, T, S, LAYOUT, ICON, ICON_WEIGHT, useSystemStyles,
+} from '../../ui';
+import { MobileRouteCanvas } from './MobileHome';
+import { AppScreen } from '../../components/mobile/AppScreen';
+import { useConversations } from '../../context/ConversationContext';
 
-// ─── Toggle ────────────────────────────────────────────────────────────────────
+/**
+ * Help & account.
+ *
+ * The tab is named "Help", so the screen leads with reaching a human — for a
+ * stressed user that is the job, not settings. Rebuilt on the system 2026-08-27.
+ *
+ * What the old screen had and this drops:
+ *  - a hardcoded 390×844 artboard (it ignored `ARTBOARD` and clipped in the
+ *    portfolio embed); `Screen` uses the shared constant.
+ *  - two dead links — `/mobile/onboarding/2` and `/mobile/login` — to routes
+ *    that do not exist.
+ *  - three stacked subscription cards, one a navy gradient. Navy is the anchor
+ *    and the stop ground (L5), never a pricing decoration. Plan becomes one
+ *    quiet row.
+ *  - five cards total → zero. Settings are hairline rows; the one focal move is
+ *    the human-help primary.
+ */
+
+/** A small theme-safe switch. */
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
-    <div
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
       onClick={onToggle}
       style={{
-        width: '44px', height: '24px', borderRadius: LAYOUT.radius.panel,
-        background: on ? C.navy : C.border,
-        position: 'relative', cursor: 'pointer', flexShrink: 0,
+        width: 44, height: 24, borderRadius: LAYOUT.radius.pill,
+        background: on ? T.anchor : T.hairlineFirm,
+        border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0,
         transition: 'background 0.2s ease',
       }}
     >
-      <div style={{
-        position: 'absolute',
-        top: '2px', left: on ? '22px' : '2px',
-        width: '20px', height: '20px', borderRadius: LAYOUT.radius.full,
-        background: '#FFFFFF',
-        boxShadow: SHADOW.xs,
-        transition: 'left 0.2s ease',
+      <span style={{
+        position: 'absolute', top: 2, left: on ? 22 : 2,
+        width: 20, height: 20, borderRadius: LAYOUT.radius.full,
+        background: T.raised, transition: 'left 0.2s ease',
       }} />
-    </div>
+    </button>
   );
 }
 
-// ─── Section label ─────────────────────────────────────────────────────────────
-function SectionLabel({ text }: { text: string }) {
-  return (
-    <div style={{
-      padding: '20px 20px 8px',
-      fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
-      color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
-    }}>
-      {text}
-    </div>
-  );
-}
+const chevron = <CaretRight size={ICON.inline} weight={ICON_WEIGHT} color="var(--role-ink-faint)" />;
 
-// ─── Card wrapper ─────────────────────────────────────────────────────────────
-function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.card, margin: '0 16px',
-      overflow: 'hidden',
-      boxShadow: SHADOW.sm,
-      ...style,
-    }}>
-      {children}
-    </div>
-  );
-}
-
-// ─── Subscription Plan Cards ───────────────────────────────────────────────────
-function FreePlanCard() {
-  return (
-    <div style={{
-      background: C.surface2, borderRadius: LAYOUT.radius.panel,
-      padding: '16px', marginBottom: '10px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <span style={{
-          fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.ink,
-        }}>Free</span>
-        <span style={{
-          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 500, color: C.muted,
-          background: C.border, borderRadius: LAYOUT.radius.pill, padding: '2px 10px',
-        }}>Current plan</span>
-      </div>
-      <p style={{
-        fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft,
-        margin: 0, lineHeight: 1.6,
-      }}>
-        5 questions/day · Hindi + English · 1 document/month
-      </p>
-    </div>
-  );
-}
-
-function CitizenPlanCard() {
-  return (
-    <div style={{
-      background: '#EEF2F8', border: `1px solid ${C.navy}`,
-      borderRadius: LAYOUT.radius.panel, padding: '16px', marginBottom: '10px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.navy }}>Citizen</span>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.navy }}>₹199/month</span>
-      </div>
-      <p style={{
-        fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft,
-        margin: '0 0 12px', lineHeight: 1.6,
-      }}>
-        50 questions/day · All 12 languages · 10 documents/month · PDF export
-      </p>
-      <button style={{
-        background: GRAD.buttonPrimary, border: 'none',
-        borderRadius: LAYOUT.radius.pill, padding: '10px 20px',
-        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: '#FFFFFF',
-        cursor: 'pointer', boxShadow: SHADOW.sm,
-      }}>
-        Upgrade →
-      </button>
-    </div>
-  );
-}
-
-function CounselPlanCard() {
-  return (
-    <div style={{
-      background: `linear-gradient(160deg, ${C.ink} 0%, ${C.navy} 100%)`,
-      borderRadius: LAYOUT.radius.panel, padding: '16px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <span style={{
-          fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, fontStyle: 'normal', color: '#FFFFFF',
-        }}>Counsel</span>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: '#FFFFFF' }}>₹499/month</span>
-      </div>
-      <p style={{
-        fontFamily: SANS, fontSize: TYPE.small.size, color: 'rgba(255,255,255,0.75)',
-        margin: '0 0 12px', lineHeight: 1.6,
-      }}>
-        Unlimited · All languages · Unlimited documents · Talk to a lawyer
-      </p>
-      <button style={{
-        background: 'transparent',
-        border: `1.5px solid ${C.saffron}`,
-        borderRadius: LAYOUT.radius.pill, padding: '10px 20px',
-        fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.saffron,
-        cursor: 'pointer',
-      }}>
-        Upgrade to Counsel →
-      </button>
-    </div>
-  );
-}
-
-// ─── Settings Row ──────────────────────────────────────────────────────────────
-function SettingsRow({
-  Icon, label, value, last = false, rightSlot,
-}: {
-  Icon: React.ComponentType<{ style?: React.CSSProperties; strokeWidth?: number }>;
-  label: string;
-  value?: string;
-  last?: boolean;
-  rightSlot?: React.ReactNode;
-}) {
-  return (
-    <>
-      <div style={{
-        padding: '14px 16px',
-        display: 'flex', alignItems: 'center', gap: '14px',
-        cursor: 'pointer',
-      }}>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
-          background: C.surface2,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <Icon style={{ width: '18px', height: '18px', color: C.navy }} strokeWidth={1.5} />
-        </div>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.ink, flex: 1 }}>{label}</span>
-        {value && (
-          <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginRight: '4px' }}>{value}</span>
-        )}
-        {rightSlot ?? <ChevronRight style={{ width: '16px', height: '16px', color: '#C8C4BC' }} />}
-      </div>
-      {!last && <div style={{ height: '1px', background: '#F0EDE8', marginLeft: '66px' }} />}
-    </>
-  );
-}
-
-// ─── Profile Artboard ─────────────────────────────────────────────────────────
-export function ProfileArtboard() {
+function ProfileArtboard() {
+  useSystemStyles();
   const navigate = useNavigate();
+  const { selectedLanguage } = useConversations();
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const settingsRef = React.useRef<HTMLDivElement | null>(null);
+
+  const langLabel = { en: 'English', hi: 'हिन्दी', mr: 'मराठी', ta: 'தமிழ்' }[selectedLanguage] ?? 'English';
+  const goHuman = () => navigate('/mobile/case/consumer?stage=escalation');
 
   return (
-    <div style={{
-      width: '390px', height: '844px', background: C.bg,
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
-    }}>
-      <StatusBar />
+    <AppScreen
+      context={
+        <Row gap={3} align="center">
+          <span style={{
+            width: 40, height: 40, borderRadius: LAYOUT.radius.full,
+            background: T.anchorTint, color: T.anchor,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <UserCircle size={ICON.row} weight={ICON_WEIGHT} />
+          </span>
+          <Stack gap={0}>
+            <Text role="bodyStrong" measured={false}>Priya Sharma</Text>
+            <Text role="caption" tone="faint" measured={false}>{langLabel} · Mumbai, MH · Free plan</Text>
+          </Stack>
+        </Row>
+      }
+      action={<Button onClick={goHuman}>Talk to a person</Button>}
+      scrollClearance={S[6]}
+    >
+      {/* Focal move — the human path. A legal tool's most valuable escape is a
+          real person, so it leads rather than hiding in settings. */}
+      <Stack gap={2}>
+        <Text role="answer">Need a human?</Text>
+        <Text tone="quiet">
+          LokAI gives legal information, not legal advice. For anything urgent or
+          high-stakes, a person from a legal-aid partner can take over — your
+          confirmed facts carry across so you don't repeat them.
+        </Text>
+      </Stack>
 
-      {/* Profile Top Bar — "Profile" centered + gear right */}
-      <div style={{
-        height: '56px', background: '#FFFFFF',
-        borderBottom: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center',
-        padding: '0 20px', flexShrink: 0,
-      }}>
-        <div style={{ flex: 1 }} />
-        <span style={{
-          fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600, color: C.ink,
-        }}>Profile</span>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+      <Stack gap={2}>
+        <Label>Preferences</Label>
+        <HairlineList>
+          <HairlineRow
+            leading={<GlobeSimple size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
+            trailing={<Row gap={2} align="center"><Text role="caption" tone="quiet" measured={false}>{langLabel}</Text>{chevron}</Row>}
+            onClick={() => navigate('/mobile/home')}
           >
-            <Settings style={{ width: '20px', height: '20px', color: C.inkSoft }} strokeWidth={1.5} />
-          </button>
-        </div>
-      </div>
+            <Text role="bodyStrong" measured={false}>Language</Text>
+          </HairlineRow>
+          <HairlineRow
+            leading={<Moon size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
+            trailing={<Text role="caption" tone="faint" measured={false}>Light</Text>}
+          >
+            <Text role="bodyStrong" measured={false}>Appearance</Text>
+          </HairlineRow>
+          <HairlineRow
+            leading={<Bell size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
+            trailing={<Toggle on={notificationsOn} onToggle={() => setNotificationsOn(v => !v)} />}
+          >
+            <Text role="bodyStrong" measured={false}>Notifications</Text>
+          </HairlineRow>
+          <HairlineRow
+            leading={<ShieldCheck size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
+            trailing={chevron}
+            onClick={() => navigate('/mobile/home')}
+          >
+            <Text role="bodyStrong" measured={false}>Privacy & data</Text>
+            <Text role="caption" tone="faint" measured={false}>Nothing is uploaded or sent in this demo</Text>
+          </HairlineRow>
+        </HairlineList>
+      </Stack>
 
-      {/* Scrollable content */}
-      <div style={{
-        flex: 1, overflowY: 'auto', overflowX: 'hidden',
-        background: C.bg, scrollbarWidth: 'none',
-      } as React.CSSProperties}>
-
-        {/* ── Avatar Section ── */}
-        <div style={{
-          background: '#FFFFFF', padding: '28px 20px 24px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          borderBottom: `1px solid ${C.border}`, marginBottom: '16px',
-        }}>
-          {/* Avatar circle — 56px, navy bg, "P" */}
-          <div style={{
-            width: '64px', height: '64px', borderRadius: LAYOUT.radius.full,
-            background: C.navy,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: '12px',
-          }}>
-            <span style={{
-              fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400,
-              color: '#FFFFFF', lineHeight: 1,
-            }}>P</span>
-          </div>
-          {/* Name */}
-          <p style={{
-            fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600,
-            color: C.ink, margin: '0 0 4px',
-          }}>
-            Priya Sharma
-          </p>
-          {/* Location */}
-          <p style={{
-            fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft,
-            margin: '0 0 10px',
-          }}>
-            Mumbai, MH
-          </p>
-          {/* Plan chip — outline style */}
-          <div style={{
-            border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.pill,
-            padding: '4px 14px', display: 'inline-flex',
-          }}>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>Free Plan</span>
-          </div>
-        </div>
-
-        {/* ── LANGUAGE Section ── */}
-        <SectionLabel text="Language" />
-        <Card style={{ marginBottom: '16px' }}>
-          <div style={{ padding: '14px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              {/* Active language chip */}
-              <div style={{
-                background: '#EEF2F8', border: `1px solid ${C.navy}`,
-                borderRadius: LAYOUT.radius.pill, padding: '5px 14px',
-                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.navy,
-              }}>
-                English
-              </div>
-              <button style={{
-                fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 500, color: C.saffron,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              }} onClick={() => navigate('/mobile/onboarding/2')}>
-                Change →
-              </button>
-            </div>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: 0, lineHeight: 1.5 }}>
-              Responses match the language you type or speak
-            </p>
-          </div>
-        </Card>
-
-        {/* ── SUBSCRIPTION Section ── */}
-      <SectionLabel text="Subscription" />
-      <div style={{ padding: '0 16px', marginBottom: '16px' }}>
-        <FreePlanCard />
-        <div onClick={() => navigate('/mobile/login')}><CitizenPlanCard /></div>
-        <div onClick={() => navigate('/mobile/login')}><CounselPlanCard /></div>
-      </div>
-
-      {/* ── SETTINGS Section ── */}
-        <div ref={settingsRef}>
-          <SectionLabel text="Settings" />
-        </div>
-        <Card style={{ marginBottom: '16px' }}>
-          <SettingsRow
-            Icon={Bell}
-            label="Notifications"
-            rightSlot={<Toggle on={notificationsOn} onToggle={() => setNotificationsOn(!notificationsOn)} />}
-          />
-          <SettingsRow Icon={Shield} label="Privacy" />
-          <SettingsRow Icon={HelpCircle} label="Help & Support" last />
-        </Card>
-
-        {/* ── Disclaimer ── */}
-        <p style={{
-          fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
-          textAlign: 'center', padding: '8px 32px 28px', lineHeight: 1.65,
-        }}>
-          LokAI provides legal information, not legal advice.
-        </p>
-      </div>
-
-      <BottomNav active="profile" />
-      <HomeIndicator />
-    </div>
+      <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+        LokAI provides legal information, not legal advice.
+      </Text>
+    </AppScreen>
   );
 }
 
-// ─── Route page ────────────────────────────────────────────────────────────────
 export default function MobileProfile() {
   return (
     <MobileRouteCanvas>

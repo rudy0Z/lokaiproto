@@ -1,11 +1,21 @@
-/* Latin — display, UI, and evidence metadata */
-@import '@fontsource/fraunces/latin-300.css';
-@import '@fontsource/fraunces/latin-400.css';
-@import '@fontsource/fraunces/latin-600.css';
-@import '@fontsource/inter/latin-400.css';
-@import '@fontsource/inter/latin-500.css';
-@import '@fontsource/inter/latin-600.css';
-@import '@fontsource/inter/latin-700.css';
+/* Latin display — Fraunces VARIABLE (2026-08-28), replacing the static cuts.
+   The static weights read brittle/high-contrast on a calm page; the variable
+   font exposes Fraunces' SOFT and opsz axes, so the display serif can be
+   softened (rounder terminals, lower contrast) to sit warmly with Hanken.
+   `full.css` carries the wght + opsz + SOFT + WONK axes; the softening values
+   live on the editorial TYPE roles (shared.tsx) via font-variation-settings. */
+@import '@fontsource-variable/fraunces/full.css';
+/* UI sans — Hanken Grotesk (2026-08-27), replacing Inter.
+   Inter is the default AI-generated UI face — instantly legible AS the default,
+   which is exactly the generic tell we're removing. Hanken Grotesk is a warm,
+   high-legibility grotesque: it keeps Inter's clarity for stressed, mixed-
+   literacy readers but carries quiet personality, and it pairs with Fraunces
+   without fighting it. Self-hosted via @fontsource so the embed stays
+   deterministic and offline-safe (no CDN @import). */
+@import '@fontsource/hanken-grotesk/latin-400.css';
+@import '@fontsource/hanken-grotesk/latin-500.css';
+@import '@fontsource/hanken-grotesk/latin-600.css';
+@import '@fontsource/hanken-grotesk/latin-700.css';
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import '@fontsource/jetbrains-mono/latin-500.css';
 @import '@fontsource/jetbrains-mono/latin-600.css';

@@ -1,4 +1,5 @@
-﻿export type WorkflowStage =
+import { getDemoScenario, type DemoFact } from './demoScenarios';
+export type WorkflowStage =
   | 'intake'
   | 'clarify'
   | 'verify'
@@ -188,26 +189,39 @@ const CONSUMER_FACTS = {
 };
 
 /**
- * Facts LokAI extracted from the citizen's intake + uploaded invoice. The
- * Verification Scratchpad blocks the assessment until each is confirmed — this is
- * the anti-hallucination gate: the citizen, not the model, owns the facts the
- * legal output is built on. At least one is intentionally flagged "needs review"
- * so the catch is visible (the classic "AI misread the date" failure).
+ * Convert a scenario fact (keyed `state`) into a VerificationFact (keyed
+ * `status`). A `disputed` fact is the one the gate must catch, so it maps to
+ * `needs_review`; everything else is `confirmed`. The `hint` — why LokAI
+ * flagged it — carries straight across.
+ *
+ * This is the seam that unified two once-divergent fact lists (2026-08-27). It
+ * takes the structural minimum (`DemoFact`) so a live `MatterFact` from
+ * DemoContext maps through it too, which is how confirming a fact on the verify
+ * screen propagates to every other screen.
+ */
+export function factToVerification(f: DemoFact): VerificationFact {
+  return {
+    id: f.id,
+    label: f.label,
+    value: f.value,
+    status: f.state === 'disputed' ? 'needs_review' : 'confirmed',
+    hint: f.hint,
+  };
+}
+
+/**
+ * Facts LokAI extracted from the citizen's intake + uploaded invoice, for the
+ * Verification Scratchpad's anti-hallucination gate: the citizen, not the
+ * model, owns the facts the legal output is built on.
+ *
+ * Derived from the consumer scenario's facts — the single canonical source
+ * (`demoScenarios.ts`). One is `disputed`, so the gate has a real catch (the
+ * "AI misread the date" failure). Live confirm/fix flows through DemoContext,
+ * not this static snapshot — this exists for the specimen and for read-only
+ * counts (e.g. the drawer's "N facts need your confirmation").
  */
 export function getVerificationFacts(): VerificationFact[] {
-  return [
-    { id: 'product', label: 'Product', value: 'Mixer grinder', status: 'confirmed' },
-    { id: 'seller', label: 'Seller', value: 'HomeKart', status: 'confirmed' },
-    { id: 'amount', label: 'Invoice amount', value: '₹8,999', status: 'confirmed' },
-    {
-      id: 'purchaseDate',
-      label: 'Purchase date',
-      value: '6 June 2026',
-      status: 'confirmed',
-      hint: 'This date appears on both the prepared invoice and seller message.',
-    },
-    { id: 'defect', label: 'Defect', value: 'Cracked jar; motor unsafe to run', status: 'confirmed' },
-  ];
+  return getDemoScenario('consumer').facts.map(factToVerification);
 }
 
 // ─── Evidence Locker ───────────────────────────────────────────────────────────
@@ -222,6 +236,13 @@ export interface EvidenceExtractedFact {
   value: string;
 }
 
+/**
+ * The visual class of an exhibit — drives how the mobile Documents screen draws
+ * its paper thumbnail. Kept separate from `id` (which is domain identity) so the
+ * thumbnail shape is a stated property, not inferred from a label string.
+ */
+export type ExhibitKind = 'invoice' | 'chat' | 'photo' | 'receipt' | 'report';
+
 export interface EvidenceItem {
   id: string;
   label: string;
@@ -229,6 +250,14 @@ export interface EvidenceItem {
   extractedFacts?: EvidenceExtractedFact[];
   /** Only set when status is 'conflicting' — names the other document and what disagrees. */
   conflictNote?: string;
+  /**
+   * What this exhibit establishes, in one line — the reason it is in the matter
+   * at all (documents-as-exhibits, MOBILE_AI_SYSTEM.md §3.9). Honest prepared
+   * copy, not derived in the view.
+   */
+  proves?: string;
+  /** Visual class for the paper thumbnail. Defaults to 'report' when unset. */
+  kind?: ExhibitKind;
 }
 
 /**
@@ -243,37 +272,57 @@ export function getEvidenceLocker(): EvidenceItem[] {
       id: 'invoice',
       label: 'Invoice or payment receipt',
       status: 'uploaded',
+      kind: 'invoice',
+      proves: 'That Priya paid ₹8,999 for the mixer, and when.',
       extractedFacts: [
         { label: 'Date read from invoice', value: '6 June 2026' },
         { label: 'Amount', value: '₹8,999' },
       ],
     },
+    /*
+     * The conflicting one — the other half of the purchaseDate flag above.
+     * Restored 2026-08-26 alongside it: this item was `uploaded` with no
+     * conflictNote, which left EVIDENCE_STATUS_STYLE.conflicting and the
+     * isConflict fill path in LokAIWorkflow.tsx as unreachable dead code.
+     */
     {
       id: 'whatsapp-chat',
       label: 'WhatsApp or seller-chat screenshots',
-      status: 'uploaded',
-      extractedFacts: [{ label: 'Seller refusal received', value: '8 June 2026' }],
+      status: 'conflicting',
+      extractedFacts: [
+        { label: 'Seller refusal received', value: '8 June 2026' },
+        { label: 'Order referred to as placed', value: '8 June 2026' },
+      ],
+      conflictNote: 'This thread refers to the order as placed on 8 June, but the invoice is dated 6 June. Confirm the purchase date before LokAI counts the reply window.',
+      kind: 'chat',
+      proves: 'That the seller refused a replacement in writing.',
     },
     {
       id: 'order-ticket',
       label: 'Platform order or ticket ID',
       status: 'uploaded',
+      kind: 'receipt',
+      proves: 'That the order can be traced on the platform.',
       extractedFacts: [{ label: 'Order ID', value: 'HK-48291' }],
     },
     {
       id: 'seller-chat',
       label: 'Seller replies, call logs, or written complaint proof',
       status: 'uploaded',
+      kind: 'chat',
+      proves: 'That Priya complained and gave the seller a chance to fix it.',
       extractedFacts: [{ label: 'Written refusal', value: '8 June 2026' }],
     },
     {
       id: 'defect-evidence',
       label: 'Photos or video showing the defect',
       status: 'uploaded',
+      kind: 'photo',
+      proves: 'That the mixer arrived damaged and is unsafe to run.',
       extractedFacts: [{ label: 'Captured', value: 'Today' }],
     },
-    { id: 'warranty', label: 'Warranty card or product listing', status: 'missing' },
-    { id: 'repair-report', label: 'Repair report, if already inspected', status: 'missing' },
+    { id: 'warranty', label: 'Warranty card or product listing', status: 'missing', kind: 'receipt', proves: 'Would show the warranty terms — strengthens the claim if added.' },
+    { id: 'repair-report', label: 'Repair report, if already inspected', status: 'missing', kind: 'report', proves: 'Would confirm the defect independently — optional.' },
   ];
 }
 

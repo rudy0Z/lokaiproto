@@ -1,186 +1,279 @@
-﻿import React from 'react';
-import { ArrowRight, FileText, Upload } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { IconFile, IconFolder, IconPlus } from '../../ui/icons';
 import { useNavigate } from 'react-router';
-import { C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../../components/shared';
-import { StatusBar, TopNav, BottomNav, HomeIndicator, MobileRouteCanvas } from './MobileHome';
-import { useDemo } from '../../context/DemoContext';
-import { ARTBOARD } from '../../embed';
+import {
+  Stack, Row, Rule, HairlineList, HairlineRow,
+  Text, Label, Amount, Badge, Button, IconButton,
+  T, S, LAYOUT, ICON, useSystemStyles,
+} from '../../ui';
+import { MobileRouteCanvas } from './MobileHome';
+import { AppScreen } from '../../components/mobile/AppScreen';
+import { ExhibitPaper } from '../../components/mobile/ExhibitPaper';
+import { Sheet } from '../../components/Sheet';
+import { getEvidenceLocker, type EvidenceItem } from '../../data/caseWorkflow';
+import { EVIDENCE_STATUS_VIEW } from '../../data/statusVocabulary';
+import { useConversations } from '../../context/ConversationContext';
 
-function FileRow({
-  item,
-}: {
-  item: { id: string; title: string; meta: string; route: string; detail: string };
-}) {
-  const navigate = useNavigate();
+/**
+ * Documents — exhibits in a matter, not files in folders.
+ *
+ * Replaces the old files screen (4 hardcoded rows, every one an identical
+ * generic file icon in a 42px tile). The reframe is `MOBILE_AI_SYSTEM.md` §3.9:
+ * in a legal matter a document exists because it *proves* something, and its
+ * value is its relationship to a claim. So each row is an exhibit — a mono
+ * reference (how it will be cited), a paper thumbnail, what it proves, and its
+ * state — grouped under its matter.
+ *
+ * Reference read (product owner's decks): date/case grouping, a left rail, and
+ * documents as real paper objects rather than icon rows. Taken: the paper
+ * object (`ExhibitPaper`) and case grouping. Rejected: the glossy 3D folder
+ * (skeuomorphic, wrong register for legal) and folder cards (generic). There is
+ * one matter today, so grouping shows as one titled section rather than a
+ * folder grid — the structure is ready for more matters without a redesign.
+ *
+ * States (L1 — only the exception gets a fill): `uploaded` plain, `missing` a
+ * dashed placeholder with a quiet add, `conflicting` the one filled row. That
+ * conflicting row is reachable for the first time — the data that feeds it was
+ * restored 2026-08-26 (see getEvidenceLocker).
+ */
+
+/** Exhibit references are assigned in source order, so EX-01 is stable no
+ *  matter how the list is sorted for display. */
+function withReferences(items: EvidenceItem[]) {
+  return items.map((item, i) => ({ item, ref: `EX-${String(i + 1).padStart(2, '0')}` }));
+}
+
+/** Display order: the conflict first (it needs a decision), then gathered, then
+ *  the optional gaps. */
+const STATUS_ORDER: Record<EvidenceItem['status'], number> = {
+  conflicting: 0, uploaded: 1, missing: 2,
+};
+
+/* Labels + tones come from the shared status vocabulary — the same state
+   renders identically everywhere (audit V4). */
+function statusBadge(status: EvidenceItem['status']) {
+  const view = EVIDENCE_STATUS_VIEW[status];
+  return <Badge tone={view.tone}>{view.label}</Badge>;
+}
+
+/** A clean document glyph tile, tinted by state — replaces the colour-lined
+ *  paper thumbnail, which read as noisy at row size. Missing gets a dashed
+ *  outline (a slot to fill); a conflict gets the one warm fill. */
+function DocIcon({ status }: { status: EvidenceItem['status'] }) {
+  const conflicting = status === 'conflicting';
+  const missing = status === 'missing';
   return (
-    <button
-      onClick={() => navigate(item.route)}
-      style={{
-        width: '100%',
-        minHeight: '76px',
-        background: '#FFFFFF',
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.card,
-        boxShadow: SHADOW.xs,
-        display: 'grid',
-        gridTemplateColumns: '42px 1fr 20px',
-        gap: 12,
-        alignItems: 'center',
-        padding: '13px 14px',
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
-    >
-      <div style={{
-        width: 42,
-        height: 42,
-        borderRadius: LAYOUT.radius.panel,
-        background: C.surface2,
-        border: `1px solid ${C.border}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <FileText size={18} color={C.navy} />
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <p style={{
-          fontFamily: SANS,
-          fontSize: TYPE.body.size,
-          fontWeight: 700,
-          color: C.ink,
-          margin: '0 0 4px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {item.title}
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: '0 0 5px' }}>
-          {item.meta}
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
-          {item.detail}
-        </p>
-      </div>
-      <ArrowRight size={16} color={C.muted} />
-    </button>
+    <span style={{
+      width: 44, height: 44, borderRadius: LAYOUT.radius.panel,
+      background: conflicting ? T.flagFill : missing ? 'transparent' : T.sunken,
+      color: conflicting ? T.flag : T.inkQuiet,
+      border: missing ? `1px dashed ${T.hairlineFirm}` : 'none',
+      display: 'grid', placeItems: 'center', flexShrink: 0,
+    }}>
+      {missing
+        ? <IconPlus size={ICON.row} color="var(--role-ink-faint)" />
+        : <IconFile size={ICON.row} />}
+    </span>
   );
 }
 
-function FilesArtboard() {
-  const navigate = useNavigate();
-  const { scenario, facts, draftAllowed, draftApproved, language, auditEvents } = useDemo();
-  const confirmed = facts.filter((f) => f.state === 'confirmed').length;
+function ExhibitRow({
+  item, refId, onOpen,
+}: {
+  item: EvidenceItem;
+  refId: string;
+  onOpen: () => void;
+}) {
+  const conflicting = item.status === 'conflicting';
+  const missing = item.status === 'missing';
+  return (
+    <HairlineRow
+      flagged={conflicting}
+      onClick={missing ? undefined : onOpen}
+      leading={<DocIcon status={item.status} />}
+    >
+      {/* Reference and status share the meta line, so the title gets the full
+          width below them. A badge riding alongside the title wrapped it to
+          four lines — the same trap the drawer's status badge hit. */}
+      <Row gap={2} justify="between" align="center">
+        <Amount tone="faint">{refId}</Amount>
+        {statusBadge(item.status)}
+      </Row>
+      <Text role="bodyStrong" measured={false}>{item.label}</Text>
+      {item.proves && (
+        <Text role="caption" tone="quiet" measured={false}>{item.proves}</Text>
+      )}
+      {/* The row flags the conflict in one line; the full note lives in the
+          sheet the row opens (L7 — say it once, and say the detail where the
+          decision is made). */}
+      {conflicting && (
+        <Text role="caption" tone="flag" measured={false}>
+          The dates disagree, so tap to confirm the purchase date.
+        </Text>
+      )}
+    </HairlineRow>
+  );
+}
 
-  const fileItems = [
-    {
-      id: 'consumer-summary',
-      title: `${scenario.matterTitle} summary`,
-      meta: `${scenario.label} · ${language.toUpperCase()}`,
-      route: '/mobile/case/consumer?stage=packet',
-      detail: scenario.statusTitle,
-    },
-    {
-      id: 'consumer-evidence',
-      title: 'Invoice and damage evidence',
-      meta: `${confirmed}/${facts.length} facts · Ready to review`,
-      route: '/mobile/case/consumer?stage=verify',
-      detail: facts.map((f) => f.label).slice(0, 3).join(' · '),
-    },
-    {
-      id: 'consumer-sources',
-      title: 'Source basis',
-      meta: scenario.sources[0]?.reviewLabel ?? 'Example — verify with a lawyer',
-      route: '/mobile/case/consumer?stage=retrieve',
-      detail: scenario.sources[0]?.title ?? 'Consumer Protection Act, 2019',
-    },
-    {
-      id: 'consumer-draft',
-      title: 'Demand notice draft',
-      meta: draftAllowed
-        ? (draftApproved ? 'Approved for copy/print' : 'Ready to review')
-        : 'Held — policy blocks draft',
-      route: draftAllowed ? '/mobile/case/consumer?stage=packet' : '/mobile/case/consumer?stage=answer',
-      detail: draftAllowed
-        ? `${auditEvents.length} audit events on this matter`
-        : scenario.statusBody,
-    },
-  ];
+/** The detail sheet — In plain words / Original. Clause-linking on the Original
+ *  view is the notice-interpreter pass (§3.8a); this is the shell and the tap
+ *  target it opens. */
+function ExhibitSheet({ open, item, refId, onClose }: {
+  open: boolean; item: EvidenceItem | null; refId: string; onClose: () => void;
+}) {
+  const [view, setView] = useState<'plain' | 'original'>('plain');
+  if (!item) return null;
 
   return (
-    <div style={{
-      ...ARTBOARD,
-      background: PLANE.reading,
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      position: 'relative',
-    }}>
-      <StatusBar />
-      <TopNav bg="transparent" />
+    <Sheet open={open} onClose={onClose} label={item.label} contain maxHeight="82%">
+      <Stack gap={4} style={{ padding: `${S[4]} ${S[5]} ${S[6]}` }}>
+        <Stack gap={2}>
+          <Row gap={2}>
+            <Amount tone="faint">{refId}</Amount>
+            {statusBadge(item.status)}
+          </Row>
+          <Text role="answer">{item.label}</Text>
+          {item.proves && <Text tone="quiet">{item.proves}</Text>}
+        </Stack>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px 100px' }}>
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{
-            fontFamily: SERIF,
-            fontSize: TYPE.editorial.size,
-            fontWeight: 400,
-            color: C.ink,
-            lineHeight: 1.08,
-            letterSpacing: '-0.4px',
-            margin: '0 0 8px',
+        {/* View toggle — plain-words vs the original document */}
+        <Row gap={1} role="tablist" style={{ background: T.sunken, borderRadius: LAYOUT.radius.control, padding: S[1] }}>
+          {(['plain', 'original'] as const).map((v) => (
+            <button
+              key={v}
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => setView(v)}
+              className="lokai-pressable"
+              style={{
+                flex: 1, minHeight: 38, border: 'none', cursor: 'pointer',
+                borderRadius: LAYOUT.radius.sm,
+                background: view === v ? T.raised : 'transparent',
+                font: 'inherit',
+              }}
+            >
+              <Text role="captionStrong" tone={view === v ? 'default' : 'faint'} measured={false}>
+                {v === 'plain' ? 'In plain words' : 'Original'}
+              </Text>
+            </button>
+          ))}
+        </Row>
+
+        {view === 'plain' ? (
+          <Stack gap={3}>
+            {item.extractedFacts?.length ? (
+              <HairlineList>
+                {item.extractedFacts.map((f) => (
+                  <HairlineRow key={f.label} trailing={<Amount>{f.value}</Amount>}>
+                    <Text role="body" measured={false}>{f.label}</Text>
+                  </HairlineRow>
+                ))}
+              </HairlineList>
+            ) : (
+              <Text tone="quiet">
+                This document has not been added yet, so there is nothing to read from it.
+              </Text>
+            )}
+            <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+              Read from a prepared example — nothing is uploaded or sent.
+            </Text>
+          </Stack>
+        ) : (
+          <Row gap={4} align="flex-start">
+            <ExhibitPaper kind={item.kind} status={item.status} width={96} />
+            <Text tone="quiet" style={{ flex: 1 }}>
+              The full document opens in the notice reader, where each figure links
+              back to the exact line it was read from.
+            </Text>
+          </Row>
+        )}
+      </Stack>
+    </Sheet>
+  );
+}
+
+function DocumentsArtboard() {
+  useSystemStyles();
+  const navigate = useNavigate();
+  const { conversations, activeId } = useConversations();
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const active = conversations.find((c) => c.id === activeId) ?? conversations[0];
+  const referenced = useMemo(() => withReferences(getEvidenceLocker()), []);
+  const sorted = useMemo(
+    () => [...referenced].sort((a, b) => STATUS_ORDER[a.item.status] - STATUS_ORDER[b.item.status]),
+    [referenced],
+  );
+
+  const gathered = referenced.filter((r) => r.item.status === 'uploaded').length;
+  const flagged = referenced.filter((r) => r.item.status === 'conflicting').length;
+  const optional = referenced.filter((r) => r.item.status === 'missing').length;
+
+  const open = referenced.find((r) => r.item.id === openId) ?? null;
+
+  return (
+    <AppScreen
+      context={<Text role="meta" tone="faint">Documents</Text>}
+      scrollClearance={S[6]}
+    >
+      {/* The matter is the group; its heading is the only place the name
+          appears (the context strip above says just "Documents", so the name
+          is not stated twice). One quiet summary line under it — not a card,
+          not a meter. */}
+      <Stack gap={4}>
+        {/* The matter as a folder — documents are grouped case-wise, so the
+            header is the case and the exhibits below belong to it. One matter
+            today shows as one folder; the structure holds for more. */}
+        <Row gap={3} align="center">
+          <span style={{
+            width: 44, height: 44, borderRadius: LAYOUT.radius.panel,
+            background: T.anchorTint, color: T.anchor,
+            display: 'grid', placeItems: 'center', flexShrink: 0,
           }}>
-            Drafts and files
-          </h1>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, lineHeight: 1.55, margin: 0 }}>
-            Everything for {scenario.matterTitle} stays on one matter — facts, sources, and drafts.
-          </p>
-        </div>
+            <IconFolder size={ICON.row} />
+          </span>
+          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+            <Text role="bodyStrong" measured={false}>{active?.title ?? 'Consumer refund'}</Text>
+            <Text role="caption" tone="quiet" measured={false}>
+              <Amount>{gathered}</Amount> gathered
+              {flagged ? <> · <Amount tone="flag">{flagged}</Amount> to check</> : null}
+              {optional ? <> · <Amount tone="faint">{optional}</Amount> optional</> : null}
+            </Text>
+          </Stack>
+        </Row>
+        <Rule />
+        <HairlineList>
+          {sorted.map(({ item, ref }) => (
+            <ExhibitRow key={item.id} item={item} refId={ref} onOpen={() => setOpenId(item.id)} />
+          ))}
+        </HairlineList>
+      </Stack>
 
-        <button
-          onClick={() => navigate('/mobile/case/consumer?stage=intake')}
-          style={{
-            width: '100%',
-            minHeight: 54,
-            borderRadius: LAYOUT.radius.card,
-            border: `1px dashed ${C.borderStrong}`,
-            background: 'rgba(255,255,255,0.62)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            fontFamily: SANS,
-            fontSize: TYPE.small.size,
-            fontWeight: 700,
-            color: C.navy,
-            cursor: 'pointer',
-            marginBottom: 16,
-          }}
-        >
-          <Upload size={16} />
-          Use sample notice
-        </button>
+      {/* Add a document — a prepared pick, never a real file input (the demo
+          forbids type=file). Quiet, not a primary CTA: browsing is the job here. */}
+      <Row gap={2} align="center">
+        <IconButton label="Add a document" onClick={() => navigate('/mobile/notice')}>
+          <IconPlus size={ICON.row} />
+        </IconButton>
+        <Button variant="quiet" size="sm" onClick={() => navigate('/mobile/notice')}>
+          Add a document to this matter
+        </Button>
+      </Row>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {fileItems.map(item => <FileRow key={item.id} item={item} />)}
-        </div>
-
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.55, textAlign: 'center', margin: '18px 18px 0' }}>
-          Prepared examples only · nothing is uploaded or sent. Review every draft before use.
-        </p>
-      </div>
-
-      <BottomNav active="docs" />
-      <HomeIndicator />
-    </div>
+      <ExhibitSheet
+        open={openId !== null}
+        item={open?.item ?? null}
+        refId={open?.ref ?? ''}
+        onClose={() => setOpenId(null)}
+      />
+    </AppScreen>
   );
 }
 
 export default function MobileFiles() {
   return (
     <MobileRouteCanvas>
-      <FilesArtboard />
+      <DocumentsArtboard />
     </MobileRouteCanvas>
   );
 }

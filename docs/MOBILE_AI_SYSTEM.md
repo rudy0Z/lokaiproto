@@ -255,6 +255,51 @@ inversion of the stop state. That is a systems argument. A toggle is not.
 
 ---
 
+## 2.3 The system layer — built 2026-08-26, why it was the blocker
+
+Everything above was written as *rules*. Rules that live only in a document get
+re-derived by hand at every call site, and they drift wherever the build guard is not
+watching. That is not a hypothesis — it is what measurably happened:
+
+| Symptom | Measured |
+|---|---|
+| Screens hand-composing every element | 172 inline style objects in `LokAIWorkflow.tsx` alone |
+| Raw colour, unguarded | 215 hex literals; 823 raw-style lines counting `rgba()`, `fontFamily`, `lineHeight` |
+| Per-script typography never applied | `[lang="hi"]` / `[lang="ta"]` rules in `index.css` have **never matched an element** — nothing in the app sets a `lang` attribute. Only `Turn.tsx` did it, privately, in JS |
+| Stop state not full-bleed | `FailureStateCard` renders inside the scroll container; status bar, top nav, header and cream ground all stay lit |
+| Contradictory tokens | `TYPE` is rem; `Btn` and `InputField` in `shared.tsx` hardcode 13/14/15px, silently opting every control out of the Dynamic Type work |
+
+Every one of these has the same root cause: **the codebase had layer 1 (tokens) and layer
+4 (domain components) and nothing in between.** There was no `<Text>`, so script handling
+had nowhere to live and only one component remembered it. There was no `<Screen>`, so the
+stop state could not own its chrome. There was no `<Card>` with a stated test, so the
+folded corner on `VerificationScratchpad` was as legitimate as anything else.
+
+The missing layers now exist:
+
+```
+1 TOKENS      ui/theme.ts + styles/index.css role layer + shared.tsx
+2 PRIMITIVES  ui/primitives.tsx   Text Label Amount Button IconButton Badge Field
+3 LAYOUT KIT  ui/layout.tsx       Screen Stack Row Rule Card HairlineList HairlineRow
+4 DOMAIN      Turn VerificationGate StopState NoticeInterpret + screens
+```
+
+Three properties that were previously per-call-site now come free and cannot be
+forgotten: **theme safety** (roles, not literals — §2.2's blocker is gone),
+**script safety** (`<Text>` sets `lang` and resolves family + leading from the active
+language), and **tone safety** (`<Screen tone="stop">` inverts the entire artboard).
+
+Enforcement widened to match. `verify-demo.mjs` guarded radius, `fontSize` and
+`boxShadow` — and nothing else — so drift went exactly where it wasn't looking.
+`scripts/ui-debt.mjs` is a per-file **ratchet** on raw colour, family and leading:
+today's counts are the budget and a budget may only fall. Migrating a screen drops its
+budget; adding a raw hex fails the build. When every file reads 0, delete the script.
+
+Build sheet: **`docs/LLM_DESIGN_SYSTEM.md`** — the copy-pasteable one-pager. Read it
+before writing any screen.
+
+---
+
 ## 3. Screen work list
 
 Ordered by leverage. Each item is independently shippable and screenshot-checkpointed
@@ -430,6 +475,78 @@ separate route — it is a **chat capability**:
 
 This is the highest-thesis-value screen in the whole app. It slots at **day 5**, not as
 a stretch — it's the feature the founding story is *about*.
+
+#### 3.8a The interaction model — one object, two depths (resolved 2026-08-26)
+
+The open question was whether notice interpretation is *two* features — "upload any
+document as chat context" and "the notice interpreter with its side-by-side view" — and
+if so, how a user sees the interpretation while they are mid-chat.
+
+**It is one feature.** Two features would force the user to classify their own document
+before the app has read it, which is precisely the thing they came here unable to do.
+Resolution:
+
+**1 · Every document enters through the composer.** There is no separate upload route
+and no mode picker. Attaching produces a `DocumentTurn` in the stream — a paper-toned
+`Card` (a document is a discrete object, so it earns the container under L1) carrying:
+document name · page count · detected language, then the plain-language summary, then
+the surfaced fields as a `HairlineList` with a `CitationStamp` per field.
+
+**2 · Depth is decided by the document, not by the user.** A notice or circular gets
+fields extracted (amount claimed, reply-by, section invoked). A receipt or a photo is
+filed as evidence and gets a one-line acknowledgement instead. The user never picks;
+they find out what they had. *This is the founding thesis rendered as an interaction* —
+the person who cannot read the notice also cannot categorise it.
+
+**3 · Side-by-side becomes link, not layout.** Desktop shows original and interpretation
+in two columns; 390px cannot, and stacking them is not a translation of the idea, it is
+a loss of it. Tapping the document turn opens the existing `Sheet` at full height with
+two views — `In plain words` / `Original` — and **tapping a surfaced field scrolls the
+original to the exact clause it came from and highlights it.** The clause-highlighting
+logic already exists in `Notice.tsx`. What desktop does with adjacency, mobile does with
+correspondence — a stronger demonstration of grounding than the desktop version, and a
+genuine case-study beat rather than a responsive fallback.
+
+**4 · "See the summary while I'm chatting" is a persistent strip, not a screen.** Once a
+document is attached to the matter, a single quiet line sits above the composer:
+`notice_hindi.pdf · in plain words ↗`. One line, no card, always tappable, reopens the
+sheet at whatever depth. That is the whole answer to the question, and it costs one
+component.
+
+**Copy note (product owner, 2026-08-26):** the UX copy drops government register. The
+user's word is "document" — never "instrument", "communication", or "matter
+correspondence". The one place formal language is allowed to survive is inside the
+*original*, quoted, where its strangeness is the point.
+
+**Constraint:** `verify-demo.mjs` forbids `type="file"`, so the attach affordance stays a
+prepared pick from a scripted set. Keep it — it is the deterministic-demo rule, and it
+also means the demo can never fail on a bad scan.
+
+### 3.9 Documents — exhibits in a matter, not files in folders
+
+Desktop `Documents.tsx` is a generic file manager: rows, coloured type-chips, a folder
+metaphor borrowed from an operating system. It is the most replaceable screen in the app
+and it currently reads that way.
+
+**The reframe:** in a legal matter a document is not a file, it is an **exhibit** — it
+exists because it proves something, and its value is its relationship to a claim. So the
+IA is matter-first, not folder-first, and each document carries:
+
+- a **mono reference** (`EX-03`) — how it will be cited in the notice or complaint
+- **what it proves**, in one line ("that the seller refused a replacement")
+- **where it is used** — which claim(s) in the current draft depend on it
+- **provenance** — uploaded by the user, or extracted by LokAI from another document
+
+That last pair is the accountability surface again: an exhibit whose claim was later
+retracted should say so. No file manager ships that, which is the same argument as the
+rest of §2's net-new set.
+
+**Visual direction is open — references pending from the product owner.** Two
+constraints regardless of what lands: a document renders as a **paper object** (the
+`PaperTexture()` craft in `Notice.tsx` is the direction, not a coloured file-type chip),
+and there is exactly one icon library — `lucide-react`, already the app's only icon
+source. The two `@mui` packages in `package.json` have **zero imports** and should be
+dropped in the same pass.
 
 ---
 

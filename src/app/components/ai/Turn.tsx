@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, Copy, Volume2, Info, RotateCcw, ChevronDown } from 'lucide-react';
+import { ArrowCounterClockwise, BookOpen, CaretDown, Check, Copy, Info, SpeakerHigh } from '@phosphor-icons/react';
 import { C, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
 import { Sheet } from '../Sheet';
 import { LegalText } from '../demo/LegalTerms';
@@ -182,7 +182,7 @@ export function TurnStatus({
                 placeItems: 'center',
               }}
             >
-              <RotateCcw size={14} />
+              <ArrowCounterClockwise size={14} />
             </button>
           )}
         </div>
@@ -312,7 +312,7 @@ function VerificationTrace({ turn }: { turn: ResponseTurn }) {
         }}
       >
         How we checked
-        <ChevronDown
+        <CaretDown
           size={14}
           aria-hidden
           style={{
@@ -398,7 +398,7 @@ export function TurnActions({
     onSpeak && (
       <button key="speak" type="button" className="icon-btn lokai-pressable" aria-label="Read aloud (prepared)" onClick={onSpeak}
         style={actionBtn}>
-        <Volume2 size={14} />
+        <SpeakerHigh size={14} />
       </button>
     ),
     onWhy && (
@@ -697,7 +697,6 @@ export function Turn({
       style={{
         background: meta.bg,
         border: `1px solid ${C.border}`,
-        borderLeft: `3px solid ${meta.border}`,
         borderRadius: LAYOUT.radius.turn,
         boxShadow: SHADOW.sm,
         overflow: 'hidden',
@@ -771,6 +770,60 @@ export function Turn({
         />
       </div>
     </article>
+  );
+}
+
+/* ── Composer glyphs — bespoke, not the icon set ───────────────────────────────
+   The three highest-touch controls in the app get hand-drawn glyphs rather than
+   a stock icon: a chat send should feel like this product's send. Stroke-based,
+   currentColor, so they invert cleanly on the navy send button and the light
+   mic. Press feedback comes from `.lokai-pressable`; the fill/lift is the state. */
+function SendGlyph({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 19.5V5.5" />
+      <path d="M6 11l6-6 6 6" />
+    </svg>
+  );
+}
+
+function MicGlyph({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="9" y="2.5" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 17.5v4" />
+    </svg>
+  );
+}
+
+function StopGlyph({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <rect x="6" y="6" width="12" height="12" rx="2.5" />
+    </svg>
+  );
+}
+
+/* Working indicator — three dots breathing in sequence. Reuses the existing
+   pulse keyframe so it matches the progress dot elsewhere. */
+function BusyDots({ light = false }: { light?: boolean }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center' }} aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 4, height: 4, borderRadius: LAYOUT.radius.full,
+            background: light ? '#fff' : C.navy,
+            animation: 'lokaiPulseRing 1.2s ease-in-out infinite',
+            animationDelay: `${i * 0.16}s`,
+          }}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -865,12 +918,14 @@ export function Composer({
         style={{
           display: 'flex',
           alignItems: compact ? 'center' : 'flex-end',
-          gap: 10,
+          gap: 6,
           background: C.surface,
+          /* Border, not border + shadow: the input reads as part of the dock it
+             sits in rather than a pill floating above the page (the "why is the
+             chat bar a separate container" note). */
           border: `1px solid ${C.border}`,
-          borderRadius: compact ? LAYOUT.radius.card : LAYOUT.radius.plane,
-          padding: compact ? '8px 10px' : '12px 14px',
-          boxShadow: SHADOW.sm,
+          borderRadius: compact ? LAYOUT.radius.pill : LAYOUT.radius.plane,
+          padding: compact ? '5px 6px' : '12px 14px',
         }}
       >
         {showVoice && (
@@ -888,28 +943,27 @@ export function Composer({
             }}
             className="lokai-pressable"
             style={{
-              width: compact ? 36 : 40,
-              height: compact ? 36 : 40,
+              width: compact ? 38 : 42,
+              height: compact ? 38 : 42,
               borderRadius: LAYOUT.radius.full,
-              border: `1px solid ${C.border}`,
+              border: 'none',
               background:
                 voice.phase === 'listening' || voice.phase === 'transcribing'
                   ? C.navy
-                  : C.surface,
+                  : 'transparent',
               color:
                 voice.phase === 'listening' || voice.phase === 'transcribing'
                   ? '#fff'
-                  : C.navy,
+                  : C.muted,
               cursor: disabled ? 'default' : 'pointer',
               flexShrink: 0,
               display: 'grid',
               placeItems: 'center',
-              fontSize: TYPE.body.size,
-              fontWeight: 700,
-              fontFamily: SANS,
             }}
           >
-            {voice.phase === 'listening' || voice.phase === 'transcribing' ? '···' : '🎤'}
+            {voice.phase === 'listening' || voice.phase === 'transcribing'
+              ? <StopGlyph />
+              : <MicGlyph size={compact ? 18 : 20} />}
           </button>
         )}
         <textarea
@@ -934,12 +988,15 @@ export function Composer({
             border: 'none',
             outline: 'none',
             resize: 'none',
-            minHeight: compact ? 36 : 44,
+            /* Single-row height that matches the round buttons so the placeholder
+               sits on their centre line; grows to maxH as the user types. */
+            minHeight: compact ? 24 : 28,
             maxHeight: maxH,
+            padding: 0,
             overflowY: 'auto',
             fontFamily: SANS,
             fontSize: TYPE.body.size,
-            lineHeight: 1.5,
+            lineHeight: 1.45,
             background: 'transparent',
             color: C.ink,
           }}
@@ -954,22 +1011,20 @@ export function Composer({
           }}
           className={canSend ? 'lokai-pressable' : undefined}
           style={{
-            width: 40,
-            height: 40,
+            width: compact ? 38 : 42,
+            height: compact ? 38 : 42,
             borderRadius: LAYOUT.radius.full,
             border: 'none',
-            background: canSend ? C.navy : C.border,
-            color: '#fff',
+            background: canSend ? C.navy : C.surface2,
+            color: canSend ? '#fff' : C.muted,
             cursor: canSend ? 'pointer' : 'default',
-            fontFamily: SANS,
-            fontSize: TYPE.h4.size,
-            fontWeight: 700,
+            display: 'grid',
+            placeItems: 'center',
             flexShrink: 0,
-            transition: `background ${MOTION.press} ${MOTION.ease}, opacity ${MOTION.press} ${MOTION.ease}`,
-            opacity: voice.isBusy ? 0.85 : 1,
+            transition: `background ${MOTION.press} ${MOTION.ease}, transform ${MOTION.press} ${MOTION.ease}`,
           }}
         >
-          {voice.isBusy ? '···' : '→'}
+          {voice.isBusy ? <BusyDots light /> : <SendGlyph size={compact ? 17 : 19} />}
         </button>
       </div>
       {voiceHint && (

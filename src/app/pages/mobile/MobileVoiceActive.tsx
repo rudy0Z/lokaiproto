@@ -1,29 +1,40 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Mic, Type } from 'lucide-react';
-import { C, LAYOUT, SANS, SERIF, SHADOW, TYPE, VoiceOrb } from '../../components/shared';
-import { StatusBar, HomeIndicator, MobileRouteCanvas } from './MobileHome';
+import { ArrowLeft, Microphone, TextT } from '@phosphor-icons/react';
+import { VoiceOrb } from '../../components/shared';
+import {
+  Stack, Row, Text, Label, Button, IconButton,
+  T, S, LAYOUT, TYPE, typeStyle, ICON, ICON_WEIGHT, SANS, useSystemStyles,
+} from '../../ui';
+import { MobileRouteCanvas } from './MobileHome';
+import { AppScreen } from '../../components/mobile/AppScreen';
 import { useDemo } from '../../context/DemoContext';
 import { Turn, TurnStatus } from '../../components/ai/Turn';
 import type { ResponseTurn } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
-import { ARTBOARD } from '../../embed';
 
-/* voicePulse / voiceBarListen removed.
-   This screen hand-rolled its own listening visual — a pulsing circle with
-   a static mic icon — and defined voiceBarListen for level bars that were
-   then never referenced anywhere, so the bars simply did not exist. The
-   shared <VoiceOrb> already implements all four states (idle, listening
-   with animated bars, processing, error) and now crossfades between them,
-   so this screen uses that instead of maintaining a second, less complete
-   copy of the same thing. */
+/**
+ * Voice capture — speak instead of type, and see it caught before it commits.
+ *
+ * Rebuilt on the system 2026-08-27. The two trust moments the case study leans
+ * on stay exactly as they were, now on the primitives:
+ *  - `confirm`: the transcript is EDITABLE before it becomes the matter input.
+ *    The user owns their words before the model does anything with them.
+ *  - `unclear`: LokAI refuses to guess, and always offers the text escape.
+ *
+ * The listening visual is the shared `<VoiceOrb>` (animated level bars), not the
+ * old hand-rolled pulsing circle. Honesty about the prototype (no mic permission,
+ * scripted sample) is a quiet line under the action, never the hero.
+ */
 
 export function VoiceActiveArtboard() {
+  useSystemStyles();
   const navigate = useNavigate();
   const { runPreparedInput, isProgressing, progressLabel, progressIndex, skipProgress } = useDemo();
   const voice = useVoiceCapture({ initialPhase: 'intent' });
   const [answer, setAnswer] = useState<ResponseTurn | null>(null);
+  const phase = voice.phase;
 
   const confirmAndAnswer = async () => {
     voice.setPhase('answering');
@@ -32,216 +43,114 @@ export function VoiceActiveArtboard() {
     voice.setPhase('done');
   };
 
-  const phase = voice.phase;
+  // Each phase names its own pinned primary action (Screen's action slot).
+  let action: React.ReactNode = null;
+  if (phase === 'intent') {
+    action = (
+      <Button icon={<Microphone size={ICON.ui} weight={ICON_WEIGHT} />} onClick={voice.startSample}>
+        Play sample voice note
+      </Button>
+    );
+  } else if (phase === 'unclear') {
+    action = (
+      <Stack gap={2}>
+        <Button onClick={voice.startSample}>Retry sample voice</Button>
+        <Button variant="quiet" icon={<TextT size={ICON.ui} weight={ICON_WEIGHT} />} onClick={() => navigate('/mobile/case/consumer?stage=intake')}>
+          Type instead
+        </Button>
+      </Stack>
+    );
+  } else if (phase === 'confirm') {
+    action = <Button onClick={() => void confirmAndAnswer()}>Confirm and continue</Button>;
+  } else if (phase === 'done') {
+    action = <Button onClick={() => navigate('/mobile/case/consumer?stage=plan')}>Open case journey</Button>;
+  }
 
   return (
-    <div
-      style={{
-        ...ARTBOARD,
-        position: 'relative',
-        overflow: 'hidden',
-        background: C.bg,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+    <AppScreen
+      onBack={() => navigate('/mobile/home')}
+      context={<Text role="meta" tone="faint">Voice input · prepared listening flow</Text>}
+      action={action}
+      scrollClearance={S[6]}
     >
-      <StatusBar />
-      <div style={{
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        borderBottom: `1px solid ${C.border}`,
-        background: C.surface,
-      }}>
-        <button
-          type="button"
-          aria-label="Back"
-          onClick={() => navigate('/mobile/home')}
-          style={{
-            width: 40, height: 40, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`,
-            background: C.surface, display: 'grid', placeItems: 'center', cursor: 'pointer',
-          }}
-        >
-          <ArrowLeft size={17} color={C.inkSoft} />
-        </button>
-        <div>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Sample voice
-          </p>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0 }}>
-            Prepared listening flow
-          </p>
-        </div>
-      </div>
+      {phase === 'intent' && (
+        <Stack gap={4}>
+          <Stack gap={2}>
+            <Text role="answer">Say what happened.</Text>
+            <Text tone="quiet">
+              Speaking is often easier than typing a legal problem — especially in
+              Hindi, Marathi, or Tamil. You'll see the transcript and can correct
+              it before anything is used.
+            </Text>
+          </Stack>
+          <Button variant="quiet" size="sm" onClick={voice.simulateUnclear} style={{ alignSelf: 'flex-start' }}>
+            Simulate unclear audio
+          </Button>
+          <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+            Prototype: plays a scripted sample. No microphone permission is
+            requested and no audio leaves the device.
+          </Text>
+        </Stack>
+      )}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}>
-        {phase === 'intent' && (
-          <div>
-            {/* Lead with what the interaction is for, not with a caveat about
-                the prototype. The constraint is real and PRODUCT.md requires
-                disclosing it, so it stays — demoted to a quiet line under the
-                actions rather than occupying the hero. */}
-            <h1 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, color: C.ink, margin: '0 0 10px', lineHeight: 1.15 }}>
-              Say what happened.
-            </h1>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 20px' }}>
-              Speaking is often easier than typing a legal problem — especially
-              in Hindi, Marathi, or Tamil. You will see the transcript and can
-              correct it before anything is used.
-            </p>
-            <button
-              type="button"
-              onClick={voice.startSample}
-              style={{
-                width: '100%', minHeight: 52, borderRadius: LAYOUT.radius.panel, border: 'none',
-                background: C.navy, color: '#fff', fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 800,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                marginBottom: 10,
-              }}
-            >
-              <Mic size={18} /> Play sample voice note
-            </button>
-            <button
-              type="button"
-              onClick={voice.simulateUnclear}
-              style={{
-                width: '100%', minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`,
-                background: C.surface, color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Simulate unclear audio
-            </button>
-            <p style={{
-              fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
-              lineHeight: 1.5, margin: '14px 0 0', textTransform: 'none', letterSpacing: 'normal',
-            }}>
-              Prototype: plays a scripted sample. No microphone permission is
-              requested and no audio leaves the device.
-            </p>
-          </div>
-        )}
+      {(phase === 'listening' || phase === 'transcribing') && (
+        <Stack gap={5} align="center" style={{ paddingTop: S[7] }}>
+          <VoiceOrb size={96} state={phase === 'listening' ? 'listening' : 'processing'} />
+          <Text role="bodyStrong" style={{ textAlign: 'center' }}>
+            {phase === 'listening' ? 'Playing prepared voice example…' : 'Turning the example into text…'}
+          </Text>
+          <Button variant="quiet" size="sm" onClick={voice.skipToConfirm}>Skip animation</Button>
+        </Stack>
+      )}
 
-        {(phase === 'listening' || phase === 'transcribing') && (
-          <div style={{ textAlign: 'center', paddingTop: 48 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-              <VoiceOrb size={96} state={phase === 'listening' ? 'listening' : 'processing'} />
-            </div>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink }}>
-              {phase === 'listening' ? 'Playing prepared voice example…' : 'Turning the example into text…'}
-            </p>
-            <button
-              type="button"
-              onClick={voice.skipToConfirm}
-              style={{
-                marginTop: 16, minHeight: 40, padding: '0 16px', borderRadius: LAYOUT.radius.control,
-                border: `1px solid ${C.border}`, background: C.surface, fontFamily: SANS,
-                fontSize: TYPE.caption.size, fontWeight: 600, color: C.navy, cursor: 'pointer',
-              }}
-            >
-              Skip animation
-            </button>
-          </div>
-        )}
+      {phase === 'unclear' && (
+        <Stack gap={2}>
+          <Text role="lead">That sample was unclear</Text>
+          <Text tone="quiet">LokAI will not guess. Retry the sample or type the issue instead.</Text>
+        </Stack>
+      )}
 
-        {phase === 'unclear' && (
-          <div>
-            <h2 style={{ fontFamily: SANS, fontSize: TYPE.lead.size, color: C.ink, margin: '0 0 8px' }}>
-              That sample was unclear
-            </h2>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 16px' }}>
-              LokAI will not guess. Retry the sample or type the issue instead.
-            </p>
-            <button type="button" onClick={voice.startSample} style={primaryBtn}>Retry sample voice</button>
-            <button
-              type="button"
-              onClick={() => navigate('/mobile/case/consumer?stage=intake')}
-              style={{ ...secondaryBtn, marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            >
-              <Type size={16} /> Type instead
-            </button>
-          </div>
-        )}
-
-        {phase === 'confirm' && (
-          <div>
-            <h2 style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.ink, margin: '0 0 8px' }}>
-              Confirm the transcript
-            </h2>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: '0 0 10px' }}>
+      {phase === 'confirm' && (
+        <Stack gap={3}>
+          <Stack gap={1}>
+            <Text role="title">Confirm the transcript</Text>
+            <Text role="caption" tone="faint" measured={false}>
               Edit if needed, then confirm. This becomes the matter input.
-            </p>
-            <textarea
-              value={voice.transcript}
-              onChange={(e) => voice.setTranscript(e.target.value)}
-              rows={4}
-              style={{
-                width: '100%', boxSizing: 'border-box', borderRadius: LAYOUT.radius.panel,
-                border: `1px solid ${C.border}`, padding: 12, fontFamily: SANS, fontSize: TYPE.body.size,
-                lineHeight: 1.55, color: C.ink, background: C.surface, resize: 'vertical',
-                boxShadow: SHADOW.xs,
-              }}
-            />
-            <button type="button" onClick={() => void confirmAndAnswer()} style={{ ...primaryBtn, marginTop: 12 }}>
-              Confirm and continue
-            </button>
-          </div>
-        )}
+            </Text>
+          </Stack>
+          <textarea
+            value={voice.transcript}
+            onChange={(e) => voice.setTranscript(e.target.value)}
+            rows={4}
+            className="lokai-input-field"
+            style={{
+              ...typeStyle('body'),
+              width: '100%', boxSizing: 'border-box',
+              borderRadius: LAYOUT.radius.control,
+              border: `1.5px solid ${T.hairline}`,
+              padding: S[3], color: T.ink, background: T.raised,
+              resize: 'vertical', fontFamily: SANS, outline: 'none',
+            }}
+          />
+        </Stack>
+      )}
 
-        {(phase === 'answering' || phase === 'done') && (
-          <div>
-            {isProgressing && progressLabel && (
-              <TurnStatus
-                label={progressLabel}
-                stages={DEMO_PROGRESS_STAGES}
-                activeIndex={Math.max(0, progressIndex)}
-                onSkip={skipProgress}
-              />
-            )}
-            {answer && <Turn turn={answer} />}
-            {phase === 'done' && (
-              <button
-                type="button"
-                onClick={() => navigate('/mobile/case/consumer?stage=plan')}
-                style={{ ...primaryBtn, marginTop: 8 }}
-              >
-                Open case journey
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-      <HomeIndicator />
-    </div>
+      {(phase === 'answering' || phase === 'done') && (
+        <Stack gap={3}>
+          {isProgressing && progressLabel && (
+            <TurnStatus
+              label={progressLabel}
+              stages={DEMO_PROGRESS_STAGES}
+              activeIndex={Math.max(0, progressIndex)}
+              onSkip={skipProgress}
+            />
+          )}
+          {answer && <Turn turn={answer} />}
+        </Stack>
+      )}
+    </AppScreen>
   );
 }
-
-const primaryBtn: React.CSSProperties = {
-  width: '100%',
-  minHeight: 48,
-  borderRadius: LAYOUT.radius.panel,
-  border: 'none',
-  background: C.navy,
-  color: '#fff',
-  fontFamily: SANS,
-  fontSize: TYPE.body.size,
-  fontWeight: 800,
-  cursor: 'pointer',
-};
-
-const secondaryBtn: React.CSSProperties = {
-  width: '100%',
-  minHeight: 44,
-  borderRadius: LAYOUT.radius.panel,
-  border: `1px solid ${C.border}`,
-  background: C.surface,
-  color: C.inkSoft,
-  fontFamily: SANS,
-  fontSize: TYPE.small.size,
-  fontWeight: 600,
-  cursor: 'pointer',
-};
 
 export default function MobileVoiceActive() {
   return (
