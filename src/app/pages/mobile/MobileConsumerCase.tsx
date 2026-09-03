@@ -3,11 +3,11 @@ import { ArrowLeft, ArrowRight, BellRinging, Camera, Compass, FileText, Micropho
 import { IconChevronRight } from '../../ui/icons';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, PLANE, S, SANS, SERIF, SHADOW, TYPE, VoiceOrb, typeStyle } from '../../components/shared';
-import { Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rule, Stack, StageTransition, Text, Textarea } from '../../ui';
+import { Badge, Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rule, Stack, StageTransition, Text, Textarea } from '../../ui';
 import { VoiceFactChips } from '../../components/mobile/VoiceFactChips';
 import { extractEntities } from '../../hooks/useVoiceCapture';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
-import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
+import { HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
 import {
   AuditTrailList,
@@ -294,7 +294,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
                   minHeight: 64,
                   borderRadius: LAYOUT.radius.panel,
                   border: `1.5px solid ${isSelected ? C.navy : C.border}`,
-                  background: isSelected ? '#EEF2F8' : '#F8F5EE',
+                  background: isSelected ? 'var(--role-anchor-tint)' : 'var(--role-ground)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -435,23 +435,19 @@ function ClarifyView({ onNext }: { onNext: () => void }) {
         <Text role="answer">Have you already complained to the seller in writing?</Text>
       </Stack>
       <Stack gap={2}>
-        {['Yes, I have proof', 'No, only verbal complaint', 'Not sure'].map((label, index) => (
-          <button
-            key={label}
-            onClick={onNext}
-            className="lokai-pressable"
-            style={{
-              width: '100%', minHeight: 52,
-              borderRadius: LAYOUT.radius.control,
-              border: `1.5px solid ${index === 1 ? C.navy : C.border}`,
-              background: index === 1 ? '#EEF2F8' : '#FFFFFF',
-              color: C.ink, fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
-              textAlign: 'left', padding: `0 ${S[4]}`, cursor: 'pointer',
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        {/* Answer options as hairline rows — no fake pre-selection; the tap
+           IS the answer. */}
+        <HairlineList>
+          {['Yes, I have proof', 'No, only verbal complaint', 'Not sure'].map((label) => (
+            <HairlineRow
+              key={label}
+              onClick={onNext}
+              trailing={<IconChevronRight size={ICON.inline} color="var(--role-ink-faint)" />}
+            >
+              <Text role="bodyStrong" measured={false}>{label}</Text>
+            </HairlineRow>
+          ))}
+        </HairlineList>
       </Stack>
     </Stack>
   );
@@ -619,7 +615,7 @@ export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChan
   return (
     <div style={{
       background: 'var(--role-raised)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
-      padding: 14, boxShadow: SHADOW.xs, display: 'flex', flexDirection: 'column', gap: 10,
+      padding: 14, display: 'flex', flexDirection: 'column', gap: 10,
     }}>
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         How much should LokAI do?
@@ -636,7 +632,7 @@ export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChan
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                 padding: '10px 6px', borderRadius: LAYOUT.radius.panel,
                 border: `1.5px solid ${isActive ? C.navy : C.border}`,
-                background: isActive ? '#EEF2F8' : '#FFFFFF',
+                background: isActive ? 'var(--role-anchor-tint)' : 'var(--role-raised)',
                 cursor: 'pointer',
               }}
             >
@@ -666,7 +662,7 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
   return (
     <div style={{
       background: 'var(--role-raised)', border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.card,
-      padding: 18, boxShadow: SHADOW.sm, display: 'flex', flexDirection: 'column', gap: 12,
+      padding: 18, display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         Before LokAI prepares this
@@ -705,7 +701,7 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
         <button
           onClick={onApprove}
           style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: 'var(--role-on-anchor)',
             fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 800, cursor: 'pointer',
           }}
         >
@@ -744,7 +740,7 @@ export function TrackingBanner({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%',
-        background: '#FFF8F0', border: '1px solid rgba(233,133,43,0.25)',
+        background: 'var(--role-flag-fill)', border: '1px solid var(--role-flag)',
         borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.none}`, padding: '10px 14px', cursor: 'pointer', textAlign: 'left',
       }}
     >
@@ -778,16 +774,10 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
   return (
     <div style={{
       background: 'var(--role-raised)', border: `1px solid ${C.border}`,
-      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn}`, padding: 18, boxShadow: SHADOW.sm,
+      borderRadius: LAYOUT.radius.turn, padding: 18,
       display: 'flex', flexDirection: 'column', gap: 12,
     }}>
-      <span style={{
-        alignSelf: 'flex-start', fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700,
-        textTransform: 'uppercase', letterSpacing: '0.06em', color: C.navy,
-        background: 'var(--role-anchor-tint)', borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
-      }}>
-        {matter?.category ?? 'Matter'}
-      </span>
+      <Badge tone="neutral">{matter?.category ?? 'Matter'}</Badge>
       <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.22 }}>
         {title}
       </h2>
@@ -808,26 +798,16 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
           </ul>
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
-        <button
-          onClick={() => navigate('/mobile/home')}
-          style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: 'var(--role-raised)',
-            color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          Back to home
-        </button>
-        <button
-          onClick={() => navigate('/mobile/case/consumer?stage=intake')}
-          style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
-            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 800, cursor: 'pointer',
-          }}
-        >
+      {/* One primary (the built journey) + the home escape quiet beneath —
+         no side-by-side twins (L5). */}
+      <Stack gap={2} style={{ marginTop: 2 }}>
+        <Button onClick={() => navigate('/mobile/case/consumer?stage=intake')}>
           Open the built journey
-        </button>
-      </div>
+        </Button>
+        <Button variant="quiet" onClick={() => navigate('/mobile/home')}>
+          Back to home
+        </Button>
+      </Stack>
     </div>
   );
 }

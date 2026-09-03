@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowCounterClockwise, BookOpen, CaretDown, Check, Copy, Info, SpeakerHigh } from '@phosphor-icons/react';
-import { C, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
+import { C, EDITORIAL, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
 import { Sheet } from '../Sheet';
 import { CitationChip, AttachmentChip, FadeRise, Row, shortStatuteLabel } from '../../ui';
 import { LegalText } from '../demo/LegalTerms';
@@ -126,7 +126,6 @@ export function TurnStatus({
         borderRadius: LAYOUT.radius.card,
         border: `1px solid ${C.border}`,
         background: C.surface,
-        boxShadow: SHADOW.xs,
         marginBottom: 16,
       }}
     >
@@ -443,24 +442,34 @@ function Zone({
   return (
     <FadeRise duration={revealMs} y={6}>
       <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
-        <div style={{
-          fontFamily: SANS,
-          fontSize: TYPE.label.size,
-          fontWeight: 700,
-          color: C.muted,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          marginBottom: 8,
-        }}>
-          {label}
-        </div>
+        {/* Label diet (L4/L7): the serif zone IS the law speaking — a caps
+           eyebrow above it restates the register the type already carries.
+           Supporting zones keep their quiet label. */}
+        {!large && (
+          <div style={{
+            fontFamily: SANS,
+            fontSize: TYPE.label.size,
+            fontWeight: 700,
+            color: C.muted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            marginBottom: 8,
+          }}>
+            {label}
+          </div>
+        )}
         <div
           {...(script.lang ? { lang: script.lang } : {})}
           style={{
-            fontFamily: SANS,
-            fontSize: large ? 20 : 14,
+            /* Zone 1 is THE LAW SPEAKING — the serif register, same decision
+               as the assess screen. Indic scripts have no display serif by
+               design (ui/script.ts): they take the script sans at weight 500,
+               which the lang-conditional weight below provides. */
+            fontFamily: large ? EDITORIAL : SANS,
+            fontSize: large ? 22 : 14,
+            fontWeight: large && script.lang ? 500 : 400,
             color: large ? C.ink : C.inkSoft,
-            lineHeight: large ? 1.45 : 1.65,
+            lineHeight: large ? 1.3 : 1.65,
             ...script.style,
           }}
         >
@@ -695,7 +704,6 @@ export function Turn({
         background: meta.bg,
         border: `1px solid ${C.border}`,
         borderRadius: LAYOUT.radius.turn,
-        boxShadow: SHADOW.sm,
         overflow: 'hidden',
         marginBottom: 20,
       }}

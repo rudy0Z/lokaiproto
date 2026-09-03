@@ -1,7 +1,7 @@
 {
   "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
   "measuredAt": "2026-09-03",
-  "totalDebt": 658,
+  "totalDebt": 573,
   "files": {
     "src/app/App.tsx": {
       "rawFamily": 1
@@ -12,7 +12,6 @@
       "rawLeading": 1
     },
     "src/app/components/ai/Turn.tsx": {
-      "rawColor": 5,
       "rawFamily": 23,
       "rawLeading": 7
     },
@@ -31,8 +30,8 @@
       "rawLeading": 5
     },
     "src/app/components/LokAIWorkflow.tsx": {
-      "rawColor": 35,
-      "rawFamily": 76,
+      "rawColor": 4,
+      "rawFamily": 63,
       "rawLeading": 34
     },
     "src/app/components/SettingsPanel.tsx": {
@@ -76,13 +75,13 @@
       "rawLeading": 3
     },
     "src/app/pages/mobile/MobileConsumerCase.tsx": {
-      "rawColor": 23,
-      "rawFamily": 47,
-      "rawLeading": 22
+      "rawColor": 1,
+      "rawFamily": 42,
+      "rawLeading": 21
     },
     "src/app/pages/mobile/MobileHome.tsx": {
-      "rawColor": 8,
-      "rawFamily": 9
+      "rawColor": 1,
+      "rawFamily": 8
     },
     "src/app/pages/Notice.tsx": {
       "rawColor": 40,

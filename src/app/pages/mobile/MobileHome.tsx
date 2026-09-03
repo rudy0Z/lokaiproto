@@ -43,7 +43,10 @@ import { factToVerification, getConsumerWorkflowState, getEvidenceLocker } from 
 
 // ─── Status Bar ───────────────────────────────────────────────────────────────
 export function StatusBar({ light = false }: { light?: boolean }) {
-  const fg = light ? '#FFFFFF' : C.ink;
+  /* `light` = sitting on the stop ground. stop-ink is white in light theme
+     and navy in dark (where the stop ground is cream) — the role, not a
+     literal, is what keeps this legible in both. */
+  const fg = light ? 'var(--role-stop-ink)' : C.ink;
   /* The portfolio embed frame provides its own device chrome. */
   if (IS_EMBED) return null;
   return (
@@ -116,74 +119,25 @@ export function TopNav({
   );
 }
 
-// ─── Bottom Nav — 64px ────────────────────────────────────────────────────────
-const NAV_TABS = [
-  { key: 'home',    label: 'Home',    Icon: Home,          route: '/mobile/home'       },
-  { key: 'chat',    label: 'Case',    Icon: MessageSquare, route: '/mobile/case/consumer' },
-  { key: 'docs',    label: 'Files',   Icon: FileText,      route: '/mobile/files' },
-  { key: 'profile', label: 'Help',    Icon: User,          route: '/mobile/profile'    },
-];
-
-export function BottomNav({ active = 'home' }: { active?: string }) {
-  const navigate = useNavigate();
-
-  return (
-    <div style={{
-      height: '64px', background: 'var(--role-raised)',
-      borderTop: `1px solid ${C.border}`,
-      boxShadow: SHADOW.sm,
-      display: 'flex', alignItems: 'stretch', flexShrink: 0,
-      paddingBottom: '8px',
-    }}>
-      {NAV_TABS.map(tab => {
-        const isActive = active === tab.key;
-        return (
-          <button key={tab.key} onClick={() => navigate(tab.route)} style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'flex-start',
-            paddingTop: '8px',
-            gap: '3px',
-            cursor: 'pointer',
-            border: 'none',
-            background: 'transparent',
-          }}>
-            {/* Active indicator bar */}
-            <div style={{
-              height: '3px', width: '20px', borderRadius: LAYOUT.radius.xs,
-              background: isActive ? C.saffron : 'transparent',
-              marginBottom: '6px',
-              flexShrink: 0,
-            }} />
-            <tab.Icon style={{
-              width: '22px', height: '22px',
-              color: isActive ? C.navy : C.muted,
-              strokeWidth: isActive ? 2.2 : 1.5,
-            }} />
-            <span style={{
-              fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: isActive ? 600 : 400,
-              color: isActive ? C.navy : C.muted,
-            }}>
-              {tab.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+// ─── Bottom Nav — RETIRED ─────────────────────────────────────────────────────
+/* The tab bar was replaced by the MatterDrawer (chat-first navigation model,
+   2026-08-27): the drawer is the app's one nav surface, and a persistent tab
+   bar competed with the composer for the thumb zone. No render sites remain.
+   TopNav above is likewise kept only for any stray legacy import; new screens
+   use MobileTopBar. */
 
 // ─── Home Indicator ────────────────────────────────────────────────────────────
 export function HomeIndicator({ light = false }: { light?: boolean }) {
   if (IS_EMBED) return null;
   return (
     <div style={{
-      height: '20px', background: light ? 'transparent' : '#FFFFFF',
+      height: '20px', background: light ? 'transparent' : 'var(--role-ground)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
       <div style={{
         width: '134px', height: '5px', borderRadius: LAYOUT.radius.xs,
-        background: light ? 'rgba(255,255,255,0.3)' : C.ink,
-        opacity: light ? 1 : 0.12,
+        background: light ? 'var(--role-stop-ink)' : 'var(--role-ink)',
+        opacity: light ? 0.4 : 0.24,
       }} />
     </div>
   );
@@ -363,7 +317,7 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                   padding: '12px 8px',
-                  background: isSel ? '#EEF2F8' : C.bg,
+                  background: isSel ? 'var(--role-anchor-tint)' : C.bg,
                   border: isSel ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
                   borderRadius: LAYOUT.radius.control,
                   cursor: available ? 'pointer' : 'not-allowed',

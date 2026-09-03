@@ -20,6 +20,7 @@ import {
   RISK_VIEW,
   SOURCE_COVERAGE_VIEW,
 } from '../data/statusVocabulary';
+import { Badge, Button, Stack } from '../ui';
 
 const CSS = `
   @keyframes lokaiProgressIn {
@@ -44,25 +45,19 @@ const CSS = `
     }
   }
   .lokai-verification-input:focus-visible {
-    outline: 2px solid ${C.saffron};
+    outline: 2px solid ${C.saffronAccessible};
     outline-offset: 2px;
-    box-shadow: 0 0 0 3px rgba(232,131,42,0.16);
   }
 `;
 
-/** Shows observable source coverage, never model confidence. */
+/** Shows observable source coverage, never model confidence.
+ *  Ground-level (L1): the meter is a reading, not an object — no box. */
 export function GroundingMeter({ grounded, total, note, live = false }: { grounded: number; total: number; note?: string; live?: boolean }) {
   const ratio = total > 0 ? grounded / total : 0;
   const pct = Math.round(ratio * 100);
-  const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.saffron : C.oxblood;
+  const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.amber : C.oxblood;
   return (
-    <div style={{
-      background: C.surface2,
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.control,
-      padding: '11px 12px',
-      marginBottom: 11,
-    }}>
+    <div style={{ marginBottom: 11 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
         <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.inkSoft }}>
           Claims checked against sources
@@ -71,7 +66,7 @@ export function GroundingMeter({ grounded, total, note, live = false }: { ground
           {grounded} of {total}
         </span>
       </div>
-      <div style={{ height: 7, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
+      <div style={{ height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
         <div
           className="lokai-meter-fill"
           style={{
@@ -94,14 +89,8 @@ export function GroundingMeter({ grounded, total, note, live = false }: { ground
 }
 
 /* Labels for coverage, risk, evidence and draft states live in
-   data/statusVocabulary.ts — one vocabulary app-wide (audit V4). Only the
-   colors stay local, since these predate the Badge primitive. */
-const COVERAGE_COLOR: Record<SourceCoverage, string> = {
-  direct: C.green,
-  related: C.navy,
-  missing: C.amber,
-  conflicting: C.oxblood,
-};
+   data/statusVocabulary.ts — one vocabulary app-wide (audit V4); tones ride
+   the Badge primitive. The old COVERAGE_COLOR map died with the left stripe. */
 
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -120,17 +109,10 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function LokAIProgressList({ items }: { items: string[] }) {
+  /* Ground-level (L1): a progress reading sits on the page — label + hairline
+     rows, no box. */
   return (
-    <div
-      aria-live="polite"
-      style={{
-        background: '#FFFFFF',
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.panel,
-        padding: 12,
-        boxShadow: SHADOW.xs,
-      }}
-    >
+    <div aria-live="polite">
       <style>{CSS}</style>
       <SmallLabel>LokAI is checking</SmallLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -151,7 +133,7 @@ export function LokAIProgressList({ items }: { items: string[] }) {
               height: 18,
               borderRadius: LAYOUT.radius.full,
               border: `1px solid ${index === items.length - 1 ? C.saffron : C.borderStrong}`,
-              background: index === items.length - 1 ? '#FFF3E8' : C.surface2,
+              background: index === items.length - 1 ? 'var(--role-flag-fill)' : C.surface2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -172,22 +154,11 @@ export function LokAIProgressList({ items }: { items: string[] }) {
   );
 }
 
+/** Coverage as a Badge — the vocabulary module owns label AND tone, so the
+ *  same state reads identically here, in the ledger, and on Documents. */
 export function SourceCoveragePill({ coverage }: { coverage: SourceCoverage }) {
-  return (
-    <span style={{
-      fontFamily: SANS,
-      fontSize: TYPE.label.size,
-      fontWeight: 700,
-      color: COVERAGE_COLOR[coverage],
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.pill,
-      padding: '3px 8px',
-      whiteSpace: 'nowrap',
-    }}>
-      {SOURCE_COVERAGE_VIEW[coverage].label}
-    </span>
-  );
+  const view = SOURCE_COVERAGE_VIEW[coverage];
+  return <Badge tone={view.tone}>{view.label}</Badge>;
 }
 
 export function SourceCard({ source, compact = false }: { source: WorkflowSource; compact?: boolean }) {
@@ -195,12 +166,13 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
   const plain = source.howUsed || source.excerpt;
   const shortPlain = plain.length > 110 ? `${plain.slice(0, 108)}…` : plain;
 
+  /* A source is a discrete object, so it keeps a card — but the coloured
+     left stripe and the asymmetric radius are gone (the stripe was the most
+     generic pattern in the app; coverage now travels in the Badge). */
   return (
     <div style={{
-      background: compact ? '#FFFFFF' : C.surface2,
       border: `1px solid ${C.border}`,
-      borderLeft: `3px solid ${COVERAGE_COLOR[source.coverage]}`,
-      borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
+      borderRadius: LAYOUT.radius.control,
       padding: compact ? '10px 11px' : '12px 13px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -364,7 +336,7 @@ export function LokAISourceDrawer({
               height: 40,
               borderRadius: LAYOUT.radius.panel,
               border: `1px solid ${C.border}`,
-              background: '#FFFFFF',
+              background: C.surface,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -465,13 +437,7 @@ export function WorkflowActionPlan({
   };
 
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: `1px solid ${C.border}`,
-      borderRadius: LAYOUT.radius.panel,
-      padding: compact ? 12 : 14,
-      boxShadow: SHADOW.xs,
-    }}>
+    <div>
       <style>{CSS}</style>
       <SmallLabel>Living action plan</SmallLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 12 }}>
@@ -493,65 +459,47 @@ export function WorkflowActionPlan({
                   </p>
                 )}
 
-                {/* Live controls — only on the active step in interactive mode */}
+                {/* Live controls — the primary is the forward action; blocked
+                   is the quiet alternative, never an outlined twin (L5). */}
                 {interactive && step.status === 'current' && (
                   <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
-                    <button
+                    <Button
+                      size="md"
+                      icon={<Check size={13} />}
                       onClick={() => markDone(step.id)}
-                      style={{
-                        minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
-                        background: C.navy, color: '#FFFFFF',
-                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 12px', cursor: 'pointer',
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                      }}
                     >
-                      <Check size={13} /> Mark done
-                    </button>
-                    <button
-                      onClick={() => markBlocked(step.id)}
-                      style={{
-                        minHeight: 34, borderRadius: LAYOUT.radius.control,
-                        border: `1px solid ${C.borderStrong}`,
-                        background: '#FFFFFF', color: C.inkSoft,
-                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 12px', cursor: 'pointer',
-                      }}
-                    >
+                      Mark done
+                    </Button>
+                    <Button variant="quiet" size="md" onClick={() => markBlocked(step.id)}>
                       I'm blocked
-                    </button>
+                    </Button>
                   </div>
                 )}
 
                 {/* Static reroute button (non-interactive, data-driven blocked state) */}
                 {!interactive && step.status === 'blocked' && (
-                  <button
+                  <Button
+                    variant="quiet"
+                    size="md"
+                    iconAfter={<ArrowRight size={13} />}
                     onClick={onPacket}
-                    style={{
-                      marginTop: 8, minHeight: 36, borderRadius: LAYOUT.radius.control,
-                      border: `1px solid ${C.navy}`, background: '#FFFFFF', color: C.navy,
-                      fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                      padding: '0 11px', cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                    }}
+                    style={{ marginTop: 8, alignSelf: 'flex-start' }}
                   >
                     {step.rerouteLabel || 'Prepare packet'}
-                    <ArrowRight size={13} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
 
-            {/* Adaptive reroute card, inserted live below the blocked step */}
+            {/* Adaptive reroute, inserted live below the blocked step — a
+               flagged exception (the fill marks it), not a striped box. */}
             {interactive && reroute?.afterId === step.id && (
               <div
                 className="lokai-gate-in"
                 style={{
                   marginLeft: 34,
-                  background: '#FFF8F0',
-                  border: `1px solid rgba(233,133,43,0.28)`,
-                  borderLeft: `3px solid ${C.saffron}`,
-                  borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
+                  background: 'var(--role-flag-fill)',
+                  borderRadius: LAYOUT.radius.control,
                   padding: '10px 12px',
                   animation: 'lokaiGateIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
                 }}
@@ -582,11 +530,12 @@ export function WorkflowActionPlan({
  * neutralises the AI-misread-a-date liability that sinks legal AI.
  */
 /* Colors only — the labels come from data/statusVocabulary.ts so the same
-   state never ships under two names (audit V4). */
+   state never ships under two names (audit V4). Fills are role tokens so
+   dark re-tints them. */
 const EVIDENCE_STATUS_STYLE: Record<EvidenceItem['status'], { border: string; bg: string; labelColor: string }> = {
-  uploaded:    { border: C.green,   bg: '#F5F9F6', labelColor: C.green },
-  missing:     { border: C.border,  bg: C.surface2, labelColor: C.muted },
-  conflicting: { border: C.saffron, bg: '#FFF8F0', labelColor: C.amber },
+  uploaded:    { border: C.green,   bg: 'var(--role-ok-fill)',    labelColor: C.green },
+  missing:     { border: C.border,  bg: C.surface2,               labelColor: C.muted },
+  conflicting: { border: C.saffron, bg: 'var(--role-flag-fill)',  labelColor: C.amber },
 };
 
 /**
@@ -802,7 +751,8 @@ export function VerificationScratchpad({
                   )}
                 </div>
 
-                {/* Needs-review hint + actions */}
+                {/* Needs-review hint + actions — the forward action is primary,
+                   the alternative quiet (L5: no outlined twins). */}
                 {needsReview && !isEditing && (
                   <>
                     {fact.hint && (
@@ -811,57 +761,24 @@ export function VerificationScratchpad({
                       </p>
                     )}
                     <div style={{ display: 'flex', gap: 7, marginTop: fact.hint ? 0 : 10 }}>
-                      <button
+                      <Button
+                        size="md"
+                        icon={<Check size={13} />}
                         onClick={() => confirm(fact.id)}
-                        style={{
-                          minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
-                          background: C.navy, color: C.onDark,
-                          fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                          padding: '0 12px', cursor: 'pointer',
-                          display: 'inline-flex', alignItems: 'center', gap: 6,
-                        }}
                       >
-                        <Check size={13} /> It's correct
-                      </button>
-                      <button
-                        onClick={() => startEdit(fact)}
-                        style={{
-                          minHeight: 34, borderRadius: LAYOUT.radius.control,
-                          border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.inkSoft,
-                          fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                          padding: '0 12px', cursor: 'pointer',
-                        }}
-                      >
+                        It's correct
+                      </Button>
+                      <Button variant="quiet" size="md" onClick={() => startEdit(fact)}>
                         Fix it
-                      </button>
+                      </Button>
                     </div>
                   </>
                 )}
 
                 {isEditing && (
                   <div style={{ display: 'flex', gap: 7, marginTop: 8 }}>
-                    <button
-                      onClick={() => saveEdit(fact.id)}
-                      style={{
-                        minHeight: 34, borderRadius: LAYOUT.radius.control, border: 'none',
-                        background: C.navy, color: C.onDark,
-                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 14px', cursor: 'pointer',
-                      }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      style={{
-                        minHeight: 34, borderRadius: LAYOUT.radius.control,
-                        border: `1px solid ${C.borderStrong}`, background: C.surface, color: C.inkSoft,
-                        fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
-                        padding: '0 14px', cursor: 'pointer',
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    <Button size="md" onClick={() => saveEdit(fact.id)}>Save</Button>
+                    <Button variant="quiet" size="md" onClick={() => setEditingId(null)}>Cancel</Button>
                   </div>
                 )}
               </div>
@@ -870,24 +787,16 @@ export function VerificationScratchpad({
         })}
       </div>
 
-      {/* Gated generate button */}
-      <button
+      {/* Gated generate button — the product decision stays exactly as it is:
+         the CTA stays locked until every fact is confirmed. Restyled onto the
+         Button primitive (disabled = hairline surface, not grey navy). */}
+      <Button
         onClick={allConfirmed ? onConfirmed : undefined}
         disabled={!allConfirmed}
-        style={{
-          width: '100%', minHeight: 48,
-          borderRadius: LAYOUT.radius.panel, border: 'none',
-          background: allConfirmed ? C.navy : C.border,
-          color: allConfirmed ? C.onDark : C.muted,
-          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700,
-          cursor: allConfirmed ? 'pointer' : 'not-allowed',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          transition: 'background 0.18s ease',
-        }}
+        iconAfter={allConfirmed ? <ArrowRight size={16} /> : undefined}
       >
         {allConfirmed ? 'Build my assessment' : `Confirm ${remaining} more to continue`}
-        {allConfirmed && <ArrowRight size={16} />}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -936,12 +845,9 @@ export function ReviewGate({
     <div
       className="lokai-gate-in"
       style={{
-        background: '#FFFFFF',
         border: `1px solid ${C.border}`,
-        borderTop: `3px solid ${C.oxblood}`,
-        borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel} ${LAYOUT.radius.panel}`,
+        borderRadius: LAYOUT.radius.panel,
         padding: 15,
-        boxShadow: SHADOW.sm,
         animation: 'lokaiGateIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
       }}
     >
@@ -971,8 +877,8 @@ export function ReviewGate({
           alignItems: 'center',
           gap: 10,
           textAlign: 'left',
-          background: reviewed ? 'rgba(31,107,58,0.06)' : C.surface2,
-          border: `1px solid ${reviewed ? 'rgba(31,107,58,0.4)' : C.border}`,
+          background: reviewed ? 'var(--role-ok-fill)' : C.surface2,
+          border: `1px solid ${reviewed ? 'var(--role-ok)' : C.border}`,
           borderRadius: LAYOUT.radius.control,
           padding: '11px 12px',
           cursor: 'pointer',
@@ -984,67 +890,39 @@ export function ReviewGate({
           height: 20,
           borderRadius: LAYOUT.radius.sm,
           flexShrink: 0,
-          background: reviewed ? C.green : '#FFFFFF',
+          background: reviewed ? C.green : 'var(--role-raised)',
           border: `1.5px solid ${reviewed ? C.green : C.borderStrong}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'background 0.16s ease, border-color 0.16s ease',
         }}>
-          {reviewed && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
+          {reviewed && <Check size={13} color="var(--role-on-anchor)" strokeWidth={3} />}
         </span>
         <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink }}>
           I've read the details and I'm ready to send it myself.
         </span>
       </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <button
+      {/* One primary (copy — the action almost everyone takes), the print
+         escape quiet beneath it. Two filled buttons was the form-wizard tell. */}
+      <Stack gap={2}>
+        <Button
           onClick={reviewed ? handleCopy : undefined}
           disabled={!reviewed}
-          style={{
-            minHeight: 44,
-            borderRadius: LAYOUT.radius.control,
-            border: 'none',
-            background: !reviewed ? C.border : copied ? C.green : C.navy,
-            color: !reviewed ? C.muted : '#FFFFFF',
-            fontFamily: SANS,
-            fontSize: TYPE.small.size,
-            fontWeight: 700,
-            cursor: reviewed ? 'pointer' : 'not-allowed',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 7,
-            transition: 'background 0.18s ease',
-          }}
+          icon={copied ? <Check size={15} /> : <Copy size={14} />}
         >
-          {copied ? <Check size={15} /> : <Copy size={14} />}
           {copied ? 'Copied' : 'Copy draft'}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="quiet"
           onClick={reviewed ? onPrint : undefined}
           disabled={!reviewed}
-          style={{
-            minHeight: 44,
-            borderRadius: LAYOUT.radius.control,
-            border: `1.5px solid ${!reviewed ? C.border : C.navy}`,
-            background: '#FFFFFF',
-            color: !reviewed ? C.muted : C.navy,
-            fontFamily: SANS,
-            fontSize: TYPE.small.size,
-            fontWeight: 700,
-            cursor: reviewed ? 'pointer' : 'not-allowed',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 7,
-          }}
+          icon={<Printer size={14} />}
         >
-          <Printer size={14} />
           Print
-        </button>
-      </div>
+        </Button>
+      </Stack>
 
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '11px 0 0', textAlign: 'center' }}>
         LokAI prepared this draft. You are the sender. No message leaves the app on its own.
@@ -1099,17 +977,7 @@ export function FirstActionChecklist({
   };
 
   return (
-    <div
-      style={{
-        background: '#FFFFFF',
-        border: `1px solid ${C.border}`,
-        borderTop: `3px solid ${C.terracotta}`,
-        borderRadius: LAYOUT.radius.card,
-        padding: compact ? 14 : 16,
-        boxShadow: SHADOW.sm,
-        marginTop: 12,
-      }}
-    >
+    <div style={{ marginTop: 12 }}>
       <SmallLabel>After you leave LokAI</SmallLabel>
       <h3 style={{
         fontFamily: SERIF,
@@ -1121,14 +989,14 @@ export function FirstActionChecklist({
       }}>
         Your first actions
       </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 12px' }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 4px' }}>
         The product ends here. These three steps stay with you — mark them as you go.
       </p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {FIRST_ACTIONS.map((action, i) => {
           const on = checked[action.id];
           return (
-            <li key={action.id}>
+            <li key={action.id} style={{ borderTop: i ? `1px solid ${C.rule}` : 'none' }}>
               <button
                 type="button"
                 onClick={() => toggle(action.id)}
@@ -1139,11 +1007,14 @@ export function FirstActionChecklist({
                   alignItems: 'flex-start',
                   gap: 10,
                   textAlign: 'left',
-                  background: on ? 'rgba(169,79,45,0.08)' : C.surface2,
-                  border: `1px solid ${on ? 'rgba(169,79,45,0.35)' : C.border}`,
-                  borderRadius: LAYOUT.radius.control,
-                  padding: '11px 12px',
+                  background: on ? 'var(--role-ok-fill)' : 'transparent',
+                  /* Checked rows bleed to the padding edge via negative margin
+                     so the fill reads as a row highlight, not a boxed tile. */
+                  borderRadius: on ? LAYOUT.radius.sm : 0,
+                  margin: on ? '0 -8px' : 0,
+                  padding: on ? '11px 20px' : '11px 12px',
                   cursor: 'pointer',
+                  border: 'none',
                 }}
               >
                 <span style={{
@@ -1151,17 +1022,17 @@ export function FirstActionChecklist({
                   height: 22,
                   borderRadius: LAYOUT.radius.sm,
                   flexShrink: 0,
-                  background: on ? C.terracotta : '#FFFFFF',
-                  border: `1.5px solid ${on ? C.terracotta : C.borderStrong}`,
+                  background: on ? C.green : 'transparent',
+                  border: `1.5px solid ${on ? C.green : C.borderStrong}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontFamily: SANS,
                   fontSize: TYPE.micro.size,
                   fontWeight: 800,
-                  color: on ? '#fff' : C.muted,
+                  color: on ? 'var(--role-on-anchor)' : C.muted,
                 }}>
-                  {on ? <Check size={13} color="#FFFFFF" strokeWidth={3} /> : i + 1}
+                  {on ? <Check size={13} color="var(--role-on-anchor)" strokeWidth={3} /> : i + 1}
                 </span>
                 <span>
                   <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, display: 'block' }}>
@@ -1288,32 +1159,21 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
   const isRisky = assessment.riskLevel === 'high_risk_signals';
   return (
     <div style={{
-      background: isRisky ? '#FFF1EE' : '#FFFFFF',
-      border: `1px solid ${isRisky ? 'rgba(184,54,28,0.22)' : C.border}`,
-      borderLeft: `4px solid ${isRisky ? C.red : C.green}`,
-      borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.card}`,
+      border: `1px solid ${isRisky ? 'var(--role-halt)' : C.border}`,
+      borderRadius: LAYOUT.radius.card,
       padding: 16,
-      boxShadow: SHADOW.sm,
       display: 'flex',
       flexDirection: 'column',
       gap: 10,
     }}>
-      <span style={{
-        alignSelf: 'flex-start',
-        fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
-        color: isRisky ? C.red : C.green,
-        background: isRisky ? 'rgba(184,54,28,0.08)' : 'rgba(31,107,58,0.08)',
-        borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
-      }}>
-        {isRisky ? 'Verify before trusting' : 'Looks genuine'}
-      </span>
+      <Badge tone={isRisky ? 'halt' : 'ok'}>{isRisky ? 'Verify before trusting' : 'Looks genuine'}</Badge>
       <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
         {assessment.title}
       </h3>
       <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
         {assessment.decodedSummary}
       </p>
-      <div style={{ background: isRisky ? '#FDF3F1' : '#F5F9F6', borderRadius: LAYOUT.radius.control, padding: '10px 12px' }}>
+      <div style={{ background: isRisky ? 'var(--role-halt-fill)' : 'var(--role-ok-fill)', borderRadius: LAYOUT.radius.control, padding: '10px 12px' }}>
         <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: isRisky ? C.red : C.green, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Why LokAI flagged this
         </p>
@@ -1330,16 +1190,13 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
         {assessment.deadline}
       </p>
       {!isRisky && assessment.suggestedReply && onPrepareReply && (
-        <button
+        <Button
           onClick={onPrepareReply}
-          style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: '#FFFFFF',
-            fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4,
-          }}
+          iconAfter={<ArrowRight size={14} />}
+          style={{ marginTop: 4 }}
         >
-          Prepare a reply <ArrowRight size={14} />
-        </button>
+          Prepare a reply
+        </Button>
       )}
       {isRisky && (
         <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.5, margin: 0 }}>
