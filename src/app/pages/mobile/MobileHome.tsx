@@ -679,18 +679,29 @@ export function HomeArtboard() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const atBottom = useRef(true);
+  const [awayFromBottom, setAwayFromBottom] = useState(false);
 
   /* Auto-scroll only when the user is already at the bottom — scrolling up to
-     re-read the answer must never be yanked forward by a new item. */
+     re-read the answer must never be yanked forward by a new item. When they
+     ARE away from the bottom, a quiet "jump to latest" pill appears above the
+     composer instead of the app deciding for them. */
   useEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
     const onScroll = () => {
-      atBottom.current = vp.scrollHeight - vp.scrollTop - vp.clientHeight < 80;
+      const next = vp.scrollHeight - vp.scrollTop - vp.clientHeight < 80;
+      atBottom.current = next;
+      setAwayFromBottom((prev) => (prev === !next ? prev : !next));
     };
     vp.addEventListener('scroll', onScroll, { passive: true });
     return () => vp.removeEventListener('scroll', onScroll);
   }, []);
+
+  const jumpToLatest = () => {
+    viewportRef.current?.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
+    atBottom.current = true;
+    setAwayFromBottom(false);
+  };
 
   useEffect(() => {
     if (atBottom.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -810,7 +821,35 @@ export function HomeArtboard() {
 
   return (
     <AppScreen
-      action={<Composer compact placeholder="Describe what happened…" onSubmit={send} />}
+      action={
+        <Stack gap={2}>
+          {!empty && awayFromBottom && (
+            <Row justify="center">
+              <button
+                type="button"
+                onClick={jumpToLatest}
+                className="lokai-pressable"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  minHeight: 36, padding: '0 16px',
+                  borderRadius: LAYOUT.radius.pill,
+                  border: `1px solid ${T.hairline}`,
+                  background: T.raised,
+                  boxShadow: 'none',
+                  ...typeStyle('caption'),
+                  fontWeight: 600,
+                  color: T.anchor,
+                  cursor: 'pointer',
+                }}
+              >
+                <IconArrowRight size={ICON.inline} style={{ transform: 'rotate(90deg)' }} />
+                Jump to latest
+              </button>
+            </Row>
+          )}
+          <Composer compact placeholder="Describe what happened…" onSubmit={send} />
+        </Stack>
+      }
       scrollClearance={M.zoneGap}
       scrollViewportRef={viewportRef}
       showWordmark={false}

@@ -519,47 +519,9 @@ export function useLokaiSharedStyles() {
   useEffect(() => { injectSharedStyles(); }, []);
 }
 
-// ─── Citation Stamp — the most important UI component ─────────────────────────
-export function CitationStamp({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  useEffect(() => { injectSharedStyles(); }, []);
-
-  const handleCopy = () => {
-    void navigator.clipboard?.writeText(text).catch(() => {});
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), Number.parseInt(MOTION.confirm, 10) + 1200);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      aria-label={copied ? 'Copied citation' : `Copy citation ${text}`}
-      className="lokai-pressable"
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: '6px',
-        background: GRAD.oxbloodStamp,
-        color: '#FFFFFF',
-        borderRadius: LAYOUT.radius.xs,
-        border: 'none',
-        padding: '3px 10px',
-        fontFamily: MONO,
-        fontSize: TYPE.label.size,
-        fontWeight: 500,
-        letterSpacing: '0.05em',
-        cursor: 'pointer',
-      }}
-    >
-      <span style={{
-        width: 5, height: 5, borderRadius: LAYOUT.radius.full,
-        background: copied ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.6)',
-        flexShrink: 0,
-        transition: `background ${MOTION.confirm} ${MOTION.ease}`,
-      }} />
-      {copied ? 'Copied' : text}
-    </button>
-  );
-}
+/* CitationStamp deleted 2026-08-28 — it had zero consumers. Citations render
+   through <CitationChip> in ui/primitives (section-first, Perplexity-pattern)
+   via TurnCitations and the notice reader's surfaced fields. */
 
 // ─── Logo Mark — "L" in a circle ──────────────────────────────────────────────
 /**

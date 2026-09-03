@@ -164,24 +164,32 @@ function NoticeArtboard() {
 
   const isEmpty = items.length === 0;
 
+  /* Pending attachment — the review-before-commit contract applied to the
+     composer itself: picking a document parks it as a removable chip in the
+     tray; nothing is read until the user sends. The same gate the voice
+     transcript and the demand notice follow. */
+  const [pendingDoc, setPendingDoc] = useState<PreparedDocument | null>(null);
+
   const action = (
-    <Row gap={2} align="flex-end">
-      <IconButton
-        label="Attach a document"
-        onClick={() => setAttachOpen(true)}
-        style={{ background: T.sunken, borderRadius: LAYOUT.radius.control }}
-      >
-        <IconAttach size={ICON.row} />
-      </IconButton>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <Composer
-          compact
-          showVoice={false}
-          placeholder={noticeDoc ? 'Ask about this document…' : 'Attach a notice, or ask about it…'}
-          onSubmit={handleAsk}
-        />
-      </div>
-    </Row>
+    <Composer
+      compact
+      showVoice={false}
+      placeholder={pendingDoc
+        ? 'Add a question, or send to read it…'
+        : noticeDoc
+          ? 'Ask about this document…'
+          : 'Attach a notice, or ask about it…'}
+      attachments={pendingDoc ? [{ id: pendingDoc.id, label: pendingDoc.fileName }] : undefined}
+      onRemoveAttachment={() => setPendingDoc(null)}
+      onAttach={() => setAttachOpen(true)}
+      onSubmit={(text) => {
+        if (pendingDoc) {
+          attach(pendingDoc);
+          setPendingDoc(null);
+        }
+        if (text) handleAsk(text);
+      }}
+    />
   );
 
   return (
@@ -242,7 +250,14 @@ function NoticeArtboard() {
         </Stack>
       )}
 
-      <AttachSheet open={attachOpen} onClose={() => setAttachOpen(false)} onPick={attach} />
+      <AttachSheet
+        open={attachOpen}
+        onClose={() => setAttachOpen(false)}
+        onPick={(doc) => {
+          setPendingDoc(doc);
+          setAttachOpen(false);
+        }}
+      />
       <NoticeReaderSheet
         open={readerOpen}
         doc={readerDoc}

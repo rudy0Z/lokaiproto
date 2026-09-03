@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowCounterClockwise, BookOpen, CaretDown, Check, Copy, Info, SpeakerHigh } from '@phosphor-icons/react';
 import { C, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
 import { Sheet } from '../Sheet';
-import { FadeRise } from '../../ui';
+import { CitationChip, AttachmentChip, FadeRise, Row, shortStatuteLabel } from '../../ui';
 import { LegalText } from '../demo/LegalTerms';
 import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
@@ -235,39 +235,27 @@ export function TurnCitations({ turn }: { turn: ResponseTurn }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   if (!turn.citations.length) return null;
 
+  /* Section-first chips (the CitationChip upgrade): a legal reader scans the
+     provision, not the prose. The full authority + the prepared-example
+     review note travel in the chip's title and the source sheet — repeating
+     "Example — verify with a lawyer" on every chip was the disclaimer as
+     noise (L7). */
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
       {turn.citations.map((c) => {
         const copied = copiedId === c.id;
         return (
-          <button
+          <CitationChip
             key={c.id}
-            type="button"
-            className="lokai-chip"
-            aria-label={copied ? `Copied ${c.reference}` : `Copy source ${c.reference}`}
+            label={shortStatuteLabel(c.reference)}
+            title={`${c.title} — ${c.reference} (${c.reviewLabel})`}
+            copied={copied}
             onClick={() => {
               void navigator.clipboard?.writeText(`${c.title} — ${c.reference}`).catch(() => {});
               setCopiedId(c.id);
               window.setTimeout(() => setCopiedId(null), Number.parseInt(MOTION.confirm, 10) + 1200);
             }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              fontFamily: MONO,
-              fontSize: TYPE.label.size,
-              color: C.navy,
-              background: copied ? C.successSoft : C.navySoft,
-              border: `1px solid ${C.border}`,
-              borderRadius: LAYOUT.radius.sm,
-              padding: '4px 8px',
-              cursor: 'pointer',
-            }}
-          >
-            {copied ? <Check size={11} aria-hidden /> : <BookOpen size={11} aria-hidden />}
-            {copied ? 'Copied' : c.reference}
-            {!copied && <span style={{ color: C.muted }}>· {c.reviewLabel}</span>}
-          </button>
+          />
         );
       })}
     </div>
@@ -813,6 +801,17 @@ function StopGlyph({ size = 15 }: { size?: number }) {
   );
 }
 
+/* The paperclip, drawn to the same stroke weight as the mic and send — a stock
+   clip icon reads heavier than the bespoke glyphs beside it. */
+function AttachGlyph({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M20 11.5l-7.6 7.6a5 5 0 0 1-7.1-7.1l8-8a3.4 3.4 0 0 1 4.8 4.8l-7.9 7.9a1.8 1.8 0 0 1-2.5-2.5l7.2-7.2" />
+    </svg>
+  );
+}
+
 /* Working indicator — three dots breathing in sequence. Reuses the existing
    pulse keyframe so it matches the progress dot elsewhere. */
 function BusyDots({ light = false }: { light?: boolean }) {
@@ -841,6 +840,9 @@ export function Composer({
   suggestions,
   compact,
   showVoice = true,
+  attachments,
+  onRemoveAttachment,
+  onAttach,
 }: {
   placeholder?: string;
   onSubmit: (text: string) => void;
@@ -848,15 +850,22 @@ export function Composer({
   suggestions?: string[];
   compact?: boolean;
   showVoice?: boolean;
+  /** Pending attachments — rendered as a removable tray above the input, and
+   *  counted by canSend so a document alone can be sent. */
+  attachments?: { id: string; label: string }[];
+  onRemoveAttachment?: (id: string) => void;
+  /** Renders the attach affordance in the leading slot (paperclip). */
+  onAttach?: () => void;
 }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useLokaiSharedStyles();
   const voice = useVoiceCapture({
     initialPhase: 'idle',
     onTranscriptReady: (text) => setValue(text),
   });
-  const canSend = !!value.trim() && !disabled && !voice.isBusy;
+  const hasAttachments = !!attachments?.length;
+  const canSend = (!!value.trim() || hasAttachments) && !disabled && !voice.isBusy;
   const isWorking = voice.isBusy || (!!disabled && !!value.trim());
   const maxH = compact ? COMPOSER.maxHeightCompact : COMPOSER.maxHeight;
 
@@ -890,6 +899,13 @@ export function Composer({
 
   return (
     <div>
+      {hasAttachments && onRemoveAttachment && (
+        <Row gap={2} wrap style={{ marginBottom: 8 }}>
+          {attachments!.map((a) => (
+            <AttachmentChip key={a.id} label={a.label} onRemove={() => onRemoveAttachment(a.id)} />
+          ))}
+        </Row>
+      )}
       {suggestions && suggestions.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
           {suggestions.map((s) => (
@@ -934,6 +950,32 @@ export function Composer({
           padding: compact ? '5px 6px' : '12px 14px',
         }}
       >
+        {onAttach && (
+          <button
+            type="button"
+            aria-label="Attach a document"
+            disabled={disabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAttach();
+            }}
+            className="lokai-pressable"
+            style={{
+              width: compact ? 38 : 42,
+              height: compact ? 38 : 42,
+              borderRadius: LAYOUT.radius.full,
+              border: 'none',
+              background: 'transparent',
+              color: C.muted,
+              cursor: disabled ? 'default' : 'pointer',
+              flexShrink: 0,
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <AttachGlyph size={compact ? 17 : 19} />
+          </button>
+        )}
         {showVoice && (
           <button
             type="button"

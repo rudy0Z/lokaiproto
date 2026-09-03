@@ -174,6 +174,32 @@ export function ShimmerLine({ width = '100%', height = 10, style }: { width?: nu
   );
 }
 
+/**
+ * A content-shaped placeholder that shimmers — it reads as "coming", not
+ * "missing". Shape it roughly like the content it stands in for (a line for
+ * a paragraph, a tall block for a card) so the layout doesn't jump on load.
+ */
+export function Skeleton({
+  width = '100%',
+  height = 48,
+  radius,
+  style,
+}: {
+  width?: number | string;
+  height?: number | string;
+  radius?: string;
+  style?: React.CSSProperties;
+}) {
+  useMotionStyles();
+  return (
+    <div
+      aria-hidden
+      className="lokai-shimmer-line"
+      style={{ width, height, borderRadius: radius ?? LAYOUT.radius.sm, ...style }}
+    />
+  );
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
  * StageTransition — the product-driven state change
  * ─────────────────────────────────────────────────────────────────────────── */

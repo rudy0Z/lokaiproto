@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router';
 import { ArrowLeft, Microphone, TextT } from '@phosphor-icons/react';
 import { VoiceOrb } from '../../components/shared';
 import {
-  Stack, Row, Text, Label, Button, IconButton,
-  T, S, LAYOUT, TYPE, typeStyle, ICON, ICON_WEIGHT, SANS, useSystemStyles,
+  Stack, Row, Text, Label, Button, IconButton, Textarea,
+  T, S, ICON, ICON_WEIGHT, useSystemStyles,
 } from '../../ui';
 import { MobileRouteCanvas } from './MobileHome';
 import { AppScreen } from '../../components/mobile/AppScreen';
@@ -118,19 +118,11 @@ export function VoiceActiveArtboard() {
               Edit if needed, then confirm. This becomes the matter input.
             </Text>
           </Stack>
-          <textarea
+          <Textarea
             value={voice.transcript}
             onChange={(e) => voice.setTranscript(e.target.value)}
             rows={4}
-            className="lokai-input-field"
-            style={{
-              ...typeStyle('body'),
-              width: '100%', boxSizing: 'border-box',
-              borderRadius: LAYOUT.radius.control,
-              border: `1.5px solid ${T.hairline}`,
-              padding: S[3], color: T.ink, background: T.raised,
-              resize: 'vertical', fontFamily: SANS, outline: 'none',
-            }}
+            aria-label="Edit the transcript before submitting"
           />
         </Stack>
       )}

@@ -428,6 +428,219 @@ export function Field({ invalid = false, style, ...rest }: FieldProps) {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
+ * Textarea — the multi-line Field
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  invalid?: boolean;
+}
+
+export function Textarea({ invalid = false, rows = 4, style, ...rest }: TextareaProps) {
+  useLokaiSharedStyles();
+  const activeLang = useUiLanguage();
+  const sp = scriptProps(activeLang);
+  return (
+    <textarea
+      {...rest}
+      rows={rows}
+      {...(sp.lang ? { lang: sp.lang } : {})}
+      className={`lokai-input-field ${rest.className ?? ''}`}
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        fontFamily: SANS,
+        fontSize: TYPE.body.size,
+        lineHeight: 1.55,
+        color: T.ink,
+        padding: S[3],
+        background: rest.disabled ? T.sunken : T.raised,
+        border: `1.5px solid ${invalid ? T.halt : T.hairline}`,
+        borderRadius: LAYOUT.radius.control,
+        outline: 'none',
+        resize: 'vertical',
+        ...sp.style,
+        ...style,
+      }}
+    />
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Switch — a binary state, on the row it belongs to
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The app's one toggle. 44px wide so the whole control is the tap target,
+ * flat (no thumb shadow — stamp paper does not float), and a real
+ * `role="switch"` so screen readers announce state.
+ */
+export function Switch({
+  on,
+  onToggle,
+  label,
+  disabled,
+  style,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  /** Accessible name — the row's label text, passed in by the row. */
+  label: string;
+  disabled?: boolean;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      style={{
+        width: 44, height: 24, borderRadius: LAYOUT.radius.pill,
+        background: on ? T.anchor : T.hairlineFirm,
+        border: 'none', position: 'relative', cursor: disabled ? 'not-allowed' : 'pointer',
+        flexShrink: 0,
+        transition: `background ${MOTION.press} ${MOTION.ease}`,
+        ...style,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute', top: 2, left: on ? 22 : 2,
+          width: 20, height: 20, borderRadius: LAYOUT.radius.full,
+          background: T.raised,
+          transition: `left ${MOTION.press} ${MOTION.ease}`,
+        }}
+      />
+    </button>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * CitationChip — provenance as a scannable token
+ *
+ * The Perplexity pattern, translated to legal citations: SECTION-first, not
+ * confidence-first. A legal reader scans the provision ("S.2(10)"); the full
+ * authority travels in the chip's title and the source sheet. `count` gives
+ * the "+N" overflow when one chip stands for several.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * "Section 2(10) — defect in goods" → "S.2(10)". Falls back to a trimmed
+ * string for citations that are not statute sections ("Ref. no.").
+ */
+export function shortStatuteLabel(reference: string): string {
+  const m = reference.match(/Section\s+([\w().\-]+)/i);
+  if (m) return `S.${m[1].replace(/[.,]$/, '')}`;
+  const trimmed = reference.trim();
+  return trimmed.length > 24 ? `${trimmed.slice(0, 22).trimEnd()}…` : trimmed;
+}
+
+export function CitationChip({
+  label,
+  count,
+  onClick,
+  title,
+  interactive = true,
+  copied = false,
+  style,
+}: {
+  label: string;
+  /** +N overflow — one chip standing for several sources. */
+  count?: number;
+  onClick?: () => void;
+  /** Full reference for hover / long-press; the chip shows the short form. */
+  title?: string;
+  /** False inside an already-tappable row — HairlineRow renders a <button>,
+   *  and buttons do not nest. */
+  interactive?: boolean;
+  copied?: boolean;
+  style?: React.CSSProperties;
+}) {
+  const base: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center',
+    fontFamily: MONO,
+    fontSize: TYPE.label.size,
+    fontWeight: 500,
+    letterSpacing: '0.01em',
+    color: T.attest,
+    background: T.attestFill,
+    borderRadius: LAYOUT.radius.sm,
+    padding: '3px 8px',
+    whiteSpace: 'nowrap',
+    ...style,
+  };
+  const inner = (
+    <>
+      {copied ? 'Copied' : label}
+      {count ? <span style={{ opacity: 0.72 }}>{` +${count}`}</span> : null}
+    </>
+  );
+  if (!interactive) {
+    return <span title={title} style={base}>{inner}</span>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="lokai-pressable"
+      style={{ ...base, border: 'none', cursor: 'pointer', minHeight: 24 }}
+    >
+      {inner}
+    </button>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * AttachmentChip — a pending attachment as a removable token
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Sits in the composer's tray: what will be sent, reviewable and removable
+ * BEFORE it commits — the same review-before-commit contract the voice
+ * transcript and the demand notice follow.
+ */
+export function AttachmentChip({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        background: T.sunken, border: `1px solid ${T.hairline}`,
+        borderRadius: LAYOUT.radius.pill,
+        padding: '4px 6px 4px 10px',
+        maxWidth: '100%',
+      }}
+    >
+      <Text role="caption" measured={false} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+        {label}
+      </Text>
+      <button
+        type="button"
+        aria-label={`Remove ${label}`}
+        onClick={onRemove}
+        className="lokai-pressable"
+        style={{
+          width: 20, height: 20, borderRadius: LAYOUT.radius.full,
+          border: 'none', background: 'transparent', color: T.inkFaint,
+          cursor: 'pointer', display: 'grid', placeItems: 'center',
+          fontSize: 13, lineHeight: 1, padding: 0, flexShrink: 0,
+        }}
+      >
+        ×
+      </button>
+    </span>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
  * Icons
  *
  * One library: **Phosphor** (`@phosphor-icons/react`), replacing Lucide.

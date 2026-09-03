@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IconCheck, IconFile } from '../../ui/icons';
 import {
   Stack, Row, Rule, Card, HairlineList, HairlineRow,
-  Text, Label, Amount, Badge,
+  Text, Label, Amount, Badge, CitationChip, shortStatuteLabel,
   T, S, LAYOUT, SHADOW, ICON, useUiLanguage,
 } from '../../ui';
 import { Sheet } from '../Sheet';
@@ -67,10 +67,15 @@ function FieldRow({ field, onOpen }: { field: SurfacedField; onOpen: (clauseId: 
   return (
     <HairlineRow
       onClick={() => onOpen(field.clauseId)}
+      /* The citation as a section-first chip (CitationChip, non-interactive —
+         the row is the tap target and buttons do not nest). Full authority in
+         the title; the row's tap does the clause correspondence. */
       trailing={
-        <Text role="meta" tone="attest" measured={false} numeric style={{ letterSpacing: 'normal', textTransform: 'none', whiteSpace: 'nowrap' }}>
-          {field.citation}
-        </Text>
+        <CitationChip
+          interactive={false}
+          label={shortStatuteLabel(field.citation)}
+          title={field.citation}
+        />
       }
     >
       {field.isAmount

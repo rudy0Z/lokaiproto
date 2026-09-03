@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Bell, CaretRight, GlobeSimple, Moon, ShieldCheck, UserCircle } from '@phosphor-icons/react';
 import {
   Stack, Row, HairlineList, HairlineRow,
-  Text, Label, Button, T, S, LAYOUT, ICON, ICON_WEIGHT, useSystemStyles,
+  Text, Label, Button, Switch, T, S, LAYOUT, ICON, ICON_WEIGHT, useSystemStyles,
 } from '../../ui';
 import { MobileRouteCanvas } from './MobileHome';
 import { AppScreen } from '../../components/mobile/AppScreen';
@@ -26,30 +26,6 @@ import { useConversations } from '../../context/ConversationContext';
  *  - five cards total → zero. Settings are hairline rows; the one focal move is
  *    the human-help primary.
  */
-
-/** A small theme-safe switch. */
-function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={onToggle}
-      style={{
-        width: 44, height: 24, borderRadius: LAYOUT.radius.pill,
-        background: on ? T.anchor : T.hairlineFirm,
-        border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0,
-        transition: 'background 0.2s ease',
-      }}
-    >
-      <span style={{
-        position: 'absolute', top: 2, left: on ? 22 : 2,
-        width: 20, height: 20, borderRadius: LAYOUT.radius.full,
-        background: T.raised, transition: 'left 0.2s ease',
-      }} />
-    </button>
-  );
-}
 
 const chevron = <CaretRight size={ICON.inline} weight={ICON_WEIGHT} color="var(--role-ink-faint)" />;
 
@@ -111,7 +87,7 @@ function ProfileArtboard() {
           </HairlineRow>
           <HairlineRow
             leading={<Bell size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
-            trailing={<Toggle on={notificationsOn} onToggle={() => setNotificationsOn(v => !v)} />}
+            trailing={<Switch on={notificationsOn} onToggle={() => setNotificationsOn(v => !v)} label="Notifications" />}
           >
             <Text role="bodyStrong" measured={false}>Notifications</Text>
           </HairlineRow>

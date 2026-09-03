@@ -23,6 +23,11 @@ export {
   IconButton,
   Badge,
   Field,
+  Textarea,
+  Switch,
+  CitationChip,
+  shortStatuteLabel,
+  AttachmentChip,
   ICON,
   ICON_STROKE,
   ICON_WEIGHT,
@@ -32,7 +37,7 @@ export {
   useInk,
   useSystemStyles,
 } from './primitives';
-export type { ScreenTone, TextProps, TextTone, ButtonProps, FieldProps } from './primitives';
+export type { ScreenTone, TextProps, TextTone, ButtonProps, FieldProps, TextareaProps } from './primitives';
 
 export {
   Screen,
@@ -52,6 +57,7 @@ export {
   staggerDelay,
   WorkingDots,
   ShimmerLine,
+  Skeleton,
   StageTransition,
   NumberTicker,
   useHaptic,
