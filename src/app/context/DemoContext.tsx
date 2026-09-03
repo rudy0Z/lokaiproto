@@ -94,6 +94,9 @@ interface DemoContextValue {
   runPreparedConversation: (input: string) => Promise<ResponseTurn>;
   /** The user answered the clarify turn: short progress → the mapped follow-up. */
   resolveClarify: (nextTurnId: string) => Promise<ResponseTurn>;
+  /** New conversation: clears the active turn and re-arms the clarify middle,
+      so a fresh chat runs the full arc again (one matter, one clarify). */
+  resetConversation: () => void;
   /** Jump straight to scenario's primary turn (with progress) */
   runScenario: (scenarioId?: string) => Promise<ResponseTurn>;
 }
@@ -267,6 +270,16 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     return finishTurn(turn);
   }, [scenarioId, language, selectScenario, finishTurn]);
 
+  const resetConversation = useCallback(() => {
+    clarifyAnsweredRef.current = false;
+    setActiveTurn(null);
+    setIsProgressing(false);
+    setProgressIndex(-1);
+    setProgressLabel(null);
+    setDraftApprovedState(false);
+    addAuditEvent('New conversation started — clarify middle re-armed');
+  }, [addAuditEvent]);
+
   const skipProgress = useCallback(() => {
     progressRef.current?.skip();
   }, []);
@@ -318,13 +331,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     runPreparedInput,
     runPreparedConversation,
     resolveClarify,
+    resetConversation,
     runScenario,
   }), [
     scenarioId, scenario, selectScenario, language, stage, facts,
     confirmFact, correctFact, draftApproved, setDraftApproved, draftAllowed, selectedTermId,
     openTerm, closeTerm, auditEvents, addAuditEvent, activeTurn, legacyResponse,
     progressIndex, progressLabel, isProgressing, skipProgress, replayProgress,
-    runPreparedInput, runPreparedConversation, resolveClarify, runScenario,
+    runPreparedInput, runPreparedConversation, resolveClarify, resetConversation, runScenario,
   ]);
 
   return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;

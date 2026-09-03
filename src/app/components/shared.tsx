@@ -493,7 +493,8 @@ const SHARED_ANIM_CSS = `
 }
 .lokai-composer-shell:focus-within {
   border-color: ${C.borderFocus} !important;
-  box-shadow: 0 0 0 3px rgba(16,42,76,0.12), ${SHADOW.sm} !important;
+  /* Role tint, not a raw navy — the ring re-tints with the theme. */
+  box-shadow: 0 0 0 3px var(--role-anchor-tint) !important;
 }
 .lokai-disclose {
   display: grid;

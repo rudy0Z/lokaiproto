@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Lifebuoy } from '@phosphor-icons/react';
 import {
   Screen, Stack, Row, Rule, Text, Label, Button, IconButton,
-  T, S, ICON, ICON_WEIGHT,
+  T, S, ICON, ICON_WEIGHT, useHaptic,
 } from '../../ui';
 import { Wordmark } from '../shared';
 import { StatusBar } from '../../pages/mobile/MobileHome';
@@ -42,6 +42,7 @@ export function MobileStopScreen({
   onBack: () => void;
 }) {
   const absolute = failure.riskLevel === 'human_required';
+  const haptic = useHaptic();
 
   return (
     <Screen
@@ -50,7 +51,7 @@ export function MobileStopScreen({
         <>
           <StatusBar light />
           <Row justify="between" align="center" style={{ padding: `${S[2]} ${S[4]}`, flexShrink: 0 }}>
-            <IconButton label="Back" onClick={onBack}>
+            <IconButton label="Back" onClick={() => { haptic(); onBack(); }}>
               <ArrowLeft size={ICON.row} weight={ICON_WEIGHT} color={T.stopInk} />
             </IconButton>
             <Wordmark size={18} color={T.stopInk} />
@@ -61,11 +62,11 @@ export function MobileStopScreen({
       context={<Text role="meta" tone="faint">Stopped · your case is safe</Text>}
       action={
         <Stack gap={2}>
-          <Button icon={<Lifebuoy size={ICON.ui} weight={ICON_WEIGHT} />} onClick={onSafeAction}>
+          <Button icon={<Lifebuoy size={ICON.ui} weight={ICON_WEIGHT} />} onClick={() => { haptic(); onSafeAction(); }}>
             {failure.nextAction}
           </Button>
           {!absolute && onContinue && (
-            <Button variant="quiet" onClick={onContinue}>Continue anyway</Button>
+            <Button variant="quiet" onClick={() => { haptic(); onContinue(); }}>Continue anyway</Button>
           )}
         </Stack>
       }

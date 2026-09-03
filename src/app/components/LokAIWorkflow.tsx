@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { ArrowRight, Check, Copy, FileText, Pencil, Printer, ShieldCheck, X } from 'lucide-react';
+import { IconArrowRight, IconCheck, IconClose, IconCopy, IconFile, IconPencil, IconPrint, IconShield } from '../ui/icons';
 import { C, LAYOUT, MONO, S, SANS, SERIF, SHADOW, TYPE, typeStyle } from './shared';
 import { Sheet } from './Sheet';
 import type {
@@ -20,7 +20,7 @@ import {
   RISK_VIEW,
   SOURCE_COVERAGE_VIEW,
 } from '../data/statusVocabulary';
-import { Badge, Button, Stack } from '../ui';
+import { Badge, Button, Stack, useHaptic } from '../ui';
 
 const CSS = `
   @keyframes lokaiProgressIn {
@@ -139,7 +139,7 @@ export function LokAIProgressList({ items }: { items: string[] }) {
               justifyContent: 'center',
             }}>
               {index < items.length - 1 ? (
-                <Check size={11} color={C.green} strokeWidth={2.4} />
+                <IconCheck size={11} color={C.green} />
               ) : (
                 <span style={{ width: 5, height: 5, borderRadius: LAYOUT.radius.full, background: C.saffron }} />
               )}
@@ -343,7 +343,7 @@ export function LokAISourceDrawer({
               justifyContent: 'center',
             }}
           >
-            <X size={17} color={C.inkSoft} />
+            <IconClose size={17} color={C.inkSoft} />
           </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -382,7 +382,7 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
       justifyContent: 'center',
       marginTop: 1,
     }}>
-      {step.status === 'done' ? <Check size={13} /> : index + 1}
+      {step.status === 'done' ? <IconCheck size={13} /> : index + 1}
     </div>
   );
 }
@@ -465,7 +465,7 @@ export function WorkflowActionPlan({
                   <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
                     <Button
                       size="md"
-                      icon={<Check size={13} />}
+                      icon={<IconCheck size={13} />}
                       onClick={() => markDone(step.id)}
                     >
                       Mark done
@@ -481,7 +481,7 @@ export function WorkflowActionPlan({
                   <Button
                     variant="quiet"
                     size="md"
-                    iconAfter={<ArrowRight size={13} />}
+                    iconAfter={<IconArrowRight size={13} />}
                     onClick={onPacket}
                     style={{ marginTop: 8, alignSelf: 'flex-start' }}
                   >
@@ -632,6 +632,7 @@ export function VerificationScratchpad({
      here. Now `facts` IS the state: confirm/fix call up to DemoContext, which
      re-renders this with the fact settled. Only the edit UI (which row, the
      draft text) is local, because that genuinely belongs to this component. */
+  const haptic = useHaptic();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
 
@@ -639,6 +640,9 @@ export function VerificationScratchpad({
   const allConfirmed = confirmedCount === facts.length;
 
   const confirm = (id: string) => {
+    /* The tick lands with the SETTLE, not the tap: a fact leaving the flagged
+       state is the moment the user's ownership got real. */
+    haptic();
     onFactConfirm?.(id);
   };
 
@@ -744,8 +748,8 @@ export function VerificationScratchpad({
                           fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted,
                         }}
                       >
-                        <Check size={15} color={C.green} strokeWidth={2.6} />
-                        <Pencil size={12} color={C.muted} />
+                        <IconCheck size={15} color={C.green} />
+                        <IconPencil size={12} color={C.muted} />
                       </button>
                     )
                   )}
@@ -763,7 +767,7 @@ export function VerificationScratchpad({
                     <div style={{ display: 'flex', gap: 7, marginTop: fact.hint ? 0 : 10 }}>
                       <Button
                         size="md"
-                        icon={<Check size={13} />}
+                        icon={<IconCheck size={13} />}
                         onClick={() => confirm(fact.id)}
                       >
                         It's correct
@@ -793,7 +797,7 @@ export function VerificationScratchpad({
       <Button
         onClick={allConfirmed ? onConfirmed : undefined}
         disabled={!allConfirmed}
-        iconAfter={allConfirmed ? <ArrowRight size={16} /> : undefined}
+        iconAfter={allConfirmed ? <IconArrowRight size={16} /> : undefined}
       >
         {allConfirmed ? 'Build my assessment' : `Confirm ${remaining} more to continue`}
       </Button>
@@ -823,6 +827,7 @@ export function ReviewGate({
 }) {
   const [reviewed, setReviewed] = useState(approved);
   const [copied, setCopied] = useState(false);
+  const haptic = useHaptic();
 
   React.useEffect(() => {
     setReviewed(approved);
@@ -831,6 +836,8 @@ export function ReviewGate({
   const toggleReviewed = () => {
     const next = !reviewed;
     setReviewed(next);
+    /* The unlock moment: the export actions come alive in the user's hand. */
+    if (next) haptic();
     onApprove?.(next);
   };
 
@@ -853,7 +860,7 @@ export function ReviewGate({
     >
       <style>{CSS}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <ShieldCheck size={16} color={C.oxblood} />
+        <IconShield size={16} color={C.oxblood} />
         <SmallLabel>Review before this leaves your hands</SmallLabel>
       </div>
       <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 7px' }}>
@@ -897,7 +904,7 @@ export function ReviewGate({
           justifyContent: 'center',
           transition: 'background 0.16s ease, border-color 0.16s ease',
         }}>
-          {reviewed && <Check size={13} color="var(--role-on-anchor)" strokeWidth={3} />}
+          {reviewed && <IconCheck size={13} color="var(--role-on-anchor)" />}
         </span>
         <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink }}>
           I've read the details and I'm ready to send it myself.
@@ -910,7 +917,7 @@ export function ReviewGate({
         <Button
           onClick={reviewed ? handleCopy : undefined}
           disabled={!reviewed}
-          icon={copied ? <Check size={15} /> : <Copy size={14} />}
+          icon={copied ? <IconCheck size={15} /> : <IconCopy size={14} />}
         >
           {copied ? 'Copied' : 'Copy draft'}
         </Button>
@@ -918,7 +925,7 @@ export function ReviewGate({
           variant="quiet"
           onClick={reviewed ? onPrint : undefined}
           disabled={!reviewed}
-          icon={<Printer size={14} />}
+          icon={<IconPrint size={14} />}
         >
           Print
         </Button>
@@ -1032,7 +1039,7 @@ export function FirstActionChecklist({
                   fontWeight: 800,
                   color: on ? 'var(--role-on-anchor)' : C.muted,
                 }}>
-                  {on ? <Check size={13} color="var(--role-on-anchor)" strokeWidth={3} /> : i + 1}
+                  {on ? <IconCheck size={13} color="var(--role-on-anchor)" /> : i + 1}
                 </span>
                 <span>
                   <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, display: 'block' }}>
@@ -1101,7 +1108,7 @@ export function StopState({
         display: 'inline-flex', alignItems: 'center', gap: 7,
         ...typeStyle('label', { color: needsHuman ? '#F3B0A2' : '#F2C79A' }),
       }}>
-        <ShieldCheck size={14} />
+        <IconShield size={14} />
         {needsHuman ? 'LokAI is stopping here' : 'LokAI paused'}
       </span>
 
@@ -1138,7 +1145,7 @@ export function StopState({
           }}
         >
           {actionLabel}
-          <ArrowRight size={16} />
+          <IconArrowRight size={16} />
         </button>
       )}
     </div>
@@ -1192,7 +1199,7 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
       {!isRisky && assessment.suggestedReply && onPrepareReply && (
         <Button
           onClick={onPrepareReply}
-          iconAfter={<ArrowRight size={14} />}
+          iconAfter={<IconArrowRight size={14} />}
           style={{ marginTop: 4 }}
         >
           Prepare a reply
@@ -1214,7 +1221,7 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
       <div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...typeStyle('label', { color: C.oxblood }) }}>
-          <ShieldCheck size={14} />
+          <IconShield size={14} />
           Professional guidance recommended
         </span>
         <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '8px 0 0' }}>
@@ -1232,7 +1239,7 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
         </p>
         {['Issue summary', 'Evidence collected', 'Sources checked', 'Draft packet'].map(item => (
           <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <Check size={14} color={C.green} strokeWidth={2.4} />
+            <IconCheck size={14} color={C.green} />
             <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.ink }}>{item}</span>
           </div>
         ))}
@@ -1263,7 +1270,7 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
               justifyContent: 'center',
               marginTop: 1,
             }}>
-              <FileText size={12} color={C.navy} />
+              <IconFile size={12} color={C.navy} />
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>

@@ -228,10 +228,10 @@ scripts render in **Noto Sans Devanagari / Tamil**, selected per-script by
 `ui/script.ts` — the multilingual thesis is a property of the type system, and the
 Latin-sans swap did not touch it (Hanken handles Latin; Noto handles Indic).
 
-**Icons.** One library: **Phosphor** (`@phosphor-icons/react`), replacing Lucide
-(the Feather-derived AI default). Pass `size={ICON.*}` and `weight={ICON_WEIGHT}`
-(Phosphor uses a weight, not a strokeWidth). `ICON_WEIGHT` is `regular` — calm and
-editorial, right for a legal register.
+**Icons.** Three tiers, each with a reason — do not mix within a tier:
+1. **Bespoke SVG glyphs** for the three highest-touch controls (composer mic/send/attach): hand-drawn at one stroke weight, in `ai/Turn.tsx`. Stock glyphs read heavier beside them.
+2. **`ui/icons.tsx`** (`@animateicons/react`, aliased to app-semantic names like `IconMenu`/`IconCheck`) for **chrome and system gestures** — nav, rows, drawer, sheet affordances. Animated on hover/focus via `motion/react`; props are `size`, `color`, `isAnimated`, `duration` (NO `strokeWidth` — the set ships one weight). All Lucide/Phosphor imports in mobile screens migrated here (Phase 8).
+3. **Phosphor** (`regular` weight, `ICON_WEIGHT`) for **inline content icons** — state glyphs inside turns, evidence rows, status labels. Static on purpose: animation inside reading content competes with the words.
 
 **Elevation — contact shadows, and "border OR shadow, never both".** A surface is
 either a flat outlined plane (a hairline, no shadow) or a physical object resting on

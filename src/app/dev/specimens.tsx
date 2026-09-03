@@ -1,5 +1,5 @@
 import React from 'react';
-import { GroundingMeter, ReviewGate, VerificationScratchpad } from '../components/LokAIWorkflow';
+import { GroundingMeter, ReviewGate, VerificationScratchpad, WorkflowActionPlan } from '../components/LokAIWorkflow';
 import { Turn } from '../components/ai/Turn';
 import { C, MONO, TYPE, VoiceOrb } from '../components/shared';
 import { VoiceFactChips } from '../components/mobile/VoiceFactChips';
@@ -219,6 +219,28 @@ export const SPECIMENS: Specimen[] = [
           <Button variant="quiet" size="md" style={{ alignSelf: 'flex-start' }}>Type instead</Button>
         </Row>
       </Stack>
+    ),
+  },
+
+  {
+    id: 'living-action-plan',
+    label: 'Living action plan (interactive)',
+    group: 'Trust',
+    note: 'Steps mutate live: Mark done advances the plan, I\'m blocked spawns the adaptive reroute — the plan absorbs reality instead of scolding you.',
+    source: 'Mobile · case plan stage, and the plan tool sheet in chat',
+    width: MOBILE_CONTENT_WIDTH,
+    render: () => (
+      <div style={{ padding: 16 }}>
+        <WorkflowActionPlan
+          steps={[
+            { id: 'notice', title: 'Send the demand notice', description: 'By registered post with acknowledgement due — keep the postal receipt.', status: 'done' },
+            { id: 'wait', title: 'Wait out the seller\'s response window', description: '15 days from delivery of the notice. LokAI does not track this for you.', status: 'current' },
+            { id: 'file', title: 'File before the District Commission', description: 'e-Daakhil online, or the divisional office — within two years of purchase.', status: 'locked' },
+          ]}
+          interactive
+          onPacket={() => {}}
+        />
+      </div>
     ),
   },
 

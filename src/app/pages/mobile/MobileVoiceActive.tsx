@@ -5,7 +5,7 @@ import { VoiceOrb } from '../../components/shared';
 import { VoiceFactChips } from '../../components/mobile/VoiceFactChips';
 import {
   Stack, Row, Text, Label, Button, IconButton, Textarea,
-  T, S, ICON, ICON_WEIGHT, useSystemStyles,
+  T, S, ICON, ICON_WEIGHT, useHaptic, useSystemStyles,
 } from '../../ui';
 import { MobileRouteCanvas } from './MobileHome';
 import { AppScreen } from '../../components/mobile/AppScreen';
@@ -33,6 +33,7 @@ export function VoiceActiveArtboard() {
   useSystemStyles();
   const navigate = useNavigate();
   const { runPreparedInput, isProgressing, progressLabel, progressIndex, skipProgress } = useDemo();
+  const haptic = useHaptic();
   const voice = useVoiceCapture({ initialPhase: 'intent' });
   const [answer, setAnswer] = useState<ResponseTurn | null>(null);
   const phase = voice.phase;
@@ -51,6 +52,8 @@ export function VoiceActiveArtboard() {
   };
 
   const confirmAndAnswer = async () => {
+    /* The commit tick: these words are now the matter input. */
+    haptic();
     voice.setPhase('answering');
     const turn = await runPreparedInput(voice.transcript);
     setAnswer(turn);

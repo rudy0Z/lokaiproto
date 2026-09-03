@@ -1,7 +1,7 @@
 {
   "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
   "measuredAt": "2026-09-03",
-  "totalDebt": 573,
+  "totalDebt": 572,
   "files": {
     "src/app/App.tsx": {
       "rawFamily": 1
@@ -75,7 +75,6 @@
       "rawLeading": 3
     },
     "src/app/pages/mobile/MobileConsumerCase.tsx": {
-      "rawColor": 1,
       "rawFamily": 42,
       "rawLeading": 21
     },

@@ -1,17 +1,16 @@
 ﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronRight, Home, MessageSquare, FileText, User, Check, ArrowRight, Circle, MapPin } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { IconArrowRight, IconCheck, IconChevronDown, IconChevronRight, IconFile } from '../../ui/icons';
 import { BrandLogo, LogoMark, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { LANGUAGE_REGISTRY, type LanguageEntry, clarifyOptionsFor, type ClarifyOption } from '../../data/languagePacks';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
 import { Composer, Turn, TurnStatus } from '../../components/ai/Turn';
-import { IconArrowRight } from '../../ui/icons';
 import { DEMO_PROGRESS_STAGES, type ResponseTurn } from '../../data/responseTurns';
 import {
   Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow, FadeRise,
-  Text, Label, Amount, Button, T, M, S, ICON, ICON_STROKE, typeStyle, useHaptic, useSystemStyles,
+  Text, Label, Amount, Button, T, M, S, ICON, typeStyle, useHaptic, useSystemStyles,
 } from '../../ui';
 import { Sheet } from '../../components/Sheet';
 import { useDemo } from '../../context/DemoContext';
@@ -112,7 +111,7 @@ export function TopNav({
           {langLabel}
         </span>
         {showDropdown && (
-          <ChevronDown style={{ width: '11px', height: '11px', color: C.navy }} />
+          <IconChevronDown style={{ width: '11px', height: '11px', color: C.navy }} />
         )}
       </button>
     </div>
@@ -328,7 +327,7 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
               >
                 {isSel && (
                   <div style={{ position: 'absolute', top: '5px', right: '5px', width: '14px', height: '14px', borderRadius: LAYOUT.radius.full, background: C.navy, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Check style={{ width: '8px', height: '8px', color: 'white', strokeWidth: 3 }} />
+                    <IconCheck style={{ width: '8px', height: '8px', color: 'white' }} />
                   </div>
                 )}
                 <span style={{ fontFamily: scriptFont(lang.script), fontSize: TYPE.body.size, fontWeight: isSel ? 600 : 500, color: isSel ? C.navy : C.ink }}>{lang.native}</span>
@@ -442,14 +441,14 @@ function ConsumerCaseStart() {
           background: T.anchorTint, color: T.anchor,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <FileText size={ICON.feature} strokeWidth={ICON_STROKE} />
+          <IconFile size={ICON.feature} />
         </span>
         <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
           <Label>Guided case</Label>
           <Text role="title" measured={false}>Start Consumer Refund Case</Text>
           <Text role="caption" tone="quiet" measured={false}>Step-by-step help for a defective product or refund refusal.</Text>
         </Stack>
-        <ArrowRight size={ICON.ui} strokeWidth={ICON_STROKE} color="var(--role-anchor)" />
+        <IconArrowRight size={ICON.ui} color="var(--role-anchor)" />
       </Row>
     </Card>
   );
@@ -562,17 +561,17 @@ function AuditLine({ claims, onOpen }: { claims: { grounded: number; total: numb
         cursor: 'pointer', textAlign: 'left', width: '100%',
       }}
     >
-      <Check size={14} color="var(--role-ok)" style={{ flexShrink: 0 }} />
+      <IconCheck size={14} color="var(--role-ok)" style={{ flexShrink: 0 }} />
       <Text role="caption" tone="quiet" measured={false} style={{ flex: 1 }}>
         Checked the Consumer Protection Act, 2019 · {claims.grounded} of {claims.total} claims trace to a source
       </Text>
-      <ChevronRight size={13} color="var(--role-ink-faint)" style={{ flexShrink: 0 }} />
+      <IconChevronRight size={13} color="var(--role-ink-faint)" style={{ flexShrink: 0 }} />
     </button>
   );
 }
 
 /** The tappable answers under a clarify turn — tap one, or type instead. */
-function ClarifyOptions({ options, onAnswer }: { options: ClarifyOption[]; onAnswer: (option: ClarifyOption) => void }) {
+function ClarifyOptions({ options, onAnswer, disabled = false }: { options: ClarifyOption[]; onAnswer: (option: ClarifyOption) => void; disabled?: boolean }) {
   return (
     <Stack gap={2}>
       <Row gap={2} wrap>
@@ -580,17 +579,19 @@ function ClarifyOptions({ options, onAnswer }: { options: ClarifyOption[]; onAns
           <button
             key={opt.nextTurnId}
             type="button"
-            className="lokai-pressable"
+            className={disabled ? undefined : 'lokai-pressable'}
+            disabled={disabled}
             onClick={() => onAnswer(opt)}
             style={{
               ...typeStyle('small'),
               fontWeight: 600,
-              color: T.anchor,
+              color: disabled ? T.inkFaint : T.anchor,
               background: T.raised,
               border: `1px solid ${T.hairline}`,
               borderRadius: LAYOUT.radius.pill,
               padding: '9px 16px',
-              cursor: 'pointer',
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              opacity: disabled ? 0.6 : 1,
             }}
           >
             {opt.label}
@@ -620,8 +621,8 @@ export function HomeArtboard() {
   const haptic = useHaptic();
   const { selectedLanguage } = useConversations();
   const {
-    runPreparedConversation, resolveClarify,
-    progressLabel, progressIndex, skipProgress,
+    runPreparedConversation, resolveClarify, resetConversation,
+    progressLabel, progressIndex, skipProgress, isProgressing,
     facts, confirmFact, correctFact, addAuditEvent,
     draftApproved, setDraftApproved, draftAllowed,
     language,
@@ -752,7 +753,7 @@ export function HomeArtboard() {
       case 'note':
         return (
           <Row gap={2} align="flex-start">
-            <Check size={14} color="var(--role-ok)" style={{ flexShrink: 0, paddingTop: 2 }} />
+            <IconCheck size={14} color="var(--role-ok)" style={{ flexShrink: 0, paddingTop: 2 }} />
             <Text role="caption" tone="quiet" measured={false}>{item.text}</Text>
           </Row>
         );
@@ -760,7 +761,7 @@ export function HomeArtboard() {
         return (
           <Stack gap={2}>
             <Turn turn={item.turn} />
-            <ClarifyOptions options={item.options} onAnswer={answerClarify} />
+            <ClarifyOptions options={item.options} onAnswer={answerClarify} disabled={isProgressing} />
           </Stack>
         );
       default:
@@ -801,14 +802,19 @@ export function HomeArtboard() {
               </button>
             </Row>
           )}
-          <Composer compact placeholder="Describe what happened…" onSubmit={send} />
+          {/* Locked while a working beat is in flight — a second send would
+             clobber the progress controller and fork the stream. */}
+          <Composer compact placeholder="Describe what happened…" onSubmit={send} disabled={isProgressing} />
         </Stack>
       }
       scrollClearance={M.zoneGap}
       scrollViewportRef={viewportRef}
       showWordmark={false}
       showNewChat={!empty}
-      onNewChat={() => setItems([])}
+      onNewChat={() => {
+        setItems([]);
+        resetConversation();
+      }}
     >
       {empty ? (
         <>
@@ -877,8 +883,19 @@ export function HomeArtboard() {
           {tool === 'packet' && (
             <>
               <AutonomyDial value={autonomy} onChange={setAutonomy} />
-              {autonomy === 'guide' ? (
-                <GuideOnlyCard packet={workflow.filingPacket} />
+              {/* The stop rule travels with the matter: if the latest answer was
+                 a stop (draftAllowed=false), drafting is locked no matter what
+                 the dial says — the refusal outranks the preference. */}
+              {autonomy === 'guide' || !draftAllowed ? (
+                <>
+                  {!draftAllowed && autonomy !== 'guide' && (
+                    <Text role="caption" tone="quiet" measured={false}>
+                      Drafting is locked for this matter right now — LokAI's last answer
+                      stopped here. Escalate or ask a question it can answer first.
+                    </Text>
+                  )}
+                  <GuideOnlyCard packet={workflow.filingPacket} />
+                </>
               ) : !previewApproved ? (
                 <IntentPreviewCard
                   packet={workflow.filingPacket}

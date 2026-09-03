@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { useReducedMotion } from 'motion/react';
 import { IconFile, IconImage, IconAttach } from '../../ui/icons';
 import {
-  Stack, Row, Text, Button, IconButton, HairlineList, HairlineRow,
+  Stack, Row, Text, Button, Card, Skeleton, HairlineList, HairlineRow,
   T, S, LAYOUT, ICON, useSystemStyles,
 } from '../../ui';
 import { LogoMark } from '../../components/shared';
@@ -222,7 +222,28 @@ function NoticeArtboard() {
               case 'doc':
                 return <DocumentBubble key={item.id} doc={item.doc} />;
               case 'status':
-                return <TurnStatus key={item.id} label="Reading the document…" />;
+                /* What's arriving is a DOCUMENT, so the placeholder is a page
+                   taking shape — a content-shaped skeleton (audit D3), not a
+                   spinner. */
+                return (
+                  <Stack key={item.id} gap={2}>
+                    <TurnStatus label="Reading the document…" />
+                    <Card>
+                      <Stack gap={2}>
+                        <Row gap={2} align="center">
+                          <Skeleton width={40} height={40} radius={LAYOUT.radius.panel} />
+                          <Stack gap={1} style={{ flex: 1 }}>
+                            <Skeleton width="60%" height={10} />
+                            <Skeleton width="35%" height={8} />
+                          </Stack>
+                        </Row>
+                        <Skeleton height={12} />
+                        <Skeleton height={12} width="88%" />
+                        <Skeleton height={12} width="72%" />
+                      </Stack>
+                    </Card>
+                  </Stack>
+                );
               case 'notice':
                 return (
                   <NoticeInterpretTurn

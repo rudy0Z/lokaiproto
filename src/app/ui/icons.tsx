@@ -41,4 +41,6 @@ export {
   MicIcon as IconMic,
   InfoIcon as IconInfo,
   CopyIcon as IconCopy,
+  PrinterIcon as IconPrint,
+  PencilIcon as IconPencil,
 } from '@animateicons/react/lucide';
