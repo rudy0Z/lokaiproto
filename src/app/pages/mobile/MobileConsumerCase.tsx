@@ -207,7 +207,7 @@ function PrimaryButton({ children, onClick, disabled }: { children: React.ReactN
         borderRadius: LAYOUT.radius.panel,
         border: 'none',
         background: disabled ? C.border : C.navy,
-        color: disabled ? C.muted : '#FFFFFF',
+        color: disabled ? C.muted : 'var(--role-on-anchor)',
         fontFamily: SANS,
         fontSize: TYPE.body.size,
         fontWeight: 800,
