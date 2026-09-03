@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 // ─── Font constants ───────────────────────────────────────────────────────────
 export const EDITORIAL = '"Fraunces Variable", "Fraunces", Georgia, serif';
@@ -610,10 +610,16 @@ export function VoiceOrb({
   size  = 52,
   state = 'idle',
   onClick,
+  live = false,
 }: {
   size?:    number;
   state?:   VoiceOrbState;
   onClick?: () => void;
+  /** While listening, the level bars follow a simulated amplitude envelope
+   *  instead of a uniform loop — the demo requests no microphone, so the
+   *  envelope is choreographed over the prepared sample, and the honesty
+   *  line on the voice screen says so. */
+  live?: boolean;
 }) {
   useEffect(() => { injectSharedStyles(); }, []);
   const iconSize = Math.round(size * 0.38);
@@ -659,6 +665,20 @@ export function VoiceOrb({
   const isListening = state === 'listening';
   const isProcessing = state === 'processing';
   const isError = state === 'error';
+  const reduce = useReducedMotion();
+
+  /* The amplitude envelope the bars follow when `live`: a gentle random walk
+     per bar, spring-smoothed. Deliberately NOT a uniform loop — real speech
+     breathes, and the listening state is the one moment the app should feel
+     like it is hearing you. */
+  const [barLevels, setBarLevels] = useState<number[]>([0.5, 0.8, 1, 0.8, 0.5]);
+  useEffect(() => {
+    if (!live || !isListening || reduce) return;
+    const id = window.setInterval(() => {
+      setBarLevels((prev) => prev.map((v) => Math.min(1, Math.max(0.22, v + (Math.random() - 0.5) * 0.5))));
+    }, 130);
+    return () => window.clearInterval(id);
+  }, [live, isListening, reduce]);
 
   const surface = isListening
     ? C.saffron
@@ -750,13 +770,28 @@ export function VoiceOrb({
               style={{ display: 'flex', alignItems: 'center', gap: '3px', position: 'relative', zIndex: 1 }}
             >
               {barHeights.map((h, i) => (
-                <span key={i} style={{
-                  width: '3px', height: `${h}px`,
-                  background: 'rgba(255,255,255,0.9)',
-                  borderRadius: LAYOUT.radius.xs,
-                  transformOrigin: 'center bottom',
-                  animation: `lokaiBarBounce ${0.5 + i * 0.12}s ease-in-out ${i * 0.1}s infinite`,
-                }} />
+                live && !reduce ? (
+                  <motion.span
+                    key={i}
+                    style={{
+                      width: '3px', height: `${h}px`,
+                      background: 'rgba(255,255,255,0.9)',
+                      borderRadius: LAYOUT.radius.xs,
+                      transformOrigin: 'center',
+                      display: 'block',
+                    }}
+                    animate={{ scaleY: barLevels[i] ?? 0.6 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 16 }}
+                  />
+                ) : (
+                  <span key={i} style={{
+                    width: '3px', height: `${h}px`,
+                    background: 'rgba(255,255,255,0.9)',
+                    borderRadius: LAYOUT.radius.xs,
+                    transformOrigin: 'center bottom',
+                    animation: `lokaiBarBounce ${0.5 + i * 0.12}s ease-in-out ${i * 0.1}s infinite`,
+                  }} />
+                )
               ))}
             </motion.span>
           ) : isError ? (

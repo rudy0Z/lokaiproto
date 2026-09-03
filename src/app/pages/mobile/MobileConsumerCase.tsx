@@ -3,7 +3,9 @@ import { ArrowLeft, ArrowRight, BellRinging, Camera, Compass, FileText, Micropho
 import { IconChevronRight } from '../../ui/icons';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, PLANE, S, SANS, SERIF, SHADOW, TYPE, VoiceOrb, typeStyle } from '../../components/shared';
-import { Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rule, Stack, StageTransition, Text } from '../../ui';
+import { Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rule, Stack, StageTransition, Text, Textarea } from '../../ui';
+import { VoiceFactChips } from '../../components/mobile/VoiceFactChips';
+import { extractEntities } from '../../hooks/useVoiceCapture';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
 import { BottomNav, HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
@@ -226,6 +228,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<IntakeModality | null>(null);
   const voice = useVoiceCapture({ initialPhase: 'idle' });
+  const intakeTranscriptRef = useRef<HTMLTextAreaElement>(null);
 
   const tiles: { id: IntakeModality; label: string; Icon: typeof FileText }[] = [
     { id: 'text', label: 'Prepared text', Icon: FileText },
@@ -321,7 +324,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
           }}>
             {(voice.phase === 'listening' || voice.phase === 'transcribing') && (
               <>
-                <VoiceOrb size={64} state={voice.phase === 'listening' ? 'listening' : 'processing'} />
+                <VoiceOrb size={64} state={voice.phase === 'listening' ? 'listening' : 'processing'} live />
                 <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, margin: 0, textAlign: 'center' }}>
                   {voice.phase === 'listening'
                     ? 'Playing the prepared voice example…'
@@ -346,22 +349,28 @@ function IntakeView({ onNext }: { onNext: () => void }) {
               <div style={{ width: '100%' }}>
                 {/* The transcript is editable *before* it becomes the matter
                     input — the verification gate applied to speech. Losing
-                    this would make voice just another way to be misheard. */}
-                <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: '0 0 6px' }}>
+                    this would make voice just another way to be misheard.
+                    The chips are what the words contain; tapping one selects
+                    its words below. */}
+                <VoiceFactChips
+                  entities={extractEntities(voice.transcript)}
+                  onJump={(entity) => {
+                    const el = intakeTranscriptRef.current;
+                    if (!el) return;
+                    const idx = el.value.toLowerCase().indexOf(entity.value.toLowerCase());
+                    el.focus();
+                    if (idx >= 0) el.setSelectionRange(idx, idx + entity.value.length);
+                  }}
+                />
+                <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: '10px 0 6px' }}>
                   Check this is what you meant, then continue.
                 </p>
-                <textarea
+                <Textarea
+                  ref={intakeTranscriptRef}
                   value={voice.transcript}
                   onChange={(e) => voice.setTranscript(e.target.value)}
                   rows={3}
                   aria-label="Voice transcript"
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    borderRadius: LAYOUT.radius.panel,
-                    border: `1px solid ${C.border}`, padding: 10,
-                    fontFamily: SANS, fontSize: TYPE.body.size, lineHeight: 1.5,
-                    color: C.ink, background: C.surface, resize: 'vertical',
-                  }}
                 />
               </div>
             )}

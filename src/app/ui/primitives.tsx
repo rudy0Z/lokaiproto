@@ -435,35 +435,38 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
   invalid?: boolean;
 }
 
-export function Textarea({ invalid = false, rows = 4, style, ...rest }: TextareaProps) {
-  useLokaiSharedStyles();
-  const activeLang = useUiLanguage();
-  const sp = scriptProps(activeLang);
-  return (
-    <textarea
-      {...rest}
-      rows={rows}
-      {...(sp.lang ? { lang: sp.lang } : {})}
-      className={`lokai-input-field ${rest.className ?? ''}`}
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        fontFamily: SANS,
-        fontSize: TYPE.body.size,
-        lineHeight: 1.55,
-        color: T.ink,
-        padding: S[3],
-        background: rest.disabled ? T.sunken : T.raised,
-        border: `1.5px solid ${invalid ? T.halt : T.hairline}`,
-        borderRadius: LAYOUT.radius.control,
-        outline: 'none',
-        resize: 'vertical',
-        ...sp.style,
-        ...style,
-      }}
-    />
-  );
-}
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  function Textarea({ invalid = false, rows = 4, style, ...rest }, ref) {
+    useLokaiSharedStyles();
+    const activeLang = useUiLanguage();
+    const sp = scriptProps(activeLang);
+    return (
+      <textarea
+        {...rest}
+        ref={ref}
+        rows={rows}
+        {...(sp.lang ? { lang: sp.lang } : {})}
+        className={`lokai-input-field ${rest.className ?? ''}`}
+        style={{
+          width: '100%',
+          boxSizing: 'border-box',
+          fontFamily: SANS,
+          fontSize: TYPE.body.size,
+          lineHeight: 1.55,
+          color: T.ink,
+          padding: S[3],
+          background: rest.disabled ? T.sunken : T.raised,
+          border: `1.5px solid ${invalid ? T.halt : T.hairline}`,
+          borderRadius: LAYOUT.radius.control,
+          outline: 'none',
+          resize: 'vertical',
+          ...sp.style,
+          ...style,
+        }}
+      />
+    );
+  },
+);
 
 /* ───────────────────────────────────────────────────────────────────────────
  * Switch — a binary state, on the row it belongs to

@@ -14,6 +14,43 @@ export type VoicePhase =
 export const SAMPLE_VOICE_TRANSCRIPT =
   'I bought a damaged mixer grinder for ₹8,999 and the seller refused a replacement.';
 
+export interface VoiceEntity {
+  id: string;
+  label: string;
+  value: string;
+}
+
+const PRODUCT_NOUNS =
+  /mixer grinder|mixer|pressure cooker|refrigerator|washing machine|television|smartphone|headphones|kettle/i;
+
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * What the transcript actually says, as scannable facts. Derived by pattern,
+ * honestly: no model runs in the demo, so the chips come from regexes over
+ * the user's own words (or the prepared sample's) — a chip appears only for
+ * something the transcript genuinely contains. Tapping a chip selects those
+ * exact words in the editable transcript: the facts point back at the user's
+ * own sentence, which is the whole trust argument.
+ */
+export function extractEntities(transcript: string): VoiceEntity[] {
+  const entities: VoiceEntity[] = [];
+  const amount = transcript.match(/₹\s?[\d,]+(?:\.\d{1,2})?/);
+  if (amount) entities.push({ id: 'amount', label: 'Amount', value: amount[0].replace(/\s/g, '') });
+  const product = transcript.match(PRODUCT_NOUNS);
+  if (product) entities.push({ id: 'product', label: 'Product', value: titleCase(product[0]) });
+  const defect = transcript.match(/damaged|cracked|broken|defective|dented|not working/i);
+  if (defect) entities.push({ id: 'defect', label: 'Issue', value: titleCase(defect[0]) });
+  const remedy = transcript.match(/refund|replacement|repair/i);
+  if (remedy) entities.push({ id: 'remedy', label: 'Ask', value: titleCase(remedy[0]) });
+  const date = transcript.match(/\b\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{4}\b/i)
+    ?? transcript.match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s*\d{4}\b/i);
+  if (date) entities.push({ id: 'date', label: 'Date mentioned', value: date[0] });
+  return entities;
+}
+
 export interface UseVoiceCaptureOptions {
   /** Starting phase — mobile opens on intent; desktop starts idle */
   initialPhase?: VoicePhase;
@@ -134,7 +171,7 @@ export function useVoiceCapture(options: UseVoiceCaptureOptions = {}): UseVoiceC
         setTranscript(sampleTranscript);
         onReadyRef.current?.(sampleTranscript);
         setPhase('idle');
-      }, 650);
+      }, 1100);
     }, 800);
   }, [phase, clearTimers, schedule, sampleTranscript]);
 

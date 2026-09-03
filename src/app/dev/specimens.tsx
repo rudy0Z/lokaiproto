@@ -2,8 +2,11 @@ import React from 'react';
 import { GroundingMeter, ReviewGate, VerificationScratchpad } from '../components/LokAIWorkflow';
 import { Turn } from '../components/ai/Turn';
 import { C, MONO, TYPE, VoiceOrb } from '../components/shared';
+import { VoiceFactChips } from '../components/mobile/VoiceFactChips';
+import { Stack, Row, Text, Button, Textarea } from '../ui';
 import { getTurnById } from '../data/responseTurns';
 import { getVerificationFacts } from '../data/caseWorkflow';
+import { extractEntities, SAMPLE_VOICE_TRANSCRIPT } from '../hooks/useVoiceCapture';
 import type { ResponseMode } from '../data/responseTurns';
 import type { VoiceOrbState } from '../components/shared';
 import { SystemAnswerSpecimen, SystemStopSpecimen, SystemDrawerSpecimen } from './systemSpecimen';
@@ -152,14 +155,70 @@ export const SPECIMENS: Specimen[] = [
     id: 'voice-orb-cycle',
     label: 'Voice orb states (loop)',
     group: 'Voice',
-    note: 'idle → listening → processing → error, crossfading.',
+    note: 'idle → listening → processing → error, crossfading. The listening bars follow a simulated amplitude envelope — speech breathes.',
     source: 'Mobile · voice screen and the composer mic on every mobile surface',
     width: 160,
     frames: VOICE_STATES,
     render: (frame) => (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-        <VoiceOrb size={96} state={VOICE_STATES[frame % VOICE_STATES.length]!} />
+        <VoiceOrb size={96} state={VOICE_STATES[frame % VOICE_STATES.length]!} live />
       </div>
+    ),
+  },
+
+  {
+    id: 'voice-capture',
+    label: 'Voice capture — listen → confirm (loop)',
+    group: 'Voice',
+    note: 'The prepared sample plays, then the transcript lands EDITABLE with the facts it contains. The user owns the words before the model does anything with them.',
+    source: 'Mobile · /mobile/voice — the editable-before-commit gate (confirm phase)',
+    width: MOBILE_CONTENT_WIDTH,
+    frames: ['listening', 'transcribing', 'confirm'],
+    render: (frame) => {
+      const beat = frame % 3;
+      if (beat === 0) {
+        return (
+          <Stack gap={4} align="center" style={{ padding: '36px 20px' }}>
+            <VoiceOrb size={96} state="listening" live />
+            <Text role="bodyStrong" style={{ textAlign: 'center' }}>Playing prepared voice example…</Text>
+          </Stack>
+        );
+      }
+      if (beat === 1) {
+        return (
+          <Stack gap={4} align="center" style={{ padding: '36px 20px' }}>
+            <VoiceOrb size={96} state="processing" />
+            <Text role="bodyStrong" style={{ textAlign: 'center' }}>Turning the example into text…</Text>
+          </Stack>
+        );
+      }
+      return (
+        <Stack gap={3} style={{ padding: '20px 20px 24px' }}>
+          <Text role="title">Confirm the transcript</Text>
+          <VoiceFactChips entities={extractEntities(SAMPLE_VOICE_TRANSCRIPT)} />
+          <Textarea value={SAMPLE_VOICE_TRANSCRIPT} rows={3} aria-label="Prepared transcript (specimen)" />
+          <Button>Confirm and continue</Button>
+        </Stack>
+      );
+    },
+  },
+
+  {
+    id: 'voice-unclear',
+    label: 'Voice — refuses to guess',
+    group: 'Voice',
+    note: 'Unclear audio never becomes a guess: retry, or the one-tap text escape. The refusal IS the feature.',
+    source: 'Mobile · /mobile/voice — the unclear phase',
+    width: MOBILE_CONTENT_WIDTH,
+    render: () => (
+      <Stack gap={2} style={{ padding: '20px 20px 24px' }}>
+        <Text role="lead">That sample was unclear</Text>
+        <Text tone="quiet">LokAI will not guess. Retry the sample or type the issue instead.</Text>
+        <Row gap={2} style={{ paddingTop: 4 }}>
+          <Button size="md" style={{ alignSelf: 'flex-start' }}>Retry sample voice</Button>
+          <Button variant="quiet" size="md" style={{ alignSelf: 'flex-start' }}>Type instead</Button>
+        </Row>
+      </Stack>
     ),
   },
 

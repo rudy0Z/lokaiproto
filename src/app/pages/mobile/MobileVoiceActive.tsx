@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Microphone, TextT } from '@phosphor-icons/react';
 import { VoiceOrb } from '../../components/shared';
+import { VoiceFactChips } from '../../components/mobile/VoiceFactChips';
 import {
   Stack, Row, Text, Label, Button, IconButton, Textarea,
   T, S, ICON, ICON_WEIGHT, useSystemStyles,
@@ -12,7 +13,7 @@ import { useDemo } from '../../context/DemoContext';
 import { Turn, TurnStatus } from '../../components/ai/Turn';
 import type { ResponseTurn } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
-import { useVoiceCapture } from '../../hooks/useVoiceCapture';
+import { extractEntities, useVoiceCapture, type VoiceEntity } from '../../hooks/useVoiceCapture';
 
 /**
  * Voice capture — speak instead of type, and see it caught before it commits.
@@ -35,6 +36,19 @@ export function VoiceActiveArtboard() {
   const voice = useVoiceCapture({ initialPhase: 'intent' });
   const [answer, setAnswer] = useState<ResponseTurn | null>(null);
   const phase = voice.phase;
+  const transcriptRef = useRef<HTMLTextAreaElement>(null);
+  /* Re-derived per edit so a corrected word still yields its chips. */
+  const entities = useMemo(() => extractEntities(voice.transcript), [voice.transcript]);
+
+  /* A chip selects its own words in the editable transcript — the fact points
+     back at the user's sentence instead of asserting itself. */
+  const jumpToEntity = (entity: VoiceEntity) => {
+    const el = transcriptRef.current;
+    if (!el) return;
+    const idx = el.value.toLowerCase().indexOf(entity.value.toLowerCase());
+    el.focus();
+    if (idx >= 0) el.setSelectionRange(idx, idx + entity.value.length);
+  };
 
   const confirmAndAnswer = async () => {
     voice.setPhase('answering');
@@ -95,7 +109,7 @@ export function VoiceActiveArtboard() {
 
       {(phase === 'listening' || phase === 'transcribing') && (
         <Stack gap={5} align="center" style={{ paddingTop: S[7] }}>
-          <VoiceOrb size={96} state={phase === 'listening' ? 'listening' : 'processing'} />
+          <VoiceOrb size={96} state={phase === 'listening' ? 'listening' : 'processing'} live />
           <Text role="bodyStrong" style={{ textAlign: 'center' }}>
             {phase === 'listening' ? 'Playing prepared voice example…' : 'Turning the example into text…'}
           </Text>
@@ -118,7 +132,9 @@ export function VoiceActiveArtboard() {
               Edit if needed, then confirm. This becomes the matter input.
             </Text>
           </Stack>
+          <VoiceFactChips entities={entities} onJump={jumpToEntity} />
           <Textarea
+            ref={transcriptRef}
             value={voice.transcript}
             onChange={(e) => voice.setTranscript(e.target.value)}
             rows={4}
