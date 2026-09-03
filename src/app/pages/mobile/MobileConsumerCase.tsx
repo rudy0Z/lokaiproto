@@ -160,7 +160,9 @@ function HeaderBar({
       alignItems: 'center',
       gap: 12,
       borderBottom: `1px solid ${C.border}`,
-      background: 'rgba(255,255,255,0.74)',
+      /* Translucent header background over the cream (light) / raised (dark)
+         ground — drawn from the role layer so dark mode re-paints it. */
+      background: 'color-mix(in srgb, var(--role-raised) 75%, transparent)',
     }}>
       <button
         aria-label="Back to mobile home"
@@ -170,7 +172,7 @@ function HeaderBar({
           height: 40,
           borderRadius: LAYOUT.radius.panel,
           border: `1px solid ${C.border}`,
-          background: '#FFFFFF',
+          background: 'var(--role-raised)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -315,7 +317,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
           <div style={{
             border: `1px solid ${C.border}`,
             borderRadius: LAYOUT.radius.panel,
-            background: '#F8F5EE',
+            background: 'var(--role-paper)',
             padding: 14,
             display: 'flex',
             flexDirection: 'column',
@@ -403,7 +405,7 @@ function IntakeView({ onNext }: { onNext: () => void }) {
             minHeight: 86,
             border: `1px solid ${C.border}`,
             borderRadius: LAYOUT.radius.panel,
-            background: '#F8F5EE',
+            background: 'var(--role-paper)',
             padding: 12,
             fontFamily: SANS,
             fontSize: TYPE.body.size,
@@ -616,7 +618,7 @@ export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChan
   const active = AUTONOMY_OPTIONS.find(o => o.level === value);
   return (
     <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
+      background: 'var(--role-raised)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
       padding: 14, boxShadow: SHADOW.xs, display: 'flex', flexDirection: 'column', gap: 10,
     }}>
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
@@ -663,7 +665,7 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
   const basis = packet.fields.find(f => f.id === 'basis')?.value;
   return (
     <div style={{
-      background: '#FFFFFF', border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.card,
+      background: 'var(--role-raised)', border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.card,
       padding: 18, boxShadow: SHADOW.sm, display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
@@ -694,7 +696,7 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
         <button
           onClick={onBack}
           style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: 'var(--role-raised)',
             color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
           }}
         >
@@ -718,7 +720,7 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
 export function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
   return (
     <div style={{
-      background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
+      background: 'var(--role-paper)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
       padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
@@ -775,14 +777,14 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
 
   return (
     <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`,
+      background: 'var(--role-raised)', border: `1px solid ${C.border}`,
       borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.turn}`, padding: 18, boxShadow: SHADOW.sm,
       display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <span style={{
         alignSelf: 'flex-start', fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700,
         textTransform: 'uppercase', letterSpacing: '0.06em', color: C.navy,
-        background: '#EEF2F8', borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
+        background: 'var(--role-anchor-tint)', borderRadius: LAYOUT.radius.pill, padding: '3px 9px',
       }}>
         {matter?.category ?? 'Matter'}
       </span>
@@ -795,7 +797,7 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
         not implemented for it — so it stops here instead of running you through the wrong flow.
       </p>
       {captured.length > 0 && (
-        <div style={{ background: '#F8F5EE', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.panel, padding: '11px 13px' }}>
+        <div style={{ background: 'var(--role-paper)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.panel, padding: '11px 13px' }}>
           <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
             What LokAI captured
           </p>
@@ -810,7 +812,7 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
         <button
           onClick={() => navigate('/mobile/home')}
           style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: '#FFFFFF',
+            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: 'var(--role-raised)',
             color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
           }}
         >
@@ -982,7 +984,7 @@ function CaseArtboard() {
       {selectedLanguage !== 'en' && (
         <div style={{
           margin: '10px 20px 0', padding: '8px 12px',
-          background: '#EEF2F8', border: `1px solid ${C.border}`,
+          background: 'var(--role-anchor-tint)', border: `1px solid ${C.border}`,
           borderRadius: LAYOUT.radius.control, display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <ShieldCheck size={13} color={C.navy} />
@@ -1046,7 +1048,7 @@ function CaseArtboard() {
             <>
           {isGuardrailScene && (
             <div style={{
-              background: '#EEF2F8',
+              background: 'var(--role-anchor-tint)',
               border: `1px solid ${C.border}`,
               borderRadius: LAYOUT.radius.panel,
               padding: 12,
@@ -1252,7 +1254,7 @@ function CaseArtboard() {
                   minHeight: 32,
                   borderRadius: LAYOUT.radius.pill,
                   border: `1px solid ${C.border}`,
-                  background: '#FFFFFF',
+                  background: 'var(--role-raised)',
                   color: C.muted,
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,
@@ -1283,7 +1285,7 @@ function CaseArtboard() {
                   minHeight: 32,
                   borderRadius: LAYOUT.radius.pill,
                   border: `1px solid ${C.saffron}`,
-                  background: '#FFFFFF',
+                  background: 'var(--role-raised)',
                   color: C.amber,
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,

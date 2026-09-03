@@ -28,6 +28,9 @@ interface ConversationCtx {
   // ── Language preference — shared across all screens ──────────────────────────
   selectedLanguage:   string;
   setSelectedLanguage:(lang: string) => void;
+  // ── Appearance preference — light / dark / system (mobile only) ────────────
+  appearance:         'light' | 'dark' | 'system';
+  setAppearance:      (a: 'light' | 'dark' | 'system') => void;
   // ── Per-conversation milestone tracking ──────────────────────────────────────
   markStepComplete:   (convId: string, stepId: string) => void;
   setBlocked:         (convId: string, blocked: boolean) => void;
@@ -131,6 +134,8 @@ const ConversationContext = createContext<ConversationCtx>({
   applyResponse:      () => {},
   selectedLanguage:   'en',
   setSelectedLanguage:() => {},
+  appearance:         'system',
+  setAppearance:      () => {},
   markStepComplete:   () => {},
   setBlocked:         () => {},
 });
@@ -139,6 +144,10 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
   const [conversations,    setConversations]    = useState<Conversation[]>(buildDummyConversations);
   const [activeId,         setActiveId]         = useState<string | null>('consumer');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  /* Default to the OS — `prefers-color-scheme`. The setting is held here so
+     Appearance can drive it from Profile; MobileShell reads it and sets
+     data-theme on documentElement. */
+  const [appearance,       setAppearance]       = useState<'light' | 'dark' | 'system'>('system');
 
   const getConversation = useCallback(
     (id: string) => conversations.find(c => c.id === id),
@@ -219,6 +228,7 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
       addMessage, applyResponse,
       selectedLanguage, setSelectedLanguage,
       markStepComplete, setBlocked,
+      appearance, setAppearance,
     }}>
       {children}
     </ConversationContext.Provider>

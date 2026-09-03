@@ -75,14 +75,17 @@ export const EMOTION_CRAFT: Record<EmotionalIntent, {
   },
 };
 
+/* MODE_META — card surface per mode.
+   The literal mode tint is gone from the JS and lives in CSS so dark mode
+   can re-tint every card from the role block in one place. */
 const MODE_META: Record<ResponseMode, { label: string; border: string; bg: string; chip: string }> = {
-  explain:  { label: 'Explanation', border: C.navy, bg: C.surface, chip: C.navySoft },
-  clarify:  { label: 'Needs one fact', border: C.amber, bg: '#FFFBF5', chip: C.cautionSoft },
-  disclose: { label: 'Partial answer', border: C.saffronDark, bg: '#FFF9F1', chip: C.saffronSoft },
-  stop:     { label: 'Stopped', border: C.oxblood, bg: '#FBF6F4', chip: C.oxbloodSoft },
-  confirm:  { label: 'Confirmed', border: C.green, bg: '#F4FAF6', chip: C.successSoft },
-  progress: { label: 'Working', border: C.borderStrong, bg: C.surface2, chip: C.navySoft },
-  recover:  { label: 'Paused', border: C.amber, bg: '#FFFBF5', chip: C.cautionSoft },
+  explain:  { label: 'Explanation',    border: C.navy,    bg: 'var(--turn-bg-explain)',  chip: C.navySoft },
+  clarify:  { label: 'Needs one fact', border: C.amber,   bg: 'var(--turn-bg-clarify)',  chip: C.cautionSoft },
+  disclose: { label: 'Partial answer', border: C.saffronDark, bg: 'var(--turn-bg-disclose)', chip: C.saffronSoft },
+  stop:     { label: 'Stopped',        border: C.oxblood, bg: 'var(--turn-bg-stop)',     chip: C.oxbloodSoft },
+  confirm:  { label: 'Confirmed',      border: C.green,   bg: 'var(--turn-bg-confirm)',  chip: C.successSoft },
+  progress: { label: 'Working',        border: C.borderStrong, bg: 'var(--turn-bg-progress)', chip: C.navySoft },
+  recover:  { label: 'Paused',         border: C.amber,   bg: 'var(--turn-bg-recover)',  chip: C.cautionSoft },
 };
 
 function scriptProps(lang: DemoLanguage): { lang?: string; style: React.CSSProperties } {

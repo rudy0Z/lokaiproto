@@ -32,7 +32,7 @@ const chevron = <CaretRight size={ICON.inline} weight={ICON_WEIGHT} color="var(-
 function ProfileArtboard() {
   useSystemStyles();
   const navigate = useNavigate();
-  const { selectedLanguage } = useConversations();
+  const { selectedLanguage, appearance, setAppearance } = useConversations();
   const [notificationsOn, setNotificationsOn] = useState(true);
 
   const langLabel = { en: 'English', hi: 'हिन्दी', mr: 'मराठी', ta: 'தமிழ்' }[selectedLanguage] ?? 'English';
@@ -81,7 +81,14 @@ function ProfileArtboard() {
           </HairlineRow>
           <HairlineRow
             leading={<Moon size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
-            trailing={<Text role="caption" tone="faint" measured={false}>Light</Text>}
+            trailing={
+              <Text role="caption" tone="faint" measured={false}>
+                {appearance === 'system' ? 'System' : appearance === 'dark' ? 'Dark' : 'Light'}
+              </Text>
+            }
+            onClick={() => setAppearance(
+              appearance === 'system' ? 'light' : appearance === 'light' ? 'dark' : 'system',
+            )}
           >
             <Text role="bodyStrong" measured={false}>Appearance</Text>
           </HairlineRow>

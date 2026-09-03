@@ -159,6 +159,7 @@
   --role-anchor-deep:   var(--navy-dark);
   --role-anchor-tint:   var(--navy-tint);
   --role-on-anchor:     var(--text-on-dark);
+  --role-anchor-quiet:  rgba(255, 255, 255, 0.65);
 
   /* Flag — needs-review / caution fills only. Never chrome. */
   --role-flag:          var(--caution);
@@ -190,20 +191,109 @@
   --role-stop-ink:      var(--text-on-dark);
   --role-stop-ink-quiet: rgba(255, 255, 255, 0.68);
   --role-stop-hairline: rgba(255, 255, 255, 0.16);
+
+  /* Turn card surfaces, per response mode. Named vars (not literals in
+     Turn.tsx) so dark re-tints them; light values are the hand-tuned tints. */
+  --turn-bg-explain:  #FFFFFF;
+  --turn-bg-clarify:  #FFFBF5;
+  --turn-bg-disclose: #FFF9F1;
+  --turn-bg-stop:     #FBF6F4;
+  --turn-bg-confirm:  #F4FAF6;
+  --turn-bg-progress: #FBF8F1;
+  --turn-bg-recover:  #FFFBF5;
 }
 
-/* Dark theme — not yet designed (§2.2 is a direction, not measured values).
-   Declared here as the single place it will land so no call site has to
-   change when it does. Do not enable until every value is contrast-measured
-   against all four scripts. */
-/* [data-theme="dark"] { ... } */
+/* ── Dark theme — "the cream becomes the ink" (§2.2) ────────────────────────
+ *
+ * Light is paper in daylight; dark is paper under a desk lamp at night.
+ * Same material, different light source. The mechanism: the warm cream moves
+ * from ground to figure (it becomes the ink AND the anchor), and navy —
+ * already the darkest brand color — becomes the ground. Built from brand
+ * colors, not a borrowed neutral ramp.
+ *
+ * Every value here is contrast-measured and machine-enforced: verify-demo.mjs
+ * computes WCAG ratios for this block and fails the build under 4.5:1 text /
+ * 3:1 UI. L8 holds by construction — the stop ground re-points to the cream,
+ * so in dark the refusal is warm and luminous, the exact tonal opposite of
+ * its light-theme form.
+ *
+ * Scope: mobile only (recorded decision 2026-08-25). Desktop never sets
+ * data-theme, so it resolves the :root values unchanged. */
+[data-theme="dark"] {
+  /* Ground & surfaces — navy-grounded, never pure black */
+  --role-ground:        #0E1A2B;
+  --role-raised:        #16263C;
+  --role-sunken:        #0A1422;
+
+  /* Ink — the cream, promoted to figure (16.0:1 on ground) */
+  --role-ink:           #F8F5EE;
+  --role-ink-quiet:     #C6C0B4;   /* 9.7:1 */
+  --role-ink-faint:     #94907F;   /* 5.5:1 ground / 4.8:1 raised */
+  --role-ink-inverse:   #102A4C;   /* ink for navy-filled surfaces */
+
+  /* Structure — navy hairlines, not grey */
+  --role-hairline:      #22334A;
+  --role-hairline-firm: #32465F;
+
+  /* Anchor — INVERTS. The one dark element in light becomes the one light
+     element in dark; L5's single-anchor discipline is preserved, only its
+     direction flips. onAnchor 13.2:1. */
+  --role-anchor:        #F8F5EE;
+  --role-anchor-deep:   #EFE9DC;
+  --role-anchor-tint:   rgba(248, 245, 238, 0.10);
+  --role-on-anchor:     #102A4C;
+
+  /* States — lightened for the dark ground, each re-measured */
+  --role-flag:          #E9A05A;   /* 8.0:1 */
+  --role-flag-fill:     rgba(233, 160, 90, 0.14);
+  --role-attest:        #E08585;   /* 6.5:1 */
+  --role-attest-fill:   rgba(224, 133, 133, 0.14);
+  --role-ok:            #5FBF8C;   /* 7.8:1 */
+  --role-ok-fill:       rgba(95, 191, 140, 0.14);
+  --role-halt:          #F08262;   /* 6.7:1 */
+  --role-halt-fill:     rgba(240, 130, 98, 0.14);
+
+  /* Focus — clears 3:1 on this ground with room (8.6:1) */
+  --role-focus:         #F2A65A;
+
+  /* A document's own page stays paper in both themes — a notice under a
+     desk lamp at night is still a white page. The one deliberate exception,
+     and it is the metaphor made literal. */
+  --role-paper:         #FBF9F3;
+
+  /* Scrim — deeper shade at night */
+  --role-scrim:         rgba(4, 8, 14, 0.55);
+
+  /* Soft ink for anchor-filled (cream) surfaces */
+  --role-anchor-quiet:  rgba(16, 42, 76, 0.68);
+
+  /* L8: the stop state is the tonal opposite — in dark it goes warm and
+     luminous. stop-ink on stop-ground = 13.2:1; quiet = 8.0:1. */
+  --role-stop-ground:   #F8F5EE;
+  --role-stop-ink:      #102A4C;
+  --role-stop-ink-quiet: #3D4C61;
+  --role-stop-hairline: rgba(16, 42, 76, 0.16);
+
+  /* Turn cards — subtle tinted raiseds; ink holds ≥13:1 on all of them */
+  --turn-bg-explain:  #16263C;
+  --turn-bg-clarify:  #2E2C22;
+  --turn-bg-disclose: #2E2A20;
+  --turn-bg-stop:     #2C2022;
+  --turn-bg-confirm:  #1B2E28;
+  --turn-bg-progress: #16263C;
+  --turn-bg-recover:  #2E2C22;
+}
 
 /* ── Global base ─────────────────────────────────────────────────────────── */
 
 html, body {
-  background-color: var(--surface-bg) !important;
-  color: var(--text-primary);
+  /* The canvas follows the role layer — when the shell sets data-theme,
+     the whole page re-paints. !important so devtools / injected styles
+     cannot float a stale light surface under a dark theme. */
+  background-color: var(--role-ground) !important;
+  color: var(--role-ink);
   font-family: var(--font-ui);
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 button, input, textarea, select {

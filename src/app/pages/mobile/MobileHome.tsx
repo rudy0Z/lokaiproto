@@ -99,7 +99,7 @@ export function TopNav({
         onClick={onLanguageTap}
         style={{
           display: 'flex', alignItems: 'center', gap: '5px',
-          background: '#EEF2F8', border: `1px solid ${C.navy}`,
+          background: 'var(--role-anchor-tint)', border: `1px solid ${C.navy}`,
           borderRadius: LAYOUT.radius.pill, padding: '5px 12px',
           cursor: 'pointer',
           transition: 'background 0.15s ease',
@@ -129,7 +129,7 @@ export function BottomNav({ active = 'home' }: { active?: string }) {
 
   return (
     <div style={{
-      height: '64px', background: '#FFFFFF',
+      height: '64px', background: 'var(--role-raised)',
       borderTop: `1px solid ${C.border}`,
       boxShadow: SHADOW.sm,
       display: 'flex', alignItems: 'stretch', flexShrink: 0,
@@ -285,7 +285,7 @@ export function MobileInputDock({
   const { runPreparedInput } = useDemo();
   return (
     <div style={{
-      flexShrink: 0, background: '#FFFFFF',
+      flexShrink: 0, background: 'var(--role-raised)',
       borderTop: `1px solid ${C.border}`, padding: '12px 16px',
     }}>
       <Composer

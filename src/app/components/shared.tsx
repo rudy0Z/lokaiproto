@@ -75,60 +75,75 @@ export function typeStyle(
 }
 
 // ─── Color system (mirrors CSS tokens in src/styles/index.css) ────────────────
+/* C — the palette bridge.
+ *
+ * Every SEMANTIC entry is a var(--role-*) reference, not a hex: re-pointing
+ * the role layer in index.css ([data-theme="dark"]) re-themes every call
+ * site in the app with zero edits here. This completes the rule theme.ts
+ * states — C names colors by appearance but now resolves them by JOB, so a
+ * theme change cannot leave a call site behind.
+ *
+ * The literal exceptions, deliberately:
+ *   - saffron / saffronDark / the washes — decorative accents and the
+ *     dev-canvas planes; the orb's animated surface reads these as literals
+ *     (motion cannot interpolate var()), see VoiceOrb.
+ *   - onDark is a ROLE (ink-inverse): it pairs with navy FILLS, and both
+ *     ends invert together in dark (fill→cream, ink→navy). */
 export const C = {
-  // Canvas
-  bg:           '#F8F5EE',
-  surface:      '#FFFFFF',
-  surface2:     '#FBF8F1',
+  // Canvas — roles
+  bg:           'var(--role-ground)',
+  surface:      'var(--role-raised)',
+  surface2:     'var(--role-sunken)',
   washBlue:     '#DDE7FF',
   washGold:     '#FFE3B8',
   washRose:     '#F5D8D4',
-  // Ink
-  ink:          '#181713',
-  inkSoft:      '#48453D',
-  /* Was #858078 (3.60:1 on canvas — failed AA at ~160 call sites across 20
-     files). Restored to the DTCG step: 5.40:1 canvas / 5.88:1 white. */
-  muted:        '#68645D',
-  // Structure
-  border:       '#E7E0D4',
-  borderStrong: '#CFC5B6',
-  // Brand
-  navy:         '#102A4C',
+  // Ink — roles
+  ink:          'var(--role-ink)',
+  inkSoft:      'var(--role-ink-quiet)',
+  /* Was a literal #858078 (3.60:1 on canvas — failed AA at ~160 call sites).
+     The role restores the DTCG step: 5.40:1 canvas / 5.88:1 white, and the
+     contrast gate holds it there in BOTH themes. */
+  muted:        'var(--role-ink-faint)',
+  // Structure — roles
+  border:       'var(--role-hairline)',
+  borderStrong: 'var(--role-hairline-firm)',
+  // Brand — navy becomes the anchor ROLE (inverts in dark)
+  navy:         'var(--role-anchor)',
   saffron:      '#E9852B',
-  oxblood:      '#6B1F1F',
-  // Semantic
-  green:        '#1F6B3A',
-  red:          '#B8361C',
-  amber:        '#8A4500',
-  // Derived / soft fills
-  bgRaised:     '#FBF8F1',
-  navyDark:     '#0B1E37',
-  navySoft:     'rgba(16,42,76,0.08)',
+  oxblood:      'var(--role-attest)',
+  // Semantic — roles
+  green:        'var(--role-ok)',
+  red:          'var(--role-halt)',
+  amber:        'var(--role-flag)',
+  // Derived / soft fills — roles
+  bgRaised:     'var(--role-sunken)',
+  navyDark:     'var(--role-anchor-deep)',
+  navySoft:     'var(--role-anchor-tint)',
   saffronDark:  '#C86712',
   /* The only saffron legal on a focus ring or any UI boundary:
      3.83:1 on canvas / 4.17:1 on white, clearing WCAG 2.2 1.4.11's 3:1.
      Plain `saffron` is 2.46:1 and must never carry accessibility meaning. */
-  saffronAccessible: '#CC5A10',
+  saffronAccessible: 'var(--role-focus)',
   saffronSoft:  'rgba(233,133,43,0.10)',
-  terracotta:   '#A94F2D',
-  oxbloodSoft:  'rgba(107,31,31,0.08)',
-  onDark:       '#FFFFFF',
-  onDarkSoft:   'rgba(255,255,255,0.65)',
-  borderLight:  '#E7E0D4',
-  borderFocus:  '#102A4C',
-  rule:         '#E7E0D4',
-  successSoft:  'rgba(31,107,58,0.08)',
-  cautionSoft:  'rgba(138,69,0,0.08)',
-  errorSoft:    'rgba(184,54,28,0.08)',
-  badgeBg:      'rgba(16,42,76,0.08)',
-  badgeText:    '#102A4C',
-  badgeBorder:  '#CFC5B6',
-  // Legacy aliases (same values — keep call sites compiling)
-  teal:         '#102A4C',
-  oxbloodDark:  '#6B1F1F',
-  text:         '#181713',
-  textSoft:     '#48453D',
-  textDisabled: '#68645D',
+  terracotta:   'var(--role-flag)',
+  oxbloodSoft:  'var(--role-attest-fill)',
+  onDark:       'var(--role-on-anchor)',
+  onDarkSoft:   'var(--role-anchor-quiet)',
+  borderLight:  'var(--role-hairline)',
+  borderFocus:  'var(--role-anchor)',
+  rule:         'var(--role-hairline)',
+  successSoft:  'var(--role-ok-fill)',
+  cautionSoft:  'var(--role-flag-fill)',
+  errorSoft:    'var(--role-halt-fill)',
+  badgeBg:      'var(--role-anchor-tint)',
+  badgeText:    'var(--role-anchor)',
+  badgeBorder:  'var(--role-hairline-firm)',
+  // Legacy aliases (same roles — keep call sites compiling)
+  teal:         'var(--role-anchor)',
+  oxbloodDark:  'var(--role-attest)',
+  text:         'var(--role-ink)',
+  textSoft:     'var(--role-ink-quiet)',
+  textDisabled: 'var(--role-ink-faint)',
 } as const;
 
 export const MOTION = {
@@ -680,13 +695,23 @@ export function VoiceOrb({
     return () => window.clearInterval(id);
   }, [live, isListening, reduce]);
 
+  /* Motion requires a literal hex (var() does not interpolate). Resolve the
+     role to its concrete value at animation time, then animate THAT. The
+     shape of the animation is theme-correct because the role layers the
+     theme mapping; the orb just can't read the mapping through the JS bridge. */
+  const resolveRole = (cssVar: string): string => {
+    if (typeof window === 'undefined') return cssVar;
+    const m = cssVar.match(/^var\(\s*(--[\w-]+)\s*\)$/);
+    if (!m) return cssVar;
+    return getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim() || cssVar;
+  };
   const surface = isListening
-    ? C.saffron
+    ? resolveRole(C.saffron)
     : isProcessing
-      ? C.navy
+      ? resolveRole(C.navy)
       : isError
-        ? C.errorSoft
-        : C.surface2;
+        ? resolveRole(C.errorSoft)
+        : resolveRole(C.surface2);
 
   const borderStyle = isError
     ? `1.5px solid ${C.red}`
