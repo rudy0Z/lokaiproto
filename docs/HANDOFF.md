@@ -1,8 +1,23 @@
 # LokAI Session Handoff
 
-**Last updated:** 2026-08-26. **Read this first**, then `MOBILE_AI_SYSTEM.md` (the design spec), `MOBILE_SCREENS.md` (the whole mobile shape, screen by screen), and `LLM_DESIGN_SYSTEM.md` (the build sheet) before writing any screen.
+**Last updated:** 2026-09-04. **Read this first**, then `MOBILE_AI_SYSTEM.md` (the design spec), `MOBILE_SCREENS.md` (the whole mobile shape, screen by screen), and `LLM_DESIGN_SYSTEM.md` (the build sheet) before writing any screen.
 
-## Consistency sweep + readiness — 2026-08-27 (latest)
+## Upgrade Phases 1–6 COMPLETE — 2026-09-03/04 (ZCode sessions, commits d2a074f → 91adc1f)
+
+The three DESIGN_AUDIT findings are closed on mobile. What landed, per phase:
+
+- **P1 Foundations** — `src/app/ui/motion.tsx` (FadeRise/Stagger/WorkingDots/ShimmerLine/Skeleton/StageTransition/NumberTicker/useHaptic); WCAG contrast gate in verify-demo.mjs (parses `--role-*` from BOTH themes, fails <4.5:1 text / <3:1 UI); `data/statusVocabulary.ts` (one source for all state labels + Badge tones — never hand-write a status string); dead exports deleted (WorkflowTrustPanel, FilingPacketPreview, GuidancePreferences, InlineLinkButton, FailureStateCard render, CitationStamp).
+- **P2 Chat-first spine** — clarify middle (first consumer exchange asks purchase date; the ANSWER ROUTES the next turn: in-window → explain, >2yr → statute-expiry stop, unsure → disclose; localized EN/HI/MR/TA); working card in action-voice + Skip, collapsing in place to an audit line that opens the audit sheet; response chips open TOOL SHEETS (verify/plan/packet/audit/escalation, contained); 'Step N of 6' killed; stream motion + guarded auto-scroll (scrollViewportRef through Screen→AppScreen).
+- **P3 Composer + primitives** — CitationChip (section-first "S.2(10)", +N overflow, non-interactive mode for rows) in TurnCitations + notice fields; dead CitationStamp deleted; Composer attach affordance + AttachmentChip tray (canSend counts attachments); Textarea/Switch promoted (Textarea forwardRefs); 'Jump to latest' scroll pill.
+- **P4 Voice** — extractEntities → VoiceFactChips at confirm on /mobile/voice AND case intake (tap chip selects its words in the editable transcript — Textarea forwardRef); VoiceOrb live amplitude envelope (simulated, reduced-motion aware); desktop mic 650→1100ms; specimens voice-capture (loop) + voice-unclear.
+- **P5 Dark theme (mobile only)** — `[data-theme="dark"]` in index.css: navy ground #0E1A2B, cream becomes ink AND anchor (L5 flips), stop ground warm-luminous (L8), paper stays #FBF9F3 both themes. C palette re-pointed to var(--role-*) (theme = role re-point, zero call-site edits); VoiceOrb resolves literals at animation time (motion can't interpolate var()); Turn mode tints on --turn-bg-* vars; theme state (light/dark/system) in ConversationContext, MobileShell applies data-theme, Profile row cycles. Contrast gate enforces BOTH themes.
+- **P6 Seam closed** — LokAIWorkflow fully on the law: GroundingMeter/ProgressList/ActionPlan/Checklist ground-level; ALL twin buttons → primary+quiet; all left stripes dead; CoveragePill → Badge; ReviewGate border-only, Copy primary + Print quiet; Scratchpad gated CTA on Button (behavior unchanged) + its input focus ring fixed (was 2.46:1 saffron); Turn border-only + zone-1 serif Fraunces 22 (Indic: sans w500) + zone-1 caps label deleted; Clarify options → HairlineRows; Unsupported twins → primary+quiet; retired BottomNav deleted; last 11 mobile hex literals → roles (incl. StatusBar/HomeIndicator stop-ground bug in dark).
+
+**Validation 2026-09-04:** verify:demo 10/10 (contrast both themes), typecheck clean, build green, ratchet **686 → 573**. Zero mobile left-stripes / border+shadow pairs / raw hex in screens. Catalog deep links all resolve. Reduced-motion verified per primitive.
+
+**Remaining:** mobile Phase 8 (skeletons on tool sheets, focus craft, icon-era unification — case file + MobileHome still import Lucide, haptics on gate-unlock/stop-ack, specimen refresh) after the owner's 390px both-themes eyeball pass. **Desktop Phase 7 is a SEPARATE STAGE** (owner's call): rail → live document canvas, desktop stop composition, Notice/Draft/Documents tokenization, own detail+QA. Cut list holds: no library imports, no regenerate/branch, no streaming theater, no duration badges, no RN, no real OCR/network.
+
+## Consistency sweep + readiness — 2026-08-27 (pre-upgrade, historical)
 
 Swept the remaining visible mobile surfaces to the premium system:
 - **Lucide → Phosphor** in `MobileConsumerCase` and `ai/Turn` (the last two visible
