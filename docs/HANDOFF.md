@@ -2,6 +2,8 @@
 
 **Last updated:** 2026-09-04. **Read this first**, then `MOBILE_AI_SYSTEM.md` (the design spec), `MOBILE_SCREENS.md` (the whole mobile shape, screen by screen), and `LLM_DESIGN_SYSTEM.md` (the build sheet) before writing any screen.
 
+**Documents map:** `HANDOFF.md` = terse log (this file) · `UPGRADE-2026-09.md` = the upgrade's full decision log & remaining plan · `CASE-STUDY.md` = how the case study was written (v1→v3 reasoning, decision inventory, embed map) · `DESIGN_AUDIT.md` = the audit that started the upgrade.
+
 ## Upgrade Phases 1–6 COMPLETE — 2026-09-03/04 (ZCode sessions, commits d2a074f → 91adc1f)
 
 The three DESIGN_AUDIT findings are closed on mobile. What landed, per phase:
