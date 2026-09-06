@@ -14,20 +14,14 @@ import type { ResponseTurn } from '../data/responseTurns';
 import { DEMO_PROGRESS_STAGES, getTurnById, resolvePreparedTurn } from '../data/responseTurns';
 import { localizeConsumerExplain } from '../data/languagePacks';
 import { useLokaiSharedStyles } from '../components/shared';
+import { useMotionStyles } from '../ui/motion';
 
 // ─── Animation styles ─────────────────────────────────────────────────────────
+/* Chat-local chrome only (toast, thinking accent, input dock). Content
+   skeletons use the design-system `.lokai-shimmer-line` (ui/motion), typing
+   dots use shared `.lokai-dot-*` — the duplicates this file used to carry are
+   deleted (Phase 7: one motion source of truth for both platforms). */
 const ANIM = `
-  @keyframes lokaiDot {
-    0%,70%,100%{opacity:.2;transform:translateY(0)}
-    35%{opacity:1;transform:translateY(-4px)}
-  }
-  @keyframes lokaiSpin {
-    to{transform:rotate(360deg)}
-  }
-  @keyframes fadeUp {
-    from{opacity:0;transform:translateY(8px)}
-    to{opacity:1;transform:translateY(0)}
-  }
   @keyframes toastIn {
     from{opacity:0;transform:translateX(-50%) translateY(6px)}
     to{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -38,52 +32,28 @@ const ANIM = `
   }
   .toast-enter{animation:toastIn 0.2s cubic-bezier(0.22,1,0.36,1) both}
   .toast-exit{animation:toastOut 0.18s ease-in both}
-  @keyframes lokaiShimmer {
-    0%  {background-position:-400px 0}
-    100%{background-position: 400px 0}
-  }
   @keyframes thinkAccent {
     0%,100%{opacity:1} 50%{opacity:0.35}
   }
-  .shimmer-line {
-    background: linear-gradient(90deg,#F2EDE6 25%,#E8E2D8 50%,#F2EDE6 75%);
-    background-size: 400px 100%;
-    animation: lokaiShimmer 1.6s ease-in-out infinite;
-    border-radius: 3px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-  :focus-visible {
-    outline: 2px solid ${C.saffron};
-    outline-offset: 2px;
-  }
-  .ld1{animation:lokaiDot 1.3s ease-in-out 0s infinite}
-  .ld2{animation:lokaiDot 1.3s ease-in-out .18s infinite}
-  .ld3{animation:lokaiDot 1.3s ease-in-out .36s infinite}
   .chat-scroll::-webkit-scrollbar{width:4px}
   .chat-scroll::-webkit-scrollbar-track{background:transparent}
   .chat-scroll::-webkit-scrollbar-thumb{background:${C.border};border-radius:2px}
   .icon-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;
     background:none;border:none;cursor:pointer;color:${C.muted};border-radius:6px;
     transition:background .12s,color .12s}
-  .icon-btn:hover{background:#F0EDE8;color:${C.navy}}
+  .icon-btn:hover{background:var(--role-sunken);color:${C.navy}}
   .chip-btn{/* prefer lokai-chip from shared — keep class for motion.button mounts */}
-  .lokai-chip.chip-btn:hover{background:rgba(16,42,76,0.08)!important;border-color:${C.navy}!important}
+  .lokai-chip.chip-btn:hover{background:var(--role-anchor-tint)!important;border-color:${C.navy}!important}
   .input-bar-wrap{transition:border-color .15s,box-shadow .18s}
   .input-bar-wrap:focus-within{
     border-color:${C.navy}!important;
-    box-shadow:0 0 0 3px rgba(19,40,70,0.09),0 4px 20px rgba(26,25,22,.10)!important;
+    box-shadow:0 0 0 3px var(--role-anchor-tint),0 4px 20px rgba(26,25,22,.10)!important;
   }
   .input-bar-wrap {
     background:
       radial-gradient(ellipse 70% 130% at 12% 0%, rgba(221,231,255,0.38), transparent 58%),
       radial-gradient(ellipse 55% 100% at 88% 100%, rgba(255,227,184,0.34), transparent 62%),
-      #FFFFFF;
+      var(--role-raised);
   }
 `;
 
@@ -103,16 +73,6 @@ function seedTurnForConversation(convId: string, language: 'en' | 'hi' | 'mr' | 
     return getTurnById('out-of-scope-stop') ?? getTurnById('boundary-stop') ?? null;
   }
   return resolvePreparedTurn('', { scenarioId: convId === 'consumer' ? 'consumer' : 'boundary', language });
-}
-
-// ─── Typing dots ──────────────────────────────────────────────────────────────
-function TypingDots() {
-  const dot: React.CSSProperties = { width:7, height:7, borderRadius: LAYOUT.radius.full, background:C.navy };
-  return (
-    <div style={{ display:'flex', gap:5, alignItems:'center', padding:'16px 20px' }}>
-      <div className="ld1" style={dot}/><div className="ld2" style={dot}/><div className="ld3" style={dot}/>
-    </div>
-  );
 }
 
 // ─── User bubble ──────────────────────────────────────────────────────────────
@@ -135,6 +95,7 @@ function UserBubble({ text, time }: { text: string; time: string }) {
 
 // ─── Thinking bubble — branded shimmer skeleton ───────────────────────────────
 function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
+  useMotionStyles();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -144,33 +105,32 @@ function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
     >
       <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:500, color:C.muted, marginBottom:6 }}>LokAI</div>
       <div style={{
-        background: '#fff', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.control,
+        background: C.surface, border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.control,
         overflow: 'hidden', position: 'relative',
-        boxShadow: SHADOW.xs,
         padding: '18px 22px 18px 26px',
       }}>
         {/* Pulsing saffron left accent — same as real response card */}
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
-          background: `linear-gradient(180deg, ${C.saffron} 0%, #C4620A 100%)`,
+          background: `linear-gradient(180deg, ${C.saffron} 0%, ${C.saffronDark} 100%)`,
           borderRadius: `${LAYOUT.radius.control} ${LAYOUT.radius.none} ${LAYOUT.radius.none} ${LAYOUT.radius.control}`,
           animation: 'thinkAccent 1.5s ease-in-out infinite',
         }}/>
         {/* Label */}
         <div style={{
-          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600, color: '#A8A4A0',
+          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600, color: C.muted,
           textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14,
         }}>
           {isFollowUp ? 'Processing follow-up' : 'Analysing your question'}
         </div>
         {/* Shimmer lines mimicking real content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="shimmer-line" style={{ height: 13, width: '88%' }}/>
-          <div className="shimmer-line" style={{ height: 13, width: '72%', animationDelay: '0.15s' }}/>
-          <div className="shimmer-line" style={{ height: 13, width: '80%', animationDelay: '0.3s' }}/>
+          <div className="lokai-shimmer-line" style={{ height: 13, width: '88%' }}/>
+          <div className="lokai-shimmer-line" style={{ height: 13, width: '72%', animationDelay: '0.15s' }}/>
+          <div className="lokai-shimmer-line" style={{ height: 13, width: '80%', animationDelay: '0.3s' }}/>
           <div style={{ height: 10 }}/>
-          <div className="shimmer-line" style={{ height: 13, width: '65%', animationDelay: '0.1s' }}/>
-          <div className="shimmer-line" style={{ height: 13, width: '55%', animationDelay: '0.25s' }}/>
+          <div className="lokai-shimmer-line" style={{ height: 13, width: '65%', animationDelay: '0.1s' }}/>
+          <div className="lokai-shimmer-line" style={{ height: 13, width: '55%', animationDelay: '0.25s' }}/>
         </div>
       </div>
     </motion.div>
@@ -180,10 +140,10 @@ function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
 // ─── Error inline ─────────────────────────────────────────────────────────────
 function InlineError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div style={{ marginBottom:20, padding:'14px 18px', background:'#FFF5F5',
-      border:'1px solid #FECACA', borderRadius: LAYOUT.radius.control, display:'flex', alignItems:'center',
+    <div style={{ marginBottom:20, padding:'14px 18px', background:'var(--role-halt-fill)',
+      border:'1px solid var(--role-halt)', borderRadius: LAYOUT.radius.control, display:'flex', alignItems:'center',
       gap:12, justifyContent:'space-between' }}>
-      <p style={{ fontFamily:SANS, fontSize: TYPE.body.size, color:'#B91C1C', margin:0, lineHeight:1.5 }}>{message}</p>
+      <p style={{ fontFamily:SANS, fontSize: TYPE.body.size, color:'var(--role-halt)', margin:0, lineHeight:1.5 }}>{message}</p>
       <button onClick={onRetry} style={{ fontFamily:SANS, fontSize: TYPE.small.size, fontWeight:500,
         color:C.navy, background:'none', border:`1px solid ${C.navy}`, borderRadius: LAYOUT.radius.sm,
         padding:'6px 14px', cursor:'pointer', flexShrink:0 }}>Retry</button>
@@ -210,12 +170,12 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
       {/* Small LokAI mark */}
       <div style={{
         width: 40, height: 40, borderRadius: LAYOUT.radius.full,
-        background: `linear-gradient(135deg, ${C.navy} 0%, #1F4070 100%)`,
+        background: C.navy,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         margin: '0 auto 16px',
         boxShadow: SHADOW.navySoft,
       }}>
-        <span style={{ fontFamily: EDITORIAL, fontSize: TYPE.lead.size, color: '#fff', fontStyle: 'italic', lineHeight: 1 }}>L</span>
+        <span style={{ fontFamily: EDITORIAL, fontSize: TYPE.lead.size, color: 'var(--role-on-anchor)', fontStyle: 'italic', lineHeight: 1 }}>L</span>
       </div>
       <p style={{ fontFamily: EDITORIAL, fontStyle: 'italic', fontWeight: 300, fontSize: TYPE.h3.size, color: C.ink, margin: '0 0 6px', lineHeight: 1.3 }}>
         Choose a prepared consumer question
@@ -234,7 +194,7 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
             onClick={() => onSelect(chip.question)}
             style={{
               fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500, color: C.navy,
-              background: '#fff', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.control,
+              background: C.surface, border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.control,
               padding: '10px 18px', cursor: 'pointer',
             }}
           >
@@ -535,7 +495,7 @@ export default function Chat() {
               bottom:0,
               width:300,
               zIndex:80,
-              background:'#fff',
+              background:C.surface,
               borderLeft:`1px solid ${C.border}`,
               overflow:'hidden',
               boxShadow: SHADOW.sm }}>
@@ -570,7 +530,7 @@ export default function Chat() {
           <div className="toast-enter" style={{
             position:'fixed', bottom:96, left:'50%',
             transform:'translateX(-50%)',
-            background:C.navy, color:'#fff',
+            background:C.navy, color:'var(--role-on-anchor)',
             fontFamily:SANS, fontSize: TYPE.caption.size, fontWeight:500,
             padding:'7px 16px', borderRadius: LAYOUT.radius.control,
             boxShadow: SHADOW.navy,

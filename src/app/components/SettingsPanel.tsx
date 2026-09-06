@@ -1,9 +1,9 @@
-﻿import React, { useState } from 'react';
-import { X } from 'lucide-react';
+﻿import React from 'react';
+import { IconClose } from '../ui/icons';
 import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from './shared';
 import { useSidebar } from '../context/SidebarContext';
-
-import { useLanguage } from '../context/LanguageContext';
+import { useConversations } from '../context/ConversationContext';
+import { useDemo } from '../context/DemoContext';
 
 const LANGUAGES = [
   { id: 'en', label: 'English' },
@@ -71,7 +71,15 @@ function Divider() {
 // ─── Settings Panel ──────────────────────────────────────────────────────────
 export function SettingsPanel() {
   const { settingsOpen, closeSettings } = useSidebar();
-  const { uiLang, setUiLang } = useLanguage();
+  /* One language state (audit fix): the panel drives the SAME language the
+     chat and screens read — the parallel uiLang context is deleted. */
+  const { selectedLanguage, setSelectedLanguage } = useConversations();
+  const { setLanguage } = useDemo();
+
+  const selectLanguage = (id: string) => {
+    setSelectedLanguage(id);
+    setLanguage(id as 'en' | 'hi' | 'mr' | 'ta');
+  };
 
   const accountRows = [
     {
@@ -162,7 +170,7 @@ export function SettingsPanel() {
               boxShadow: SHADOW.md,
             }}
           >
-            <X style={{ width: '20px', height: '20px' }} />
+            <IconClose style={{ width: '20px', height: '20px' }} />
           </button>
         </div>
 
@@ -181,13 +189,13 @@ export function SettingsPanel() {
           {/* Language Preference */}
           <div style={{ padding: '0 24px 14px' }}>
             <div style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 650, color: C.ink, marginBottom: '4px' }}>
-              System Language
+              Language
             </div>
             <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginBottom: '12px', lineHeight: 1.5 }}>
-              Sets menus, labels, and placeholders. Chat answers still adapt to the language you type.
+              Sets the prepared answer pack for the whole app. Chat answers adapt to the language you type.
             </div>
           </div>
-          <LangGrid options={LANGUAGES} selected={uiLang} onSelect={setUiLang} />
+          <LangGrid options={LANGUAGES} selected={selectedLanguage} onSelect={selectLanguage} />
 
           {/* Info card */}
           <div style={{
