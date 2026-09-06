@@ -14,10 +14,11 @@ import type { ResponseTurn } from '../data/responseTurns';
 import { DEMO_PROGRESS_STAGES, getTurnById, resolvePreparedTurn } from '../data/responseTurns';
 import { localizeConsumerExplain } from '../data/languagePacks';
 import { useLokaiSharedStyles } from '../components/shared';
-import { useMotionStyles } from '../ui/motion';
+import { useMotionStyles, Stack, Label } from '../ui/motion';
 import { scriptProps } from '../ui/script';
 import { IconArrowRight } from '../ui/icons';
 import { HumanReviewCard } from '../components/LokAIWorkflow';
+import { DemandNoticePaper } from '../components/mobile/DemandNoticePaper';
 import { getConsumerWorkflowState } from '../data/caseWorkflow';
 
 // ─── Animation styles ─────────────────────────────────────────────────────────
@@ -377,7 +378,7 @@ export default function Chat() {
   const sidebarW     = collapsed ? 64 : 240;
   const {
     scenario, runPreparedInput, activeTurn, isProgressing, progressLabel, progressIndex,
-    skipProgress, replayProgress, language,
+    skipProgress, replayProgress, language, draftAllowed,
   } = useDemo();
 
   const { conversations, activeId, setActiveId, getConversation,
@@ -386,6 +387,7 @@ export default function Chat() {
   const idFromUrl = chatId || '';
   const convId    = idFromUrl || activeId || 'consumer';
   const conv      = getConversation(convId);
+  const workflow  = getConsumerWorkflowState();
 
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string|null>(null);
@@ -490,6 +492,11 @@ export default function Chat() {
   const isEmpty = (!conv || conv.messages.length === 0) && hybridTurns.length === 0;
   const panelData = conv?.contextPanel ?? null;
   const showContextPanel = (!!panelData && !isEmpty) || !!activeTurn;
+  /* The desk decision (L5 desktop): once the matter has a draft, the rail
+     becomes the workspace where the document lives — not a law reference.
+     Before that, it stays as the legal context. */
+  const hasDraft = !!draftAllowed && !isEmpty;
+  const railWidth = hasDraft ? 480 : 300;
 
   return (
     <>
@@ -502,7 +509,7 @@ export default function Chat() {
         flexDirection:'column',
         background: PLANE.reading,
         overflow:'hidden',
-        paddingRight: showContextPanel ? 300 : 0,
+        paddingRight: showContextPanel ? railWidth : 0,
         transition:'padding-right .2s ease',
       }}>
 
@@ -573,7 +580,7 @@ export default function Chat() {
               top:0,
               right:0,
               bottom:0,
-              width:300,
+              width:railWidth,
               zIndex:80,
               background:C.surface,
               borderLeft:`1px solid ${C.border}`,
@@ -590,6 +597,15 @@ export default function Chat() {
                     </div>
                     <HumanReviewCard workflow={getConsumerWorkflowState()} />
                   </div>
+                ) : hasDraft ? (
+                  /* The live document canvas — the desk where the notice is
+                     made. The paper is the focal object; the law reference
+                     sits beneath it. */
+                  <Stack gap={4} style={{ padding: '20px 16px 40px' }}>
+                    <Label>Your demand notice</Label>
+                    <DemandNoticePaper packet={workflow.filingPacket} />
+                    <LegalTermPanel />
+                  </Stack>
                 ) : (
                   <>
                     <LegalTermPanel />
@@ -603,7 +619,7 @@ export default function Chat() {
       </main>
 
       {/* Floating input bar */}
-      <div style={{ position:'fixed', bottom:28, left:sidebarW, right:showContextPanel ? 300 : 0,
+      <div style={{ position:'fixed', bottom:28, left:sidebarW, right:showContextPanel ? railWidth : 0,
         display:'flex', justifyContent:'center', zIndex:100,
         pointerEvents:'none', transition:'left .2s ease' }}>
         <div className="input-bar-wrap" style={{ maxWidth:740, width:'calc(100% - 56px)',
