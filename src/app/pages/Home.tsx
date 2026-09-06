@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef, useEffect } from 'react';
-import { Paperclip, ArrowRight } from 'lucide-react';
+import { IconAttach, IconArrowRight } from '../ui/icons';
 import { useNavigate } from 'react-router';
 import {
   EDITORIAL, SANS, MONO, C, GRAD, LAYOUT, S, SHADOW, TYPE,
@@ -246,7 +246,7 @@ function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElemen
             onMouseDown={e => { if (canSend) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.94)'; }}
             onMouseUp={e   => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
           >
-            <ArrowRight size={17} color="#FFFFFF" />
+            <IconArrowRight size={17} color="#FFFFFF" />
           </button>
         </div>
       </div>
@@ -263,7 +263,7 @@ function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElemen
               color: C.inkSoft, gap: '6px',
             }}
           >
-            <Paperclip size={15} />
+            <IconAttach size={15} />
             <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 500 }}>Sample notice</span>
           </button>
         </div>

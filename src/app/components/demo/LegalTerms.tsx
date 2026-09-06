@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { BookOpen, X } from 'lucide-react';
+import { IconBookOpen, IconClose } from '../../ui/icons';
 import { C, LAYOUT, MONO, SANS, SHADOW, TYPE } from '../shared';
 import { useDemo } from '../../context/DemoContext';
 import { LEGAL_GLOSSARY } from '../../data/demoScenarios';
@@ -69,7 +69,7 @@ function TermContent({ compact = false }: { compact?: boolean }) {
         textTransform: 'uppercase',
         marginBottom: 10,
       }}>
-        <BookOpen size={14} aria-hidden="true" />
+        <IconBookOpen size={14} aria-hidden="true" />
         Plain-language meaning
       </div>
       <h2 style={{
@@ -199,7 +199,7 @@ export function LegalTermDialog() {
             placeItems: 'center',
           }}
         >
-          <X size={20} aria-hidden="true" />
+          <IconClose size={20} aria-hidden="true" />
         </button>
         <div style={{ paddingRight: 30 }}><TermContent compact /></div>
       </section>
@@ -240,7 +240,7 @@ export function LegalTermPanel() {
           placeItems: 'center',
         }}
       >
-        <X size={17} aria-hidden="true" />
+        <IconClose size={17} aria-hidden="true" />
       </button>
       <div style={{ paddingRight: 24 }}><TermContent /></div>
     </section>

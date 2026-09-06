@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowRight, FileText } from 'lucide-react';
+import { IconArrowRight, IconFile } from '../ui/icons';
 import {
   Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow,
-  Text, Label, Amount, Button, Badge, ICON, ICON_STROKE, T, M,
+  Text, Label, Amount, Button, Badge, ICON, T, M,
 } from '../ui';
 import { MatterDrawer } from '../components/mobile/MatterDrawer';
 
@@ -70,7 +70,7 @@ export function SystemAnswerSpecimen({ lang }: { lang?: 'en' | 'hi' }) {
   return (
     <Screen
       context={<ContextStrip lang={lang} />}
-      action={<Button iconAfter={<ArrowRight size={ICON.ui} strokeWidth={ICON_STROKE} />}>
+      action={<Button iconAfter={<IconArrowRight size={ICON.ui} />}>
         {hi ? 'कार्रवाई योजना देखें' : 'See action plan'}
       </Button>}
       scrollClearance={M.zoneGap}
@@ -87,7 +87,7 @@ export function SystemAnswerSpecimen({ lang }: { lang?: 'en' | 'hi' }) {
       {/* An exhibit earns its container: the user could pick it up and move it. */}
       <Card>
         <Row gap={3} align="flex-start">
-          <FileText size={ICON.row} strokeWidth={ICON_STROKE} color={T.attest} />
+          <IconFile size={ICON.row} color={T.attest} />
           <Stack gap={1}>
             <Text role="title" lang={lang}>invoice_hk48291.pdf</Text>
             <Text role="caption" tone="faint">2 pages · uploaded by you</Text>

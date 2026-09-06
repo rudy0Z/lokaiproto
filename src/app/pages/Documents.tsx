@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Plus, ExternalLink, Download } from 'lucide-react';
+import { IconPlus, IconExternalLink, IconDownload } from '../ui/icons';
 import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from '../components/shared';
 import { ScopedAskButton, ScopedAskSheet } from '../components/ai/Turn';
 import { useDemo } from '../context/DemoContext';
@@ -323,7 +323,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
           onClick={e => { e.stopPropagation(); onOpenChat(doc.linkedPath); }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
         >
-          <ExternalLink style={{ width: '11px', height: '11px' }} />
+          <IconExternalLink style={{ width: '11px', height: '11px' }} />
           Open
         </button>
         <button
@@ -331,7 +331,7 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
           onClick={e => { e.stopPropagation(); downloadDocument(doc); }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
         >
-          <Download style={{ width: '11px', height: '11px' }} />
+          <IconDownload style={{ width: '11px', height: '11px' }} />
           Download text
         </button>
       </div>
@@ -492,7 +492,7 @@ export default function Documents() {
               }}
               title={draftAllowed ? 'Open the demand-notice packet' : 'Draft blocked until facts and policy allow it'}
             >
-              <Plus style={{ width: '15px', height: '15px' }} />
+              <IconPlus style={{ width: '15px', height: '15px' }} />
               Open Packet
             </button>
           </div>

@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { ArrowLeft, Download, Pencil } from 'lucide-react';
+import { IconBack, IconDownload, IconPencil } from '../ui/icons';
 import { useNavigate } from 'react-router';
 import { Btn, C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../components/shared';
 import { ReviewGate, FirstActionChecklist } from '../components/LokAIWorkflow';
@@ -412,7 +412,7 @@ export default function Draft() {
                 justifyContent: 'center', color: C.inkSoft, marginBottom: 24,
               }}
             >
-              <ArrowLeft style={{ width: '16px', height: '16px' }} />
+              <IconBack style={{ width: '16px', height: '16px' }} />
             </button>
 
             <div style={{
@@ -513,7 +513,7 @@ export default function Draft() {
                 zIndex: 1,
               }}
             >
-              <ArrowLeft style={{ width: '16px', height: '16px' }} />
+              <IconBack style={{ width: '16px', height: '16px' }} />
             </button>
 
             {/* Center: document title — absolutely centered */}
@@ -533,11 +533,11 @@ export default function Draft() {
             {/* Right: Edit + Download text buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', zIndex: 1 }}>
               <Btn variant="secondary" size="sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleEdit}>
-                <Pencil style={{ width: '13px', height: '13px' }} />
+                <IconPencil style={{ width: '13px', height: '13px' }} />
                 Edit
               </Btn>
               <Btn variant="primary" size="sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleDownload}>
-                <Download style={{ width: '13px', height: '13px' }} />
+                <IconDownload style={{ width: '13px', height: '13px' }} />
                 Save as PDF
               </Btn>
             </div>

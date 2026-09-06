@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Upload, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { IconAttach, IconThumbsUp, IconThumbsDown } from '../ui/icons';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { Btn, C, GRAD, LAYOUT, MONO, PLANE, SANS, SERIF, SHADOW, TYPE } from '../components/shared';
@@ -145,7 +145,7 @@ function FeedbackRow() {
           transition: 'background 0.14s ease, border-color 0.14s ease', flexShrink: 0,
         }}
       >
-        <ThumbsUp style={{ width: '14px', height: '14px', color: voted === 'up' ? C.navy : C.muted }} strokeWidth={1.8} />
+        <IconThumbsUp style={{ width: '14px', height: '14px', color: voted === 'up' ? C.navy : C.muted }} />
       </button>
       <button
         onClick={() => setVoted(v => v === 'down' ? null : 'down')}
@@ -158,7 +158,7 @@ function FeedbackRow() {
           transition: 'background 0.14s ease, border-color 0.14s ease', flexShrink: 0,
         }}
       >
-        <ThumbsDown style={{ width: '14px', height: '14px', color: voted === 'down' ? '#8A4500' : C.muted }} strokeWidth={1.8} />
+        <IconThumbsDown style={{ width: '14px', height: '14px', color: voted === 'down' ? '#8A4500' : C.muted }} />
       </button>
     </div>
   );
@@ -716,7 +716,7 @@ export default function Notice() {
           </span>
           <div>
             <Btn onClick={handleSampleNotice} variant="secondary" size="sm" style={{ fontWeight: 500, borderRadius: LAYOUT.radius.control, padding: '10px 20px', fontSize: TYPE.body.size }} disabled={loading}>
-              <Upload style={{ width: '16px', height: '16px' }} />
+              <IconAttach style={{ width: '16px', height: '16px' }} />
               {loading ? 'Loading sample…' : 'Use sample notice'}
             </Btn>
           </div>

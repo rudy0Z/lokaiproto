@@ -1,8 +1,9 @@
 ﻿import React, { useState } from 'react';
 import {
-  ChevronLeft, FilePenLine, Files, LayoutGrid, MessageSquare,
-  ScanSearch, Settings,
-} from 'lucide-react';
+  IconBack, IconFilePen, IconFiles, IconGrid, IconChat,
+  IconScanSearch,
+  IconSettings,
+} from '../ui/icons';
 import { useNavigate, useLocation } from 'react-router';
 import { BrandLogo, C, LAYOUT, LogoMark, SANS, SHADOW, TYPE } from './shared';
 import { useSidebar } from '../context/SidebarContext';
@@ -12,11 +13,11 @@ const EXPANDED_W = parseInt(LAYOUT.sidebarOpen, 10);
 const COLLAPSED_W = parseInt(LAYOUT.sidebarShut, 10);
 
 const NAV_ITEMS = [
-  { path: '/desktop/dashboard',           label: 'Dashboard',          Icon: LayoutGrid,    exact: true },
-  { path: '/desktop/chat',                label: 'Consumer Guide',     Icon: MessageSquare, prefix: true, createsChat: true },
-  { path: '/desktop/documents',           label: 'Case Files',         Icon: Files },
-  { path: '/desktop/document-draft',      label: 'Demand Notice',      Icon: FilePenLine },
-  { path: '/desktop/notice-interpreter',  label: 'Sample Notice',      Icon: ScanSearch },
+  { path: '/desktop/dashboard',           label: 'Dashboard',          Icon: IconGrid,    exact: true },
+  { path: '/desktop/chat',                label: 'Consumer Guide',     Icon: IconChat, prefix: true, createsChat: true },
+  { path: '/desktop/documents',           label: 'Case Files',         Icon: IconFiles },
+  { path: '/desktop/document-draft',      label: 'Demand Notice',      Icon: IconFilePen },
+  { path: '/desktop/notice-interpreter',  label: 'Sample Notice',      Icon: IconScanSearch },
 ];
 
 type NavItem = (typeof NAV_ITEMS)[number];
@@ -146,7 +147,7 @@ export function Sidebar() {
                   transition: 'background .14s ease, color .14s ease',
                 }}
               >
-                <ChevronLeft size={16} />
+                <IconBack size={16} />
               </button>
             )}
           </div>
@@ -196,7 +197,7 @@ export function Sidebar() {
                       background: C.saffron,
                     }} />
                   )}
-                  <Icon size={expanded ? 18 : 19} strokeWidth={active ? 2.2 : 1.65} />
+                  <Icon size={expanded ? 18 : 19} />
                   {expanded && (
                     <span style={{ fontSize: TYPE.body.size, fontWeight: active ? 650 : 500, letterSpacing: '-0.01em' }}>
                       {item.label}
@@ -353,7 +354,7 @@ export function Sidebar() {
                       justifyContent: 'center',
                     }}
                   >
-                    <Settings size={15} />
+                    <IconSettings size={15} />
                   </button>
                 </>
               )}

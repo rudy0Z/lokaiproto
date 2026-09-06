@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router';
-import { LayoutGrid, MessageSquare, Files, FilePenLine, ScanSearch, ArrowRight } from 'lucide-react';
+import { IconGrid, IconChat, IconFiles, IconFilePen, IconScanSearch, IconArrowRight } from '../ui/icons';
 import { C, LAYOUT, MONO, SANS, SHADOW, TYPE } from './shared';
 import { useConversations } from '../context/ConversationContext';
 
@@ -53,11 +53,11 @@ const PALETTE_CSS = `
 `;
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard',     Icon: LayoutGrid,    to: '/desktop/dashboard' },
-  { id: 'chat',      label: 'Ask a Question', Icon: MessageSquare, to: '/desktop/chat', newChat: true },
-  { id: 'documents', label: 'Case Files',     Icon: Files,         to: '/desktop/documents' },
-  { id: 'draft',     label: 'Filing Packet',  Icon: FilePenLine,   to: '/desktop/document-draft' },
-  { id: 'notice',    label: 'Notice Upload',  Icon: ScanSearch,    to: '/desktop/notice-interpreter' },
+  { id: 'dashboard', label: 'Dashboard',     Icon: IconGrid,    to: '/desktop/dashboard' },
+  { id: 'chat',      label: 'Ask a Question', Icon: IconChat, to: '/desktop/chat', newChat: true },
+  { id: 'documents', label: 'Case Files',     Icon: IconFiles,         to: '/desktop/documents' },
+  { id: 'draft',     label: 'Filing Packet',  Icon: IconFilePen,   to: '/desktop/document-draft' },
+  { id: 'notice',    label: 'Notice Upload',  Icon: IconScanSearch,    to: '/desktop/notice-interpreter' },
 ];
 
 /**
@@ -109,9 +109,9 @@ export function CommandPalette() {
         <Command.Group heading="Go to">
           {NAV.map(item => (
             <Command.Item key={item.id} value={`go ${item.label}`} onSelect={() => openNav(item)}>
-              <item.Icon size={16} color={C.navy} strokeWidth={1.8} />
+              <item.Icon size={16} color={C.navy} />
               <span style={{ flex: 1 }}>{item.label}</span>
-              <ArrowRight size={13} color={C.muted} />
+              <IconArrowRight size={13} color={C.muted} />
             </Command.Item>
           ))}
         </Command.Group>
