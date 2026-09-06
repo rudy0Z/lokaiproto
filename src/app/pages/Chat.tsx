@@ -541,7 +541,7 @@ export default function Chat() {
             transition: 'background .2s ease' }}>
             <div ref={chatRef} className="chat-scroll"
               style={{ flex:1, overflowY:'auto', padding:'28px 0 176px' }}>
-              <div style={{ maxWidth:600, margin:'0 auto', padding:'0 24px' }}>
+              <div style={{ maxWidth: 760, margin:'0 auto', padding:'0 24px' }}>
 
                 {scenario.id !== 'consumer' && (
                   <div style={{ marginBottom: 24 }}>
