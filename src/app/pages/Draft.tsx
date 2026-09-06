@@ -9,8 +9,8 @@ import { useDemo } from '../context/DemoContext';
 const DRAFT_CSS = `
   .draft-scroll::-webkit-scrollbar       { width: 4px; }
   .draft-scroll::-webkit-scrollbar-track { background: transparent; }
-  .draft-scroll::-webkit-scrollbar-thumb { background: #E7E0D4; border-radius: 2px; }
-  .draft-scroll::-webkit-scrollbar-thumb:hover { background: #E9852B; }
+  .draft-scroll::-webkit-scrollbar-thumb { background: var(--role-hairline); border-radius: 2px; }
+  .draft-scroll::-webkit-scrollbar-thumb:hover { background: ${C.saffron}; }
 
   /* Print / Save-as-PDF — show only the document, drop all app chrome */
   @media print {
@@ -22,7 +22,7 @@ const DRAFT_CSS = `
   }
 `;
 
-// ─── Section label — 10px uppercase #8A8880 ───────────────────────────────────
+// ─── Section label — 10px uppercase quiet ink ───────────────────────────────────
 function SectionLabel({ label }: { label: string }) {
   return (
     <div style={{ marginBottom: '8px', marginTop: '2px' }}>
@@ -51,7 +51,7 @@ function EditableField({ label, value, onChange }: {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: (focused || hovered) ? '#FFF8F2' : 'transparent',
+        background: (focused || hovered) ? 'var(--role-flag-fill)' : 'transparent',
         borderBottom: `1.5px dashed ${C.saffron}`,
         padding: '6px 10px 4px',
         borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.xs} ${LAYOUT.radius.none} ${LAYOUT.radius.none}`,
@@ -81,7 +81,7 @@ function EditableField({ label, value, onChange }: {
   );
 }
 
-// ─── Legal text block — body text 14px #4A4840, line-height 1.8 ───────────────
+// ─── Legal text block — body text 14px inkSoft, line-height 1.8 ───────────────
 function LegalText({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '14px' }}>
@@ -117,7 +117,7 @@ function DocumentCard() {
 
   return (
     <div style={{
-      background: '#FFFFFF', border: `1px solid ${C.border}`,
+      background: 'var(--role-raised)', border: `1px solid ${C.border}`,
       borderRadius: LAYOUT.radius.panel, padding: '40px 48px',
       marginBottom: '32px', boxShadow: SHADOW.md,
     }}>
@@ -207,15 +207,15 @@ function DocumentCard() {
       <SectionLabel label="Legal Reference" />
       <LegalText>
         This packet is based on{' '}
-        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: 'var(--role-anchor-tint)', cursor: 'pointer' }}>
           Section 2(10) of the Consumer Protection Act, 2019
         </span>
         {' '}for defect in goods,{' '}
-        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: 'var(--role-anchor-tint)', cursor: 'pointer' }}>
           Section 2(11)
         </span>
         {' '}for deficiency in service, and{' '}
-        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: '#7B9EC4', cursor: 'pointer' }}>
+        <span style={{ color: C.navy, textDecoration: 'underline', textDecorationColor: 'var(--role-anchor-tint)', cursor: 'pointer' }}>
           Section 35
         </span>
         {' '}for complaint filing.
@@ -251,7 +251,7 @@ function DocumentCard() {
           <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginBottom: '32px' }}>
             Signature / Thumb impression
           </div>
-          <div style={{ height: '1px', width: '160px', background: '#C4C0B8' }} />
+          <div style={{ height: '1px', width: '160px', background: 'var(--role-hairline)' }} />
           <div style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, marginTop: '6px' }}>
             {fields.buyerName} · {fields.date}
           </div>
@@ -264,7 +264,7 @@ function DocumentCard() {
 // ─── What to do next — 3-step row ─────────────────────────────────────────────
 // Step circle: navy 24px circle with white number
 // Step title: 14px weight 600 Plus Jakarta Sans
-// Legal strip: 13px secondary, 3px navy left border, #F4F2EE background
+// Legal strip: 13px secondary, 3px navy left border, sunken background
 const steps = [
   {
     num: '1',
@@ -302,12 +302,12 @@ function WhatNext() {
         <div style={{
           position: 'absolute', top: '12px',
           left: 'calc(33.33% + 12px)', right: 'calc(33.33% + 12px)',
-          borderTop: '1px dashed #D8D4CC', zIndex: 0, pointerEvents: 'none',
+          borderTop: '1px dashed var(--role-hairline)', zIndex: 0, pointerEvents: 'none',
         }} />
 
         {steps.map(step => (
           <div key={step.num} style={{
-            background: '#FFFFFF', border: `1px solid ${C.border}`,
+            background: 'var(--role-raised)', border: `1px solid ${C.border}`,
             borderRadius: LAYOUT.radius.card, padding: '20px',
             display: 'flex', flexDirection: 'column', gap: '12px',
             position: 'relative', zIndex: 1,
@@ -322,7 +322,7 @@ function WhatNext() {
             }}>
               <span style={{
                 fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
-                color: '#FFFFFF', lineHeight: 1,
+                color: 'var(--role-raised)', lineHeight: 1,
               }}>
                 {step.num}
               </span>
@@ -348,7 +348,7 @@ function WhatNext() {
         ))}
       </div>
 
-      {/* Bottom legal strip — 13px secondary, 3px navy left border, #F4F2EE background */}
+      {/* Bottom legal strip — 13px secondary, 3px navy left border, sunken background */}
       <div style={{
         background: C.surface2,
         borderLeft: `3px solid ${C.navy}`,
@@ -407,7 +407,7 @@ export default function Draft() {
               onClick={() => navigate(-1)}
               style={{
                 width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
-                background: '#FFFFFF', border: `1px solid ${C.border}`,
+                background: 'var(--role-raised)', border: `1px solid ${C.border}`,
                 cursor: 'pointer', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', color: C.inkSoft, marginBottom: 24,
               }}
@@ -416,7 +416,7 @@ export default function Draft() {
             </button>
 
             <div style={{
-              background: '#FFFFFF',
+              background: 'var(--role-raised)',
               border: `1px solid ${C.border}`,
               borderTop: `3px solid ${C.oxblood}`,
               borderRadius: `${LAYOUT.radius.xs} ${LAYOUT.radius.card} ${LAYOUT.radius.card} ${LAYOUT.radius.card}`,
@@ -507,7 +507,7 @@ export default function Draft() {
               onClick={() => navigate(-1)}
               style={{
                 width: '36px', height: '36px', borderRadius: LAYOUT.radius.control,
-                background: '#FFFFFF', border: `1px solid ${C.border}`,
+                background: 'var(--role-raised)', border: `1px solid ${C.border}`,
                 cursor: 'pointer', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', color: C.inkSoft, flexShrink: 0,
                 zIndex: 1,
@@ -543,9 +543,9 @@ export default function Draft() {
             </div>
           </div>
 
-          {/* ── AI draft review banner — #FFF3E8, 3px saffron left border, 13px ── */}
+          {/* ── AI draft review banner — var(--role-flag-fill), 3px saffron left border, 13px ── */}
           <div style={{
-            background: '#FFF3E8',
+            background: 'var(--role-flag-fill)',
             borderLeft: `3px solid ${C.saffron}`,
             borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
             padding: '12px 16px',
@@ -557,7 +557,7 @@ export default function Draft() {
               <line x1="7" y1="4.5" x2="7" y2="7.5" stroke={C.saffron} strokeWidth="1.2" strokeLinecap="round" />
               <circle cx="7" cy="9.5" r="0.7" fill={C.saffron} />
             </svg>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400, color: '#8A4500' }}>
+            <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 400, color: 'C.amber' }}>
               AI draft — review all details before sending · {scenario.matterTitle}
               {draftApproved ? ' · Approved for copy/print' : ''}
             </span>
@@ -611,7 +611,7 @@ export default function Draft() {
       {/* ── Compact scoped ask — draft stays the subject of the page ── */}
       <div className="no-print" style={{
         flexShrink: 0,
-        background: '#FFFFFF',
+        background: 'var(--role-raised)',
         borderTop: `1px solid ${C.border}`,
         boxShadow: SHADOW.xs,
         padding: '12px 48px 16px',

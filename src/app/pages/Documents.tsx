@@ -10,12 +10,12 @@ import { toast } from 'sonner';
 const PAGE_CSS = `
   .docs-scroll::-webkit-scrollbar       { width: 5px; }
   .docs-scroll::-webkit-scrollbar-track { background: transparent; }
-  .docs-scroll::-webkit-scrollbar-thumb { background: #E7E0D4; border-radius: 3px; }
+  .docs-scroll::-webkit-scrollbar-thumb { background: var(--role-hairline); border-radius: 3px; }
   .docs-scroll::-webkit-scrollbar-thumb:hover { background: ${C.saffron}; }
 
   .doc-card {
-    background: #FFFFFF;
-    border: 1px solid #E7E0D4;
+    background: var(--role-raised);
+    border: 1px solid var(--role-hairline);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05);
     overflow: hidden;
@@ -46,7 +46,7 @@ const PAGE_CSS = `
     color: ${C.muted};
     border: 1px solid ${C.border};
   }
-  .doc-footer-btn-secondary:hover { background: #F8F5EE; }
+  .doc-footer-btn-secondary:hover { background: var(--role-ground); }
 
   .filter-tab {
     font-family: ${SANS};
@@ -152,8 +152,8 @@ const DOCUMENTS: DocItem[] = [
 
 // ─── Status Chip ──────────────────────────────────────────────────────────────
 const STATUS_STYLES: Record<DocStatus, React.CSSProperties> = {
-  'Draft':     { background: '#FFF3E8', color: C.saffron },
-  'Completed': { background: '#EEF2F8', color: C.navy },
+  'Draft':     { background: 'var(--role-flag-fill)', color: C.saffron },
+  'Completed': { background: 'var(--role-anchor-tint)', color: C.navy },
 };
 
 function StatusChip({ status }: { status: DocStatus }) {
@@ -185,7 +185,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
       {/* Mini document paper */}
       <div style={{
         width: '100%', height: '100%',
-        background: '#FFFFFF',
+        background: 'var(--role-raised)',
         borderRadius: LAYOUT.radius.sm,
         border: `1px solid ${C.border}`,
         boxShadow: SHADOW.md,
@@ -228,7 +228,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
               return (
                 <div key={i} style={{
                   width: line.w, height: '4px',
-                  background: '#D8D4CC',
+                  background: 'var(--role-hairline)',
                   borderRadius: LAYOUT.radius.xs,
                   marginBottom: '7px',
                   opacity: 0.7,
@@ -239,7 +239,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
             return (
               <div key={i} style={{
                 width: line.w, height: '6px',
-                background: '#C8C4BC',
+                background: 'var(--role-hairline-firm)',
                 borderRadius: LAYOUT.radius.xs,
                 marginBottom: '7px',
               }} />
@@ -253,7 +253,7 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
 
 // ─── Document Card ────────────────────────────────────────────────────────────
 function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string) => void }) {
-  const borderColor = doc.status === 'Completed' ? '#C8D8F0' : C.border;
+  const borderColor = doc.status === 'Completed' ? 'var(--role-anchor-tint)' : C.border;
 
   return (
     <div className="doc-card" style={{ border: `1px solid ${borderColor}` }}>
@@ -381,7 +381,7 @@ function FilterTabs({ active, onSelect }: { active: FilterTab; onSelect: (t: Fil
           onClick={() => onSelect(tab)}
           style={{
             background: active === tab ? C.navy : 'transparent',
-            color: active === tab ? '#FFFFFF' : C.muted,
+            color: active === tab ? 'var(--role-on-anchor)' : C.muted,
             fontWeight: active === tab ? 600 : 400,
           }}
         >
@@ -484,7 +484,7 @@ export default function Documents() {
                 background: GRAD.buttonPrimary,
                 border: 'none', borderRadius: LAYOUT.radius.control,
                 fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
-                color: '#FFFFFF', padding: '10px 22px',
+                color: 'var(--role-on-anchor)', padding: '10px 22px',
                 cursor: 'pointer', flexShrink: 0,
                 boxShadow: SHADOW.sm,
                 transition: 'opacity 0.15s ease',
@@ -527,7 +527,7 @@ export default function Documents() {
               {/* Document icon ring */}
               <div style={{
                 width: '64px', height: '64px', borderRadius: LAYOUT.radius.full,
-                background: '#FFFFFF', border: `1px solid ${C.border}`,
+                background: 'var(--role-raised)', border: `1px solid ${C.border}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 marginBottom: '20px',
                 boxShadow: SHADOW.sm,

@@ -10,12 +10,12 @@ import { useDemo } from '../context/DemoContext';
 const NOTICE_CSS = `
   .notice-scroll::-webkit-scrollbar       { width: 4px; }
   .notice-scroll::-webkit-scrollbar-track { background: transparent; }
-  .notice-scroll::-webkit-scrollbar-thumb { background: #E7E0D4; border-radius: 2px; }
+  .notice-scroll::-webkit-scrollbar-thumb { background: var(--role-hairline); border-radius: 2px; }
   .clause-amount {
     text-decoration: underline;
-    text-decoration-color: #E9852B;
+    text-decoration-color: ${C.saffron};
     text-decoration-thickness: 2px;
-    color: #2A2420;
+    color: ${C.ink};
     border-radius: 3px;
     padding: 1px 3px;
     transition: background 0.15s ease;
@@ -26,9 +26,9 @@ const NOTICE_CSS = `
   }
   .clause-section {
     text-decoration: underline;
-    text-decoration-color: #102A4C;
+    text-decoration-color: ${C.navy};
     text-decoration-thickness: 2px;
-    color: #2A2420;
+    color: ${C.ink};
     border-radius: 3px;
     padding: 1px 3px;
     transition: background 0.15s ease;
@@ -61,16 +61,16 @@ function CitationChip({ text }: { text: string }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '5px',
       background: GRAD.oxbloodStamp, borderRadius: LAYOUT.radius.xs, padding: '3px 10px 3px 7px',
-      fontFamily: MONO, fontSize: TYPE.micro.size, color: '#FFFFFF',
+      fontFamily: MONO, fontSize: TYPE.micro.size, color: 'var(--role-on-anchor)',
       marginLeft: '6px', verticalAlign: 'middle', whiteSpace: 'nowrap',
     }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: LAYOUT.radius.full, background: '#FFFFFF', flexShrink: 0, opacity: 0.85 }} />
+      <span style={{ width: '5px', height: '5px', borderRadius: LAYOUT.radius.full, background: 'var(--role-on-anchor)', flexShrink: 0, opacity: 0.85 }} />
       {text}
     </span>
   );
 }
 
-// ─── Zone label — 10px uppercase #8A8880 ──────────────────────────────────────
+// ─── Zone label — caps, quiet ink ─────────────────────────────────────────────
 function ZoneLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
@@ -97,13 +97,13 @@ function ColLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ─── Urgency card — deadline callout ──────────────────────────────────────────
-// Background #FFF3E8, border 1px #E8C4A0, radius 12px
-// Heading: DM Serif Display italic 17px #1A1916
+// Background flag-fill, border 1px flag, radius 12px
+// Heading: serif italic 17px, ink
 function UrgencyCard() {
   return (
     <div style={{
-      background: '#FFF3E8',
-      border: '1px solid #E8C4A0',
+      background: 'var(--role-flag-fill)',
+      border: '1px solid var(--role-flag)',
       borderRadius: LAYOUT.radius.panel,
       padding: '16px',
       marginTop: '16px',
@@ -122,13 +122,13 @@ function UrgencyCard() {
 }
 
 // ─── Feedback row — thumbs up/down ────────────────────────────────────────────
-// 32px buttons, #F4F2EE background, radius 999px
+// 32px vote buttons, sunken background, radius 999px
 function FeedbackRow() {
   const [voted, setVoted] = useState<'up' | 'down' | null>(null);
   return (
     <div style={{
       padding: '14px 24px 16px',
-      borderTop: '1px solid #F0EDE8',
+      borderTop: '1px solid var(--role-hairline)',
       display: 'flex', alignItems: 'center', gap: '12px',
     }}>
       <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, flex: 1 }}>
@@ -139,8 +139,8 @@ function FeedbackRow() {
         title="Yes, helpful"
         style={{
           width: '32px', height: '32px', borderRadius: LAYOUT.radius.pill,
-          background: voted === 'up' ? '#EEF2F8' : C.surface2,
-          border: voted === 'up' ? '1px solid #B8C8E0' : `1px solid ${C.border}`,
+          background: voted === 'up' ? 'var(--role-anchor-tint)' : C.surface2,
+          border: voted === 'up' ? '1px solid var(--role-anchor)' : `1px solid ${C.border}`,
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'background 0.14s ease, border-color 0.14s ease', flexShrink: 0,
         }}
@@ -152,20 +152,20 @@ function FeedbackRow() {
         title="Not helpful"
         style={{
           width: '32px', height: '32px', borderRadius: LAYOUT.radius.pill,
-          background: voted === 'down' ? '#FFF3E8' : C.surface2,
-          border: voted === 'down' ? '1px solid #E8C4A0' : `1px solid ${C.border}`,
+          background: voted === 'down' ? 'var(--role-flag-fill)' : C.surface2,
+          border: voted === 'down' ? '1px solid var(--role-flag)' : `1px solid ${C.border}`,
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'background 0.14s ease, border-color 0.14s ease', flexShrink: 0,
         }}
       >
-        <IconThumbsDown style={{ width: '14px', height: '14px', color: voted === 'down' ? '#8A4500' : C.muted }} />
+        <IconThumbsDown style={{ width: '14px', height: '14px', color: voted === 'down' ? C.amber : C.muted }} />
       </button>
     </div>
   );
 }
 
 // ─── Left panel — Original Notice ─────────────────────────────────────────────
-// Document card: #F9F7F3 (paper feel), shadow-md, radius 12px, padding 32px
+// Document card: paper ground, shadow-md, radius 12px, padding 32px
 // Highlights: amounts = saffron underline, dates/sections = navy underline
 function OriginalNoticeColumn({ parsedText }: { parsedText: string | null }) {
   return (
@@ -176,13 +176,13 @@ function OriginalNoticeColumn({ parsedText }: { parsedText: string | null }) {
       <div style={{ marginBottom: '12px' }}>
         <span style={{
           fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 500,
-          color: C.navy, background: '#EEF2F8',
-          border: '1px solid #B8C8E0', borderRadius: LAYOUT.radius.sm,
+          color: C.navy, background: 'var(--role-anchor-tint)',
+          border: '1px solid var(--role-anchor-tint)', borderRadius: LAYOUT.radius.sm,
           padding: '4px 12px', display: 'inline-flex', alignItems: 'center', gap: '8px',
         }}>
           <span style={{
             width: '7px', height: '7px', borderRadius: LAYOUT.radius.full,
-            background: '#1F6B3A', display: 'inline-block', flexShrink: 0,
+            background: 'var(--role-ok)', display: 'inline-block', flexShrink: 0,
           }} />
           {parsedText ? 'Your uploaded document' : 'Example notice · Marathi document detected'}
         </span>
@@ -201,7 +201,7 @@ function OriginalNoticeColumn({ parsedText }: { parsedText: string | null }) {
 function UploadedNoticeCard({ text }: { text: string }) {
   return (
     <div style={{
-      background: '#F9F7F3',
+      background: 'var(--role-paper)',
       borderRadius: LAYOUT.radius.panel,
       boxShadow: SHADOW.md,
       flex: 1,
@@ -212,7 +212,7 @@ function UploadedNoticeCard({ text }: { text: string }) {
       <PaperTexture />
       <div style={{ position: 'relative', zIndex: 1, padding: '32px', flex: 1, overflowY: 'auto' }}>
         <pre style={{
-          fontFamily: MONO, fontSize: TYPE.small.size, color: '#3A3630', lineHeight: 1.85,
+          fontFamily: MONO, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.85,
           whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0,
         }}>
           {text}
@@ -223,7 +223,7 @@ function UploadedNoticeCard({ text }: { text: string }) {
         borderTop: `1px solid ${C.border}`,
         padding: '12px 32px',
         display: 'flex', alignItems: 'center', gap: '8px',
-        background: '#F9F7F3',
+        background: 'var(--role-paper)',
       }}>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <circle cx="6" cy="6" r="4.5" stroke={C.muted} strokeWidth="0.9" />
@@ -242,7 +242,7 @@ function ExampleNoticeCard() {
   return (
       /* Document card — paper feel */
       <div style={{
-        background: '#F9F7F3',
+        background: 'var(--role-paper)',
         borderRadius: LAYOUT.radius.panel,
         boxShadow: SHADOW.md,
         flex: 1,
@@ -259,14 +259,14 @@ function ExampleNoticeCard() {
           <div style={{ textAlign: 'center', marginBottom: '22px' }}>
             <div style={{
               fontFamily: MONO, fontSize: TYPE.caption.size, fontWeight: 700,
-              color: '#2A2420', letterSpacing: '0.04em', marginBottom: '4px',
+              color: C.ink, letterSpacing: '0.04em', marginBottom: '4px',
             }}>
               महाराष्ट्र शासन — बृहन्मुंबई महानगरपालिका
             </div>
-            <div style={{ fontFamily: MONO, fontSize: TYPE.micro.size, color: '#5A5650', letterSpacing: '0.02em', marginBottom: '2px' }}>
+            <div style={{ fontFamily: MONO, fontSize: TYPE.micro.size, color: C.muted, letterSpacing: '0.02em', marginBottom: '2px' }}>
               Government of Maharashtra · Brihanmumbai Municipal Corporation
             </div>
-            <div style={{ height: '1px', background: '#C4C0B4', margin: '10px auto', width: '80%' }} />
+            <div style={{ height: '1px', background: C.borderStrong, margin: '10px auto', width: '80%' }} />
           </div>
 
           {/* Reference line */}
@@ -281,7 +281,7 @@ function ExampleNoticeCard() {
 
           {/* Marathi body — amounts: saffron underline · section refs: navy underline */}
           <div style={{ marginBottom: '18px' }}>
-            <div style={{ fontFamily: MONO, fontSize: TYPE.small.size, color: '#3A3630', lineHeight: 1.85, letterSpacing: '0.01em' }}>
+            <div style={{ fontFamily: MONO, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.85, letterSpacing: '0.01em' }}>
               <div style={{ marginBottom: '8px' }}>
                 <strong>विषय:</strong> मालमत्ता कर थकबाकीबाबत नोटीस — मालमत्ता क्र. ४५२/बी, पाली हिल, बांद्रा (प).
               </div>
@@ -306,7 +306,7 @@ function ExampleNoticeCard() {
             </div>
           </div>
 
-          <div style={{ height: '1px', background: '#D8D4CC', margin: '16px 0', opacity: 0.6 }} />
+          <div style={{ height: '1px', background: C.border, margin: '16px 0', opacity: 0.6 }} />
 
           {/* English continuation */}
           <div style={{ fontFamily: MONO, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.85, letterSpacing: '0.005em' }}>
@@ -336,7 +336,7 @@ function ExampleNoticeCard() {
               <div style={{ fontFamily: MONO, fontSize: TYPE.micro.size, color: C.muted, marginBottom: '24px' }}>
                 अधिकृत स्वाक्षरी / Authorised Signatory
               </div>
-              <div style={{ height: '1px', width: '120px', background: '#B8B4AC' }} />
+              <div style={{ height: '1px', width: '120px', background: C.borderStrong }} />
               <div style={{ fontFamily: MONO, fontSize: TYPE.micro.size, color: C.muted, marginTop: '4px' }}>
                 कर निरीक्षक, H/West वॉर्ड
               </div>
@@ -344,13 +344,13 @@ function ExampleNoticeCard() {
           </div>
         </div>
 
-        {/* OCR bottom bar — border-top 1px #E8E4DC */}
+        {/* OCR bottom bar — hairline border-top */}
         <div style={{
           position: 'relative', zIndex: 1,
           borderTop: `1px solid ${C.border}`,
           padding: '12px 32px',
           display: 'flex', alignItems: 'center', gap: '8px',
-          background: '#F9F7F3',
+          background: 'var(--role-paper)',
         }}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <circle cx="6" cy="6" r="4.5" stroke={C.muted} strokeWidth="0.9" />
@@ -503,7 +503,7 @@ function InterpretationColumn({ parsedText, interpretation }: { parsedText: stri
 
       {/* Interpretation card */}
       <div style={{
-        background: '#FFFFFF',
+        background: 'var(--role-raised)',
         border: `1px solid ${C.border}`,
         borderRadius: LAYOUT.radius.card,
         overflow: 'hidden',
@@ -553,7 +553,7 @@ function InterpretationColumn({ parsedText, interpretation }: { parsedText: stri
         <div style={{
           padding: '10px 24px 12px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderTop: '1px solid #F0EDE8',
+          borderTop: '1px solid var(--role-hairline)',
         }}>
           <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted }}>
             {interpretation ? 'Interpreted just now' : 'Example interpretation'}
@@ -583,8 +583,8 @@ function InterpretationColumn({ parsedText, interpretation }: { parsedText: stri
           style={{
             width: '100%',
             padding: '12px 24px',
-            background: copied ? '#1F6B3A' : C.navy,
-            color: '#FFFFFF',
+            background: copied ? C.green : C.navy,
+            color: 'var(--role-on-anchor)',
             border: 'none',
             borderRadius: LAYOUT.radius.control,
             fontFamily: SANS,
@@ -624,7 +624,7 @@ function InterpretationColumn({ parsedText, interpretation }: { parsedText: stri
 
       {/* Hallucination disclaimer — explicit, calm, not hidden */}
       <div style={{
-        background: '#FFF8F0',
+        background: 'var(--role-flag-fill)',
         border: '1px solid rgba(233,133,43,0.24)',
         borderLeft: `3px solid ${C.saffron}`,
         borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,
@@ -736,7 +736,7 @@ export default function Notice() {
         </div>
 
         <div style={{
-          background: noticeStatus.tone === 'error' ? '#FFF5F2' : noticeStatus.tone === 'success' ? '#F1F8F3' : '#FFF8F0',
+          background: noticeStatus.tone === 'error' ? 'var(--role-halt-fill)' : noticeStatus.tone === 'success' ? 'var(--role-ok-fill)' : 'var(--role-flag-fill)',
           border: noticeStatus.tone === 'error' ? '1px solid rgba(184,54,28,0.22)' : noticeStatus.tone === 'success' ? '1px solid rgba(31,107,58,0.20)' : '1px solid rgba(233,133,43,0.24)',
           borderLeft: noticeStatus.tone === 'error' ? `3px solid ${C.red}` : noticeStatus.tone === 'success' ? `3px solid ${C.green}` : `3px solid ${C.saffron}`,
           borderRadius: `${LAYOUT.radius.none} ${LAYOUT.radius.control} ${LAYOUT.radius.control} ${LAYOUT.radius.none}`,

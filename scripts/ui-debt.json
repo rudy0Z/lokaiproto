@@ -1,7 +1,7 @@
 {
   "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
   "measuredAt": "2026-09-06",
-  "totalDebt": 551,
+  "totalDebt": 473,
   "files": {
     "src/app/App.tsx": {
       "rawFamily": 1
@@ -49,7 +49,7 @@
       "rawFamily": 1
     },
     "src/app/pages/Chat.tsx": {
-      "rawColor": 14,
+      "rawColor": 4,
       "rawFamily": 26,
       "rawLeading": 10
     },
@@ -58,12 +58,11 @@
       "rawLeading": 3
     },
     "src/app/pages/Documents.tsx": {
-      "rawColor": 18,
+      "rawColor": 5,
       "rawFamily": 12,
       "rawLeading": 2
     },
     "src/app/pages/Draft.tsx": {
-      "rawColor": 19,
       "rawFamily": 25,
       "rawLeading": 10
     },
@@ -80,7 +79,7 @@
       "rawFamily": 7
     },
     "src/app/pages/Notice.tsx": {
-      "rawColor": 40,
+      "rawColor": 4,
       "rawFamily": 32,
       "rawLeading": 10
     },
