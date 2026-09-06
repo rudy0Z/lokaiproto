@@ -230,6 +230,103 @@ export function clarifyOptionsFor(language: DemoLanguage): ClarifyOption[] {
   return CONSUMER_CLARIFY_I18N[language].options;
 }
 
+/* ─── The clarify follow-up turns, localized ─────────────────────────────────
+ * The two non-explain follow-ups (statute expiry → stop, source gap →
+ * disclose) ship in all four prepared languages. Rule from the audit: a
+ * localized question must never route to an unlocalized answer. English
+ * returns the canonical turn unchanged. */
+
+const FOLLOWUP_I18N: Partial<
+  Record<DemoLanguage, Partial<Record<'statute-expiry-stop' | 'source-gap-disclose', {
+    title: string;
+    primary: string;
+    preserved: string;
+    steps: [string, string, string];
+    systemsNote?: string;
+  }>>>
+> = {
+  hi: {
+    'statute-expiry-stop': {
+      title: 'समय-सीमा यह रास्ता बंद कर सकती है',
+      primary: 'यह उदाहरण जनवरी 2022 की खरीद दिखाता है — इस डेमो की समय-सीमा से पुराना। इसलिए LokAI नोटिस नहीं बनाएगा या शिकायत का सुझाव नहीं देगा; आपकी असली तारीख़ों के लिए वकील ही समय-सीमा जाँच सकता है।',
+      preserved: 'जनवरी 2022 में ₹8,999 का खराब मिक्सर खरीदा; विक्रेता अब भी रिफंड से मना कर रहा है। सबूत सूची और मामले का सारांश सुरक्षित है।',
+      steps: ['खरीद और सबूतों का सारांश रखें', 'अपनी तारीख़ों के लिए समय-सीमा के बारे में वकील या लीगल-एड वर्कर से पूछें', 'मौजूदा कंज्यूमर-रिफंड उदाहरण पर लौटें'],
+      systemsNote: 'समय-सीमा इस बात पर निर्भर करती है कि शिकायत की घड़ी कब शुरू हुई और कौन-सा फोरम सुनेगा। आपके मामले के लिए यह फ़ैसला सिर्फ कोर्ट या वकील करेगा — यह प्रोटोटाइप अंदाज़ा लगाने के बजाय रुक जाता है।',
+    },
+    'source-gap-disclose': {
+      title: 'मार्केटप्लेस की नीति जाँची नहीं जा सकी',
+      primary: 'खराब उत्पाद के लिए सामान्य उपभोक्ता रास्ता कंज्यूमर प्रोटेक्शन एक्ट के तहत अब भी खुला है।',
+      preserved: 'इस तैयार डेमो में मार्केटप्लेस की निजी रिटर्न नीति का कोई आधिकारिक रिकॉर्ड नहीं है, इसलिए LokAI यह नहीं कहेगा कि वह नीति आपके अधिकारों पर हावी है या नहीं।',
+      steps: ['यहाँ दी गई सामान्य उपभोक्ता जानकारी पढ़ें।', 'अगर आपके पास मार्केटप्लेस की नीति का टेक्स्ट है तो जोड़ें।', 'किसी भी मार्केटप्लेस-नीति दावे पर भरोसा करने से पहले कानूनी पेशेवर से पूछें।'],
+    },
+  },
+  mr: {
+    'statute-expiry-stop': {
+      title: 'मुदत या मार्ग अडवळू शकते',
+      primary: 'हे उदाहरण जानेवारी 2022ची खरेदी दाखवते — या डेमोच्या मुदतीपेक्षा जुने. म्हणून LokAI नोटीस तयार करणार नाही किंवा तक्रारीचा सल्ला देणार नाही; तुमच्या खऱ्या तारखांसाठी वकीलच मुदत तपासू शकतो.',
+      preserved: 'जानेवारी 2022मध्ये ₹8,999चा खराब मिक्सर खरेदी केला; विक्रेता अजून परताव्यास नकार देतो. पुरावा यादी आणि प्रकरणाचा सारांश जतन केला आहे.',
+      steps: ['खरेदी व पुराव्यांचा सारांश जतन करा', 'तुमच्या तारखांसाठी मुदतीबाबत वकील किंवा लीगल-एड कर्मचाऱ्यास विचारा', 'सध्याच्या ग्राहक-परतावा उदाहरणाकडे परत जा'],
+      systemsNote: 'मुदत यावर अवलंबून आहे की तक्रारीची घड्याळ कधी सुरू झाली आणि कोणते फोरम ऐकेल. तुमच्या प्रकरणासाठी हा निर्णय कोर्ट किंवा वकीलच घेईल — हे प्रोटोटाइप अंदाज लावण्याऐवजी थांबते.',
+    },
+    'source-gap-disclose': {
+      title: 'मार्केटप्लेसचे धोरण तपासता आले नाही',
+      primary: 'खराब उत्पादनासाठी सामान्य ग्राहक मार्ग कॉन्स्युमर प्रोटेक्शन ॲक्टअंतर्गत अजून खुला आहे.',
+      preserved: 'या तयार डेमोमध्ये मार्केटप्लेसच्या खाजगी रिटर्न धोरणाचा अधिकृत मजकूर नाही, म्हणून LokAI ते धोरण तुमच्या हक्कांवर वरचढ आहे का ते सांगणार नाही.',
+      steps: ['येथे दिलेली सामान्य ग्राहक माहिती वाचा.', 'तुमच्याकडे मार्केटप्लेसच्या धोरणाचा मजकूर असल्यास तो जोडा.', 'कोणत्याही मार्केटप्लेस-धोरण दाव्यावर विश्वास ठेवण्यापूर्वी कायदेविषयक व्यावसायिकास विचारा.'],
+    },
+  },
+  ta: {
+    'statute-expiry-stop': {
+      title: 'காலவரம்பு இந்த வழியைத் தடுக்கலாம்',
+      primary: 'இந்த எடுத்துக்காட்டு ஜனவரி 2022 வாங்குதலைக் காட்டுகிறது — இந்த டெமோ உள்ளடக்கும் காலவரம்பைவிட பழையது. எனவே LokAI நோட்டீஸ் உருவாக்கவோ புகார் அளிக்கப் பரிந்துரைக்கவோ செய்யாது; உங்கள் உண்மையான தேதிகளுக்கு வழக்கறிஞரால் மட்டுமே காலவரம்பைச் சரிபார்க்க முடியும்.',
+      preserved: 'ஜனவரி 2022இல் ₹8,999க்கு வாங்கிய பழுதான மிக்சர்; விற்பனையாளர் இன்னும் ரீஃபண்டுக்கு மறுக்கிறார். ஆதாரப் பட்டியலும் வழக்கின் சுருக்கமும் பாதுகாக்கப்பட்டுள்ளன.',
+      steps: ['வாங்குதல் மற்றும் ஆதாரங்களின் சுருக்கத்தை வைத்திருங்கள்', 'உங்கள் தேதிகளுக்கான காலவரம்பு பற்றி வழக்கறிஞர் அல்லது சட்ட உதவியாளரிடம் கேளுங்கள்', 'நடைமுறை நுகர்வோர்-ரீஃபண்டு எடுத்துக்காட்டுக்குத் திரும்புங்கள்'],
+      systemsNote: 'காலவரம்பு எப்போது புகார் கடிகாரம் தொடங்கியது, எந்த மன்றம் விசாரிக்கும் என்பதைப் பொறுத்தது. உங்கள் வழக்குக்கு அந்த முடிவை நீதிமன்றம் அல்லது வழக்கறிஞரால் மட்டுமே எடுக்க முடியும் — இந்த முன்மாதிரி ஊகிப்பதற்குப் பதிலாக நிற்கிறது.',
+    },
+    'source-gap-disclose': {
+      title: 'மார்க்கெட்பிளேஸ் கொள்கையைச் சரிபார்க்க முடியவில்லை',
+      primary: 'பழுதான பொருளுக்கான சாதாரண நுகர்வோர் வழி, நுகர்வோர் பாதுகாப்புச் சட்டத்தின் கீழ் இன்னும் திறந்துள்ளது.',
+      preserved: 'இந்த தயார் டெமோவில் மார்க்கெட்பிளேஸின் தனியார் ரிட்டர்ன் கொள்கைக்கான அதிகாரப்பூர்வ பதிவு இல்லை, எனவே அந்தக் கொள்கை உங்கள் உரிமைகளை மீறுகிறதா என்று LokAI சொல்லாது.',
+      steps: ['இங்கே அளிக்கப்பட்ட சாதாரண நுகர்வோர் தகவலைப் படியுங்கள்.', 'மார்க்கெட்பிளேஸ் கொள்கை உரை உங்களிடம் இருந்தால் சேருங்கள்.', 'எந்த மார்க்கெட்பிளேஸ்-கொள்கை கூற்றையும் நம்புவதற்கு முன் சட்ட நிபுணரிடம் கேளுங்கள்.'],
+    },
+  },
+};
+
+/**
+ * The clarify follow-up turns in the reader's language. English returns the
+ * canonical turn; hi/mr/ta return the pack with the payload re-pointed.
+ * Returns undefined when no pack exists — callers keep the EN turn and the
+ * honesty banner covers the gap.
+ */
+export function localizeConsumerFollowUp(
+  turnId: 'statute-expiry-stop' | 'source-gap-disclose',
+  language: DemoLanguage,
+): ResponseTurn | undefined {
+  if (language === 'en') return undefined;
+  const base = getTurnById(turnId);
+  const pack = FOLLOWUP_I18N[language]?.[turnId];
+  if (!base || !pack) return undefined;
+  return {
+    ...base,
+    language,
+    title: pack.title,
+    payload: base.payload.mode === 'stop'
+      ? { mode: 'stop', data: {
+          ...base.payload.data,
+          reason: pack.primary,
+          preservedSummary: pack.preserved,
+          stillAvailable: [...pack.steps],
+          ...(pack.systemsNote ? { systemsNote: pack.systemsNote } : {}),
+        } }
+      : { mode: 'disclose', data: {
+          ...base.payload.data,
+          partialAnswer: pack.primary,
+          gap: pack.preserved,
+          whatYouCanStillDo: [...pack.steps],
+        } },
+  };
+}
+
 export const SCRIPT_RAIL: { id: DemoLanguage; label: string; native: string }[] = [
   { id: 'en', label: 'English', native: 'English' },
   { id: 'hi', label: 'Hindi', native: 'हिन्दी' },

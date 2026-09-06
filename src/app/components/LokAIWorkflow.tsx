@@ -366,7 +366,7 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
       ? C.amber
       : step.status === 'current'
         ? C.navy
-        : '#D8D4CC';
+        : 'var(--role-hairline-firm)';
 
   return (
     <div style={{
@@ -374,7 +374,7 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
       height: 24,
       borderRadius: LAYOUT.radius.full,
       background: color,
-      color: '#FFFFFF',
+      color: step.status === 'locked' ? 'var(--role-ink-faint)' : 'var(--role-on-anchor)',
       fontFamily: MONO,
       fontSize: TYPE.label.size,
       display: 'flex',
@@ -1069,91 +1069,10 @@ export function FirstActionChecklist({
   );
 }
 
-/**
- * StopState (FailureStateCard) — §3.4/L6/L8. The product's whole thesis is that
- * it knows when to stop, so the refusal is the most designed screen in the app,
- * not the least. It was a pale Bootstrap alert (pink box, red left border) with
- * the app's usual navy "Continue" sitting right underneath — the highest-
- * affordance control inviting the user *past* the refusal it was refusing.
- *
- * Now it goes full-bleed dark: the one place mobile inverts tone, so a stop
- * reads as a different kind of moment rather than another card. The SAFE action
- * is the only prominent control; there is no "continue anyway." In a dark theme
- * this same relationship flips to warm-and-luminous (L8) — the contrast is the
- * constant, the direction follows the theme.
- */
-export function StopState({
-  failure,
-  onSafeAction,
-}: {
-  failure: FailureState;
-  /** The safe path out — escalate to a human for human_required, recover otherwise. */
-  onSafeAction?: () => void;
-}) {
-  const needsHuman = failure.riskLevel === 'human_required';
-  const actionLabel = needsHuman ? 'Find legal-aid help' : failure.nextAction;
-
-  return (
-    <div style={{
-      background: C.navyDark,
-      borderRadius: LAYOUT.radius.turn,
-      padding: 20,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 14,
-      boxShadow: SHADOW.lg,
-    }}>
-      <span style={{
-        alignSelf: 'flex-start',
-        display: 'inline-flex', alignItems: 'center', gap: 7,
-        ...typeStyle('label', { color: needsHuman ? '#F3B0A2' : '#F2C79A' }),
-      }}>
-        <IconShield size={14} />
-        {needsHuman ? 'LokAI is stopping here' : 'LokAI paused'}
-      </span>
-
-      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorial.size, fontWeight: 400, color: C.onDark, lineHeight: 1.2, margin: 0 }}>
-        {failure.title}
-      </h3>
-
-      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.onDarkSoft, lineHeight: 1.6, margin: 0 }}>
-        {failure.body}
-      </p>
-
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,0.14)',
-        paddingTop: 14,
-        display: 'flex', flexDirection: 'column', gap: 4,
-      }}>
-        <p style={{ ...typeStyle('captionStrong', { color: C.onDark, margin: 0 }) }}>
-          What to do instead
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.onDarkSoft, lineHeight: 1.55, margin: 0 }}>
-          {failure.safeFallback}
-        </p>
-      </div>
-
-      {onSafeAction && (
-        <button
-          onClick={onSafeAction}
-          style={{
-            minHeight: 48, marginTop: 2,
-            borderRadius: LAYOUT.radius.panel, border: 'none',
-            background: C.bg, color: C.navy,
-            fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}
-        >
-          {actionLabel}
-          <IconArrowRight size={16} />
-        </button>
-      )}
-    </div>
-  );
-}
-
-/** @deprecated legacy name — kept so any old import keeps compiling. Use StopState. */
-export const FailureStateCard = StopState;
+/* StopState (FailureStateCard) deleted 2026-09-06 — no render sites since the
+   mobile stop screen moved to <MobileStopScreen> (Screen tone="stop") and the
+   desktop stop composition is Phase 7, which will compose its own surface.
+   The full-bleed/L6/L8 reasoning lives there, not in a card. */
 
 /**
  * NoticeAssessmentCard — the same "verify before trusting" discipline the

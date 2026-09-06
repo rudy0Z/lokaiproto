@@ -7,7 +7,7 @@ import { Badge, Button, HairlineList, HairlineRow, ICON, ICON_STROKE, Label, Rul
 import { VoiceFactChips } from '../../components/mobile/VoiceFactChips';
 import { extractEntities } from '../../hooks/useVoiceCapture';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
-import { HomeIndicator, MobileRouteCanvas, StatusBar, TopNav, getLangLabel } from './MobileHome';
+import { HomeIndicator, MobileRouteCanvas, StatusBar, getLangLabel } from './MobileHome';
 import { useConversations } from '../../context/ConversationContext';
 import {
   AuditTrailList,
@@ -688,46 +688,30 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
       <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
         You'll review and can edit every field before anything is finalized. Nothing sends automatically.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-        <button
-          onClick={onBack}
-          style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: `1px solid ${C.border}`, background: 'var(--role-raised)',
-            color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          Not yet
-        </button>
-        <button
-          onClick={onApprove}
-          style={{
-            minHeight: 44, borderRadius: LAYOUT.radius.panel, border: 'none', background: C.navy, color: 'var(--role-on-anchor)',
-            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 800, cursor: 'pointer',
-          }}
-        >
+      <Stack gap={2} style={{ marginTop: 4 }}>
+        <Button onClick={onApprove} iconAfter={<IconChevronRight size={ICON.inline} color="var(--role-on-anchor)" />}>
           Prepare the draft
-        </button>
-      </div>
+        </Button>
+        <Button variant="quiet" onClick={onBack}>Not yet</Button>
+      </Stack>
     </div>
   );
 }
 
 // ─── Guide-only mode — explains, never drafts ──────────────────────────────────
 export function GuideOnlyCard({ packet }: { packet: FilingPacket }) {
+  /* Ground-level (L1): an explanation is prose, not an object — the Rule is
+     the separator, matching EvidenceLocker/Scratchpad. */
   return (
-    <div style={{
-      background: 'var(--role-paper)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
-      padding: 16, display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-        Guide me mode
-      </p>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+    <Stack gap={2}>
+      <Rule />
+      <Label>Guide me mode</Label>
+      <Text role="body" measured={false}>
         A {packet.title.toLowerCase()} for this matter would typically request repair, replacement,
         or refund and cite the sections LokAI found earlier. LokAI won't prepare or send anything in
         this mode — switch to "Prepare with me" when you're ready to draft it.
-      </p>
-    </div>
+      </Text>
+    </Stack>
   );
 }
 
@@ -1047,17 +1031,13 @@ function CaseArtboard() {
              both are suppressed here so the answer isn't pushed below the fold.
              They still render on the earlier stages that have no answer yet. */}
           {stage === 'plan' && (
-            <div style={{
-              background: C.cautionSoft,
-              border: `1px solid ${C.border}`,
-              borderRadius: LAYOUT.radius.panel,
-              padding: 14,
-            }}>
-              <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.65, margin: 0 }}>
+            <Stack gap={2}>
+              <Rule />
+              <Text role="caption" tone="quiet" measured={false}>
                 A <LegalText>deficiency</LegalText> can include a product that arrives damaged or does not work as promised.
                 Tap the highlighted term for a simple meaning.
-              </p>
-            </div>
+              </Text>
+            </Stack>
           )}
 
           {notice && (

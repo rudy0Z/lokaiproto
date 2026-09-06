@@ -75,54 +75,12 @@ export function StatusBar({ light = false }: { light?: boolean }) {
   );
 }
 
-// ─── Top Nav — logo left + language chip right ────────────────────────────────
-export function TopNav({
-  onLanguageTap,
-  bg = '#FFFFFF',
-  langLabel = 'English',
-  showDropdown = true,
-}: {
-  title?: string;
-  onLanguageTap?: () => void;
-  bg?: string;
-  langLabel?: string;
-  showDropdown?: boolean;
-}) {
-  return (
-    <div style={{
-      height: '56px', background: bg,
-      borderBottom: `1px solid ${C.border}`,
-      display: 'flex', alignItems: 'center',
-      padding: '0 20px', justifyContent: 'space-between', flexShrink: 0,
-    }}>
-      <BrandLogo size={32} />
-
-      <button
-        onClick={onLanguageTap}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          background: 'var(--role-anchor-tint)', border: `1px solid ${C.navy}`,
-          borderRadius: LAYOUT.radius.pill, padding: '5px 12px',
-          cursor: 'pointer',
-          transition: 'background 0.15s ease',
-        }}
-      >
-        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500, color: C.navy }}>
-          {langLabel}
-        </span>
-        {showDropdown && (
-          <IconChevronDown style={{ width: '11px', height: '11px', color: C.navy }} />
-        )}
-      </button>
-    </div>
-  );
-}
 
 // ─── Bottom Nav — RETIRED ─────────────────────────────────────────────────────
 /* The tab bar was replaced by the MatterDrawer (chat-first navigation model,
    2026-08-27): the drawer is the app's one nav surface, and a persistent tab
    bar competed with the composer for the thumb zone. No render sites remain.
-   TopNav above is likewise kept only for any stray legacy import; new screens
+   TopNav is deleted outright (2026-09-06 audit finding 6); new screens
    use MobileTopBar. */
 
 // ─── Home Indicator ────────────────────────────────────────────────────────────

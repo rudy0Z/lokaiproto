@@ -1,7 +1,7 @@
 {
   "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
-  "measuredAt": "2026-09-03",
-  "totalDebt": 572,
+  "measuredAt": "2026-09-06",
+  "totalDebt": 551,
   "files": {
     "src/app/App.tsx": {
       "rawFamily": 1
@@ -20,7 +20,6 @@
       "rawFamily": 1
     },
     "src/app/components/demo/GuardrailGallery.tsx": {
-      "rawColor": 1,
       "rawFamily": 11,
       "rawLeading": 6
     },
@@ -30,9 +29,8 @@
       "rawLeading": 5
     },
     "src/app/components/LokAIWorkflow.tsx": {
-      "rawColor": 4,
-      "rawFamily": 63,
-      "rawLeading": 34
+      "rawFamily": 59,
+      "rawLeading": 31
     },
     "src/app/components/SettingsPanel.tsx": {
       "rawColor": 12,
@@ -75,12 +73,11 @@
       "rawLeading": 3
     },
     "src/app/pages/mobile/MobileConsumerCase.tsx": {
-      "rawFamily": 42,
-      "rawLeading": 21
+      "rawFamily": 37,
+      "rawLeading": 19
     },
     "src/app/pages/mobile/MobileHome.tsx": {
-      "rawColor": 1,
-      "rawFamily": 8
+      "rawFamily": 7
     },
     "src/app/pages/Notice.tsx": {
       "rawColor": 40,

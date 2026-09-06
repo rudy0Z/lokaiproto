@@ -43,4 +43,6 @@ export {
   CopyIcon as IconCopy,
   PrinterIcon as IconPrint,
   PencilIcon as IconPencil,
+  TriangleAlertIcon as IconWarning,
+  CircleCheckIcon as IconCircleCheck,
 } from '@animateicons/react/lucide';

@@ -1,13 +1,15 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, CircleHelp, ShieldAlert } from 'lucide-react';
+import { IconCircleCheck, IconShield, IconWarning } from '../../ui/icons';
 import { useDemo } from '../../context/DemoContext';
 import { DEMO_SCENARIOS, type DemoPolicyTier } from '../../data/demoScenarios';
-import { C, LAYOUT, MONO, SANS, SHADOW, TYPE } from '../shared';
+import { C, LAYOUT, MONO, SANS, TYPE } from '../shared';
 
-const tierMeta: Record<DemoPolicyTier, { label: string; color: string; bg: string; Icon: typeof CheckCircle2 }> = {
-  self_service: { label: 'Can explain and prepare', color: C.green, bg: C.successSoft, Icon: CheckCircle2 },
-  review_recommended: { label: 'Needs a check first', color: C.amber, bg: C.cautionSoft, Icon: CircleHelp },
-  human_help_required: { label: 'Stops for professional help', color: C.oxblood, bg: C.oxbloodSoft, Icon: ShieldAlert },
+/* Tier glyphs from the aliased set (Phase 8 icon era). The stop tier reads
+   ShieldCheck on purpose — the stop routes to professional protection. */
+const tierMeta: Record<DemoPolicyTier, { label: string; color: string; bg: string; Icon: typeof IconCircleCheck }> = {
+  self_service: { label: 'Can explain and prepare', color: C.green, bg: C.successSoft, Icon: IconCircleCheck },
+  review_recommended: { label: 'Needs a check first', color: C.amber, bg: C.cautionSoft, Icon: IconWarning },
+  human_help_required: { label: 'Stops for professional help', color: C.oxblood, bg: C.oxbloodSoft, Icon: IconShield },
 };
 
 export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
@@ -65,7 +67,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
                 flex: compact ? '0 0 auto' : '1 0 132px',
                 border: `1px solid ${active ? C.navy : C.border}`,
                 borderRadius: LAYOUT.radius.control,
-                background: active ? '#EEF2F8' : C.surface,
+                background: active ? 'var(--role-anchor-tint)' : C.surface,
                 color: active ? C.navy : C.inkSoft,
                 cursor: 'pointer',
                 fontFamily: SANS,
@@ -85,15 +87,10 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
       <div
         aria-live="polite"
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
-          borderRadius: compact ? 14 : 16,
-          boxShadow: SHADOW.sm,
           display: 'grid',
           gap: compact ? 12 : 20,
           gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.4fr) minmax(220px, .6fr)',
           marginTop: 10,
-          padding: compact ? 14 : 22,
         }}
       >
         <div>
@@ -128,7 +125,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
           <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
             {scenario.allowedActions.map((action) => (
               <li key={action} style={{ color: C.inkSoft, display: 'flex', fontFamily: SANS, fontSize: TYPE.caption.size, gap: 7, lineHeight: 1.45 }}>
-                <CheckCircle2 size={14} color={meta.color} style={{ flex: '0 0 auto', marginTop: 1 }} aria-hidden="true" />
+                <IconCircleCheck size={14} color={meta.color} style={{ flex: '0 0 auto', marginTop: 1 }} aria-hidden="true" />
                 {action}
               </li>
             ))}
@@ -152,7 +149,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
           </div>
         ) : (
           <div style={{ color: C.muted, display: 'flex', fontFamily: SANS, fontSize: TYPE.micro.size, gap: 7, gridColumn: compact ? 'auto' : '1 / -1' }}>
-            <AlertTriangle size={14} aria-hidden="true" />
+            <IconWarning size={14} aria-hidden="true" />
             No legal source is used for this boundary scene.
           </div>
         )}

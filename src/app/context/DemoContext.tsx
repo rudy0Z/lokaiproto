@@ -21,7 +21,7 @@ import {
   resolvePreparedTurn,
 } from '../data/responseTurns';
 import { CLARIFY_RESOLVE_STAGES } from '../data/responseTurns';
-import { localizeConsumerClarify, localizeConsumerExplain } from '../data/languagePacks';
+import { clarifyOptionsFor, localizeConsumerClarify, localizeConsumerExplain, localizeConsumerFollowUp } from '../data/languagePacks';
 import {
   DEMO_PROGRESS_STAGES,
   runProgressThen,
@@ -232,6 +232,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     let target = getTurnById(nextTurnId)!;
     if (target.id === 'consumer-explain' && language !== 'en') {
       target = localizeConsumerExplain(language);
+    } else if (language !== 'en') {
+      /* The audit rule: a localized question must never route to an
+         unlocalized answer. The two non-explain follow-ups carry packs. */
+      const localized = localizeConsumerFollowUp(
+        nextTurnId as 'statute-expiry-stop' | 'source-gap-disclose',
+        language,
+      );
+      if (localized) target = localized;
     }
     setIsProgressing(true);
     setProgressIndex(0);
