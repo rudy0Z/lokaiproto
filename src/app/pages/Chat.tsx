@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { C, EDITORIAL, LAYOUT, MONO, PLANE, SANS, SHADOW, TYPE } from '../components/shared';
+import { C, EDITORIAL, LAYOUT, MONO, PLANE, SANS, SHADOW, TYPE, typeStyle } from '../components/shared';
 import { useSidebar } from '../context/SidebarContext';
 import { useConversations } from '../context/ConversationContext';
 import type { ContextPanel } from '../services/api';
@@ -15,6 +15,10 @@ import { DEMO_PROGRESS_STAGES, getTurnById, resolvePreparedTurn } from '../data/
 import { localizeConsumerExplain } from '../data/languagePacks';
 import { useLokaiSharedStyles } from '../components/shared';
 import { useMotionStyles } from '../ui/motion';
+import { scriptProps } from '../ui/script';
+import { IconArrowRight } from '../ui/icons';
+import { HumanReviewCard } from '../components/LokAIWorkflow';
+import { getConsumerWorkflowState } from '../data/caseWorkflow';
 
 // ─── Animation styles ─────────────────────────────────────────────────────────
 /* Chat-local chrome only (toast, thinking accent, input dock). Content
@@ -175,9 +179,9 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
         margin: '0 auto 16px',
         boxShadow: SHADOW.navySoft,
       }}>
-        <span style={{ fontFamily: EDITORIAL, fontSize: TYPE.lead.size, color: 'var(--role-on-anchor)', fontStyle: 'italic', lineHeight: 1 }}>L</span>
+        <span style={{ fontFamily: EDITORIAL, fontSize: TYPE.lead.size, color: 'var(--role-on-anchor)', fontStyle: 'italic', }}>L</span>
       </div>
-      <p style={{ fontFamily: EDITORIAL, fontStyle: 'italic', fontWeight: 300, fontSize: TYPE.h3.size, color: C.ink, margin: '0 0 6px', lineHeight: 1.3 }}>
+      <p style={{ fontFamily: EDITORIAL, fontStyle: 'italic', fontWeight: 300, fontSize: TYPE.h3.size, color: C.ink, margin: '0 0 6px' }}>
         Choose a prepared consumer question
       </p>
       <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: '0 0 28px' }}>
@@ -207,6 +211,9 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
 }
 
 // ─── Context panel ────────────────────────────────────────────────────────────
+/* Rail reading (L1/L4/L7): one caps eyebrow for the whole rail, sections
+   divided by hairlines — not four bordered groups each with its own label.
+   Key sections are copy-on-click rows; facts and laws are plain lists. */
 function ContextPanel({ panel }: { panel: ContextPanel | null }) {
   const [copied, setCopied] = useState<string|null>(null);
 
@@ -226,13 +233,16 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
     );
   }
 
+  const label = { fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:700, color:C.muted,
+    textTransform:'uppercase' as const, letterSpacing:'0.1em' };
+
   return (
     <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.25}}
-      style={{ padding:'24px 20px 40px', display:'flex', flexDirection:'column', gap:20 }}>
-      {/* Primary law */}
+      style={{ padding:'24px 20px 40px', display:'flex', flexDirection:'column', gap:18 }}>
+
+      {/* Primary law — the rail's one caps eyebrow names the whole context */}
       <div>
-        <div style={{ fontFamily:SANS, fontSize: TYPE.label.size, fontWeight:600, color:C.muted,
-          textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 }}>Legal Context</div>
+        <div style={{ ...label, marginBottom:8 }}>Legal context</div>
         <p style={{ fontFamily:SANS, fontSize: TYPE.body.size, fontWeight:600, color:C.navy, margin:0, lineHeight:1.4 }}>
           {panel.primaryLaw}
         </p>
@@ -241,32 +251,31 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
         </p>
       </div>
 
-      {/* Key sections */}
-      <div>
-        <div style={{ fontFamily:SANS, fontSize: TYPE.label.size, fontWeight:600, color:C.muted,
-          textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10 }}>Key Sections</div>
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      {/* Key sections — copy-on-click hairline rows */}
+      {panel.sections.length > 0 && (
+        <div>
+          <div style={{ ...label, marginBottom:2 }}>Key sections</div>
           {panel.sections.map((s,i) => (
-            <button type="button" key={i} onClick={() => handleCopyRef(s.ref)} aria-label={`Copy source reference ${s.ref}`}
-              style={{ width:'100%', textAlign:'left', background:C.surface2, borderRadius: LAYOUT.radius.control, border:`1px solid ${C.border}`,
-                padding:'10px 12px', cursor:'pointer', position:'relative',
-                transition:'background .12s' }}>
-              <span style={{ fontFamily:MONO, fontSize: TYPE.micro.size, fontWeight:600, color:C.navy }}>{s.ref}</span>
-              {copied === s.ref && (
-                <span style={{ position:'absolute', right:8, top:8, fontFamily:SANS, fontSize: TYPE.label.size,
-                  color:C.green, background:'#F0FBF4', padding:'2px 6px', borderRadius: LAYOUT.radius.xs }}>Copied!</span>
-              )}
-              <p style={{ fontFamily:SANS, fontSize: TYPE.caption.size, color:C.inkSoft, margin:'4px 0 0', lineHeight:1.5 }}>{s.summary}</p>
-            </button>
+            <div key={i} style={{ borderTop: i ? `1px solid ${C.rule}` : 'none' }}>
+              <button type="button" onClick={() => handleCopyRef(s.ref)} aria-label={`Copy source reference ${s.ref}`}
+                style={{ width:'100%', textAlign:'left', background:'none', border:'none',
+                  padding:'10px 0', cursor:'pointer', position:'relative', font:'inherit' }}>
+                <span style={{ fontFamily:MONO, fontSize: TYPE.micro.size, fontWeight:600, color:C.navy }}>{s.ref}</span>
+                {copied === s.ref && (
+                  <span style={{ position:'absolute', right:0, top:8, fontFamily:SANS, fontSize: TYPE.label.size,
+                    color:C.green }}>Copied!</span>
+                )}
+                <p style={{ fontFamily:SANS, fontSize: TYPE.caption.size, color:C.inkSoft, margin:'3px 0 0', lineHeight:1.5 }}>{s.summary}</p>
+              </button>
+            </div>
           ))}
         </div>
-      </div>
+      )}
 
       {/* Key facts */}
       {panel.keyFacts.length > 0 && (
         <div>
-          <div style={{ fontFamily:SANS, fontSize: TYPE.label.size, fontWeight:600, color:C.muted,
-            textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10 }}>Key Facts</div>
+          <div style={{ ...label, marginBottom:8 }}>Key facts</div>
           <ul style={{ margin:0, padding:'0 0 0 16px', display:'flex', flexDirection:'column', gap:6 }}>
             {panel.keyFacts.map((f,i) => (
               <li key={i} style={{ fontFamily:SANS, fontSize: TYPE.small.size, color:C.inkSoft, lineHeight:1.55 }}>{f}</li>
@@ -278,8 +287,7 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
       {/* Related laws */}
       {panel.relatedLaws.length > 0 && (
         <div>
-          <div style={{ fontFamily:SANS, fontSize: TYPE.label.size, fontWeight:600, color:C.muted,
-            textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:8 }}>Related Laws</div>
+          <div style={{ ...label, marginBottom:8 }}>Related laws</div>
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {panel.relatedLaws.map((l,i) => (
               <span key={i} style={{ fontFamily:SANS, fontSize: TYPE.small.size, color:C.navy, cursor:'default',
@@ -288,6 +296,74 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
           </div>
         </div>
       )}
+    </motion.div>
+  );
+}
+
+// ─── Desktop stop state — dark-native (L6/L8) ────────────────────────────────
+/* The mobile stop screen inverts the whole artboard. Desktop's equivalent:
+   the conversation column's ground flips to the stop tone while the rail
+   switches to the escalation path — the whole window changes job. The
+   refusal sentence is the display serif at its largest; the safe action is
+   the one bright button. No "continue anyway". */
+function DesktopStopState({ turn, onSafeAction }: { turn: ResponseTurn; onSafeAction: () => void }) {
+  const p = turn.payload;
+  if (p.mode !== 'stop') return null;
+  const sp = scriptProps(turn.language);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 14 }}
+    >
+      <span style={{
+        alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 7,
+        ...typeStyle('label', { color: 'var(--role-stop-ink-quiet)' }),
+        textTransform: 'uppercase', letterSpacing: '0.08em',
+      }}>
+        LokAI is stopping here
+      </span>
+
+      <h3 style={{
+        ...typeStyle('editorial', { color: 'var(--role-stop-ink)', lineHeight: 1.2 }),
+        fontWeight: 400, margin: 0, ...sp.style,
+      }}>
+        {p.data.reason}
+      </h3>
+
+      <p style={{ ...typeStyle('body', { color: 'var(--role-stop-ink-quiet)' }), margin: 0, ...sp.style }}>
+        {p.data.preservedSummary}
+      </p>
+
+      <div style={{
+        borderTop: '1px solid var(--role-stop-hairline)', paddingTop: 14,
+        display: 'flex', flexDirection: 'column', gap: 4,
+      }}>
+        <p style={{ ...typeStyle('captionStrong', { color: 'var(--role-stop-ink)', margin: 0 }) }}>
+          What to do instead
+        </p>
+        <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {p.data.stillAvailable.map((s, i) => (
+            <li key={i} style={{ ...typeStyle('small', { color: 'var(--role-stop-ink-quiet)', lineHeight: 1.55 }) }}>{s}</li>
+          ))}
+        </ul>
+      </div>
+
+      <button
+        onClick={onSafeAction}
+        style={{
+          minHeight: 48, marginTop: 2, alignSelf: 'flex-start',
+          borderRadius: LAYOUT.radius.control, border: 'none',
+          background: 'var(--role-stop-ink)', color: 'var(--role-stop-ground)',
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 20px',
+        }}
+      >
+        Find legal-aid help
+        <IconArrowRight size={15} />
+      </button>
     </motion.div>
   );
 }
@@ -380,15 +456,11 @@ export default function Chat() {
     if (lastMsg) handleSend(lastMsg);
   }, [lastMsg, handleSend]);
 
-  // Prefer hybrid turns; hydrate seeded conversations into Turn anatomy once
-  useEffect(() => {
-    if (hybridTurns.length > 0) return;
-    if (!conv || conv.messages.length === 0) return;
-    const hasAssistant = conv.messages.some((m) => m.role === 'assistant');
-    if (!hasAssistant) return;
-    const seeded = seedTurnForConversation(conv.id, language);
-    if (seeded) setHybridTurns([seeded]);
-  }, [conv?.id, conv?.messages.length, hybridTurns.length, language]);
+  /* The stop composition (L6/L8 desktop): when the latest exchange is a stop,
+     the chat column's ground flips to the stop tone and the rail swaps to the
+     escalation path — the whole window changes job, not just one card. */
+  const lastTurn = hybridTurns[hybridTurns.length - 1];
+  const isStop = (lastTurn?.mode === 'stop') || (activeTurn?.mode === 'stop');
 
   // Prefer hybrid turns when present — one message anatomy only
   const renderedMessages = React.useMemo(() => {
@@ -397,6 +469,11 @@ export default function Chat() {
     hybridTurns.forEach((turn, i) => {
       if (userMsgs[i]) {
         out.push(<UserBubble key={`u-${i}`} text={userMsgs[i].content} time={now()} />);
+      }
+      if (turn.mode === 'stop' && i === hybridTurns.length - 1) {
+        /* The latest stop renders dark-native (L6/L8 desktop). */
+        out.push(<DesktopStopState key={`s-${turn.id}-${i}`} turn={turn} onSafeAction={() => navigate('/desktop/chat/out-of-scope')} />);
+        return;
       }
       out.push(
         <Turn
@@ -408,7 +485,7 @@ export default function Chat() {
       );
     });
     return out;
-  }, [conv?.messages, hybridTurns, language, showCopyToast]);
+  }, [conv?.messages, hybridTurns, language, showCopyToast, navigate]);
 
   const isEmpty = (!conv || conv.messages.length === 0) && hybridTurns.length === 0;
   const panelData = conv?.contextPanel ?? null;
@@ -449,8 +526,11 @@ export default function Chat() {
         {/* Body */}
         <div style={{ flex:1, minHeight:0, display:'flex', overflow:'hidden' }}>
 
-          {/* Chat column */}
-          <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
+          {/* Chat column — ground flips to the stop tone when the AI refuses.
+              Prior exchanges stay as light history; the refusal is the state. */}
+          <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden',
+            background: isStop ? 'var(--role-stop-ground)' : 'transparent',
+            transition: 'background .2s ease' }}>
             <div ref={chatRef} className="chat-scroll"
               style={{ flex:1, overflowY:'auto', padding:'28px 0 176px' }}>
               <div style={{ maxWidth:600, margin:'0 auto', padding:'0 24px' }}>
@@ -500,8 +580,22 @@ export default function Chat() {
               overflow:'hidden',
               boxShadow: SHADOW.sm }}>
               <div className="chat-scroll" style={{ height:'100%', overflowY:'auto' }}>
-                <LegalTermPanel />
-                <ContextPanel panel={panelData}/>
+                {isStop ? (
+                  /* The rail changes job with the stop: it becomes the escalation
+                     path — the human-handoff surface — not a law reference. */
+                  <div style={{ padding:'24px 20px 40px' }}>
+                    <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:700,
+                      color:C.oxblood, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10 }}>
+                      Your matter needs a human
+                    </div>
+                    <HumanReviewCard workflow={getConsumerWorkflowState()} />
+                  </div>
+                ) : (
+                  <>
+                    <LegalTermPanel />
+                    <ContextPanel panel={panelData}/>
+                  </>
+                )}
               </div>
             </aside>
           )}
