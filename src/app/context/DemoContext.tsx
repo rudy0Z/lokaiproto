@@ -192,6 +192,27 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, [addAuditEvent]);
 
   const runPreparedInput = useCallback(async (input: string) => {
+    /* The clarify middle (audit F1/F5) is the conversation's first beat: the
+       first call from a consumer scenario returns the prepared clarify turn
+       UNLESS the user has already answered one. Once answered (or in a
+       non-consumer scenario), subsequent calls route straight to the
+       matching turn. The flag is reset by `resetConversation` (below). */
+    if (!clarifyAnsweredRef.current && scenarioId === 'consumer') {
+      clarifyAnsweredRef.current = true;
+      const target = localizeConsumerClarify(language);
+      setIsProgressing(true);
+      setProgressIndex(0);
+      setProgressLabel(DEMO_PROGRESS_STAGES[0]);
+      const controller = runProgressThen(target, (index, label) => {
+        setProgressIndex(index);
+        setProgressLabel(label);
+      });
+      progressRef.current = controller;
+      const turn = await controller.promise;
+      addAuditEvent('Clarify asked: purchase date (routes the next step)');
+      return finishTurn(turn);
+    }
+
     let target = resolvePreparedTurn(input, { scenarioId, language });
     if (target.id === 'consumer-explain' && language !== 'en') {
       target = localizeConsumerExplain(language);
@@ -207,26 +228,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     progressRef.current = controller;
     const turn = await controller.promise;
     return finishTurn(turn);
-  }, [scenarioId, language, finishTurn]);
+  }, [scenarioId, language, finishTurn, addAuditEvent]);
 
+  /** Thin delegating wrapper. Retained for one release cycle as the chat
+   *  home page migrates off its first-call clarifier. Calls `runPreparedInput`,
+   *  which carries the clarify-middle logic, so the two paths converge. */
   const runPreparedConversation = useCallback(async (input: string) => {
-    if (clarifyAnsweredRef.current || scenarioId !== 'consumer') {
-      return runPreparedInput(input);
-    }
-    clarifyAnsweredRef.current = true;
-    const target = localizeConsumerClarify(language);
-    setIsProgressing(true);
-    setProgressIndex(0);
-    setProgressLabel(DEMO_PROGRESS_STAGES[0]);
-    const controller = runProgressThen(target, (index, label) => {
-      setProgressIndex(index);
-      setProgressLabel(label);
-    });
-    progressRef.current = controller;
-    const turn = await controller.promise;
-    addAuditEvent('Clarify asked: purchase date (routes the next step)');
-    return finishTurn(turn);
-  }, [scenarioId, language, finishTurn, addAuditEvent, runPreparedInput]);
+    return runPreparedInput(input);
+  }, [runPreparedInput]);
 
   const resolveClarify = useCallback(async (nextTurnId: string) => {
     let target = getTurnById(nextTurnId)!;

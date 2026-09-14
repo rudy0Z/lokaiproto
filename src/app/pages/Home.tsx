@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import {
   EDITORIAL, SANS, MONO, C, GRAD, LAYOUT, S, SHADOW, TYPE,
 } from '../components/shared';
+import { T } from '../ui';
 import { GuardrailGallery } from '../components/demo/GuardrailGallery';
 import { useDemo } from '../context/DemoContext';
 import { SCRIPT_RAIL, CONSUMER_EXPLAIN_I18N } from '../data/languagePacks';
@@ -65,17 +66,17 @@ const CSS = `
   .script-chip:hover {
     border-color: ${C.navy};
     color: ${C.navy};
-    background: #FFFFFF;
+    background: ${C.surface};
   }
 
   /* Scrollbar */
   .home-scroll::-webkit-scrollbar { width: 4px; }
   .home-scroll::-webkit-scrollbar-track { background: transparent; }
-  .home-scroll::-webkit-scrollbar-thumb { background: #D8D4CC; border-radius: 2px; }
+  .home-scroll::-webkit-scrollbar-thumb { background: var(--role-hairline); border-radius: 2px; }
 
   /* Hero textarea */
   .hero-textarea { resize: none; min-height: 48px; max-height: 180px; overflow-y: auto; }
-  .hero-textarea::placeholder { color: #A8A4A0; }
+  .hero-textarea::placeholder { color: var(--role-ink-faint); }
   .hero-input-wrap { transition: border-color 0.15s ease, box-shadow 0.18s ease; }
   .hero-input-wrap:focus-within {
     border-color: ${C.navy} !important;
@@ -92,36 +93,22 @@ const CSS = `
     gap: 10px;
   }
 
-  /* Quick chips — specific properties only, never transition: all */
+  /* Quick chips — surface changes only, never transform: lift was removed
+     from the system (lokai-pressable owns press feedback). */
   .quick-chip {
-    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
-                transform 0.1s ease, box-shadow 0.12s ease;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
   }
-  .quick-chip:hover {
-    background: #FFFFFF !important; border-color: ${C.navy} !important;
-    color: ${C.navy} !important; transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(26,25,22,0.08) !important;
-  }
-  .quick-chip:active { transform: scale(0.97); }
 
-  /* Focus rings — visible, branded */
+  /* Focus rings — visible, branded. Use the accessible saffron token so the
+     ring clears WCAG 2.2 1.4.11's 3:1 on both canvas and white surfaces. */
   :focus-visible {
-    outline: 2px solid ${C.saffron};
+    outline: 2px solid ${C.saffronAccessible};
     outline-offset: 2px;
     border-radius: 4px;
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Hero entrance — per-element stagger */
-  .hero-chip    { animation: fadeUp 0.38s 0.05s cubic-bezier(0.22,1,0.36,1) both; }
-  .hero-heading { animation: fadeUp 0.44s 0.12s cubic-bezier(0.22,1,0.36,1) both; }
-  .hero-sub     { animation: fadeUp 0.40s 0.22s cubic-bezier(0.22,1,0.36,1) both; }
-  .hero-input   { animation: fadeUp 0.42s 0.30s cubic-bezier(0.22,1,0.36,1) both; }
-  .hero-chips   { animation: fadeUp 0.38s 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+  /* Hero entrance is now <FadeRise>-driven from JS (motion.tsx), not a CSS
+     keyframe block. The CSS still owns the pulse and the keyboard glyph. */
 
   /* Pulse for status dot */
   @keyframes statusPulse {
@@ -139,14 +126,10 @@ const CSS = `
     color: ${C.muted}; line-height: 1;
   }
 
-  /* Reduced-motion: kill all animations & transitions */
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
+  /* Reduced-motion is the global rule in styles/index.css — that one
+     correctly keeps short opacity/colour transitions while killing
+     transforms and loops. The local override that used to live here
+     flattened everything and was removed. */
 `;
 
 // ─── Quick chips ──────────────────────────────────────────────────────────────
@@ -182,7 +165,7 @@ function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElemen
 
   return (
     <div className="hero-input-wrap" style={{
-      background: '#FFFFFF',
+      background: C.surface,
       border: `1px solid ${C.borderStrong}`,
       borderRadius: LAYOUT.radius.plane,
       boxShadow: SHADOW.float,
@@ -190,20 +173,19 @@ function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElemen
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
 
-        {/* Mic */}
+        {/* Mic — the system owns press feedback via .lokai-pressable, no
+             inline JS handlers, no transform. */}
         <button
           onClick={() => setVal('I bought a damaged mixer grinder for ₹8,999 and the seller refused a replacement.')}
           aria-label="Use prepared voice example"
+          className="lokai-pressable"
           style={{
             width: '42px', height: '42px', borderRadius: LAYOUT.radius.full,
-            background: '#F4F0E8', border: `1px solid ${C.border}`, cursor: 'pointer', flexShrink: 0,
+            background: T.micWell, border: `1px solid ${T.hairline}`, cursor: 'pointer', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginTop: '2px',
-            transition: 'transform 0.1s ease, box-shadow 0.12s ease',
             boxShadow: SHADOW.inset,
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(16,42,76,0.12)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.8)'; }}
         >
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
             <rect x="5" y="0.5" width="6" height="9.5" rx="3" stroke={C.navy} strokeWidth="1.2"/>
@@ -229,24 +211,24 @@ function HeroInput({ inputRef }: { inputRef?: React.RefObject<HTMLTextAreaElemen
           }}
         />
 
-        {/* Right controls */}
+        {/* Right controls — send is the only navy button on the hero. Disabled state
+             uses the hairline fill so it reads as 'idle', not as 'broken'. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px', paddingTop: '6px', flexShrink: 0 }}>
           <button
             onClick={send}
             aria-label="Send message"
             disabled={!canSend}
+            className={canSend ? 'lokai-pressable' : undefined}
             style={{
               width: '42px', height: '42px', borderRadius: LAYOUT.radius.full,
-              background: canSend ? C.navy : '#DAD4CB',
+              background: canSend ? C.navy : C.surface2,
               border: 'none', cursor: canSend ? 'pointer' : 'default',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.15s ease, transform 0.1s ease',
+              transition: 'background 0.15s ease',
               boxShadow: canSend ? '0 8px 18px rgba(16,42,76,0.26)' : 'none',
             }}
-            onMouseDown={e => { if (canSend) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.94)'; }}
-            onMouseUp={e   => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
           >
-            <IconArrowRight size={17} color="#FFFFFF" />
+            <IconArrowRight size={17} color={T.onAnchor} />
           </button>
         </div>
       </div>
@@ -337,7 +319,13 @@ function Hero() {
         }}>
           <span className="status-dot" style={{
             width: '6px', height: '6px', borderRadius: LAYOUT.radius.full,
-            background: C.saffron, flexShrink: 0, display: 'inline-block',
+            background: C.saffron,
+            /* 1px ring so the saffron dot reads against the hero wash.
+               Without the ring, a zoom shows the dot nearly invisible on
+               the saffron-tinted gradient. */
+            border: `1px solid ${C.surface}`,
+            boxSizing: 'content-box',
+            flexShrink: 0, display: 'inline-block',
           }} />
           Prepared legal guidance demo
         </div>
@@ -378,7 +366,7 @@ function Hero() {
             {CHIPS.map(c => (
               <button
                 key={c.label}
-                className="quick-chip"
+                className="quick-chip lokai-pressable"
                 onClick={() => navigate(c.path)}
                 style={{
                   fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500,

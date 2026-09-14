@@ -1,8 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowLeft, Lifebuoy } from '@phosphor-icons/react';
 import {
   Screen, Stack, Row, Rule, Text, Label, Button, IconButton,
-  T, S, ICON, ICON_WEIGHT, useHaptic,
+  T, S, M, ICON, ICON_WEIGHT, useHaptic,
 } from '../../ui';
 import { Wordmark } from '../shared';
 import { StatusBar } from '../../pages/mobile/MobileHome';
@@ -43,6 +44,7 @@ export function MobileStopScreen({
 }) {
   const absolute = failure.riskLevel === 'human_required';
   const haptic = useHaptic();
+  const navigate = useNavigate();
 
   return (
     <Screen
@@ -68,17 +70,23 @@ export function MobileStopScreen({
           {!absolute && onContinue && (
             <Button variant="quiet" onClick={() => { haptic(); onContinue(); }}>Continue anyway</Button>
           )}
+          {/* The third exit: ask a different question. The user landed here
+              from the matter journey; the chat home is the place to start a
+              new conversation without abandoning the prepared matter. */}
+          <Button variant="quiet" onClick={() => { haptic(); navigate('/mobile/home'); }}>
+            Ask a different question
+          </Button>
         </Stack>
       }
       scrollClearance={S[6]}
     >
       <Text role="pronounce">{failure.title}</Text>
-      <Text tone="quiet">{failure.body}</Text>
+      <Text tone="quiet" style={{ maxWidth: M.measure }}>{failure.body}</Text>
 
       <Stack gap={3}>
         <Rule />
         <Label>What to do instead</Label>
-        <Text tone="quiet">{failure.safeFallback}</Text>
+        <Text tone="quiet" style={{ maxWidth: M.measure }}>{failure.safeFallback}</Text>
       </Stack>
     </Screen>
   );

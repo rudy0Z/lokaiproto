@@ -57,7 +57,7 @@ export function useInk() {
  * Text — the workhorse
  * ─────────────────────────────────────────────────────────────────────────── */
 
-export type TextTone = 'default' | 'quiet' | 'faint' | 'anchor' | 'flag' | 'attest' | 'ok' | 'halt';
+export type TextTone = 'default' | 'quiet' | 'faint' | 'anchor' | 'onAnchor' | 'inverse' | 'flag' | 'attest' | 'ok' | 'halt';
 
 export interface TextProps extends React.HTMLAttributes<HTMLElement> {
   /** What this text is FOR. See ROLE_TYPE in theme.ts for the ladder. */
@@ -79,14 +79,16 @@ const MEASURED_BY_DEFAULT = new Set<TextRole>(['pronounce', 'answer', 'body', 'b
 
 function toneColor(tone: TextTone, ink: ReturnType<typeof useInk>): string {
   switch (tone) {
-    case 'quiet':  return ink.quiet;
-    case 'faint':  return ink.faint;
-    case 'anchor': return T.anchor;
-    case 'flag':   return T.flag;
-    case 'attest': return T.attest;
-    case 'ok':     return T.ok;
-    case 'halt':   return T.halt;
-    default:       return ink.primary;
+    case 'quiet':    return ink.quiet;
+    case 'faint':    return ink.faint;
+    case 'anchor':   return T.anchor;
+    case 'onAnchor': return T.onAnchor;
+    case 'inverse':  return T.inkInverse;
+    case 'flag':     return T.flag;
+    case 'attest':   return T.attest;
+    case 'ok':       return T.ok;
+    case 'halt':     return T.halt;
+    default:         return ink.primary;
   }
 }
 
@@ -208,6 +210,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   icon?: React.ReactNode;
   /** Icon after the label instead of before — for forward motion. */
   iconAfter?: React.ReactNode;
+  /** Cross-axis alignment when a Button sits inside a flex column.
+   *  `'start'` is the "quiet escape below a primary" pattern. */
+  align?: 'start' | 'center' | 'end';
   children: React.ReactNode;
 }
 
@@ -216,6 +221,7 @@ export function Button({
   size = 'cta',
   icon,
   iconAfter,
+  align,
   disabled,
   style,
   children,
@@ -295,7 +301,14 @@ export function Button({
       {...rest}
       disabled={disabled}
       className={`lokai-pressable ${rest.className ?? ''}`}
-      style={{ ...base, ...sizing[size], ...variants[variant], ...disabledStyle, ...style }}
+      style={{
+        ...base,
+        ...sizing[size],
+        ...variants[variant],
+        ...(align ? { alignSelf: align === 'start' ? 'flex-start' : align === 'end' ? 'flex-end' : 'center' } : {}),
+        ...disabledStyle,
+        ...style,
+      }}
     >
       {icon}
       {children}
@@ -312,6 +325,7 @@ export function IconButton({
   ...rest
 }: { label: string; children: React.ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   useLokaiSharedStyles();
+  const tone = useTone();
   const ink = useInk();
   return (
     <button
@@ -330,6 +344,11 @@ export function IconButton({
         color: ink.quiet,
         cursor: 'pointer',
         flexShrink: 0,
+        /* On the stop ground (full-bleed dark) the IconButton needs its own
+           subtle surface or it disappears into the inversion. The stop-raised
+           role is theme-correct (light: navy at 0.06 alpha, dark: cream at
+           0.07 alpha). On paper the surface is 'none' as before. */
+        ...(tone === 'stop' ? { background: T.stopRaised } : {}),
         ...style,
       }}
     >
@@ -502,9 +521,11 @@ export function Switch({
       style={{
         width: 44, height: 24, borderRadius: LAYOUT.radius.pill,
         background: on ? T.anchor : T.hairlineFirm,
-        border: 'none', position: 'relative', cursor: disabled ? 'not-allowed' : 'pointer',
+        border: 'none', position: 'relative',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
         flexShrink: 0,
-        transition: `background ${MOTION.press} ${MOTION.ease}`,
+        transition: `background ${MOTION.press} ${MOTION.ease}, opacity ${MOTION.press} ${MOTION.ease}`,
         ...style,
       }}
     >
@@ -685,6 +706,93 @@ export const FOCUS_RING: React.CSSProperties = {
   outline: `2px solid ${T.focus}`,
   outlineOffset: '2px',
 };
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Meter — a contact-shadow-free progress bar
+ *
+ * Used by the claim-coverage meter on the verify screen and the claim
+ * ledger on the source sheet. Renders `value / total` as a filled bar on
+ * a sunken track, with a tone that escalates with the ratio:
+ *   - ratio ≥ 0.85 → ok (green)
+ *   - ratio ≥ 0.70 → flag (saffron)
+ *   - else         → halt (oxblood)
+ *
+ * Single source of truth: tone maps to a role, not a literal, so the
+ * theme re-tints. The width is interpolated as a percentage string —
+ * no JS animation, no JS library, just CSS `transition` when `live`.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+export type MeterTone = 'ok' | 'flag' | 'halt' | 'attest' | 'anchor';
+
+const METER_TONE_TO_ROLE: Record<MeterTone, string> = {
+  ok:     T.ok,
+  flag:   T.flag,
+  halt:   T.halt,
+  attest: T.attest,
+  anchor: T.anchor,
+};
+
+/** Resolve a tone to its concrete color. Exported so the textual readout
+ *  next to a <Meter> can carry the same role-resolved ink. */
+export function meterColor(tone: MeterTone): string {
+  return METER_TONE_TO_ROLE[tone];
+}
+
+/** Resolve a numeric ratio (or a sentinel tone) into the meter tone. */
+export function meterTone(ratio: number): MeterTone {
+  if (ratio >= 0.85) return 'ok';
+  if (ratio >= 0.7) return 'flag';
+  return 'halt';
+}
+
+export function Meter({
+  value,
+  total,
+  tone,
+  live = false,
+  height = 6,
+}: {
+  value: number;
+  total: number;
+  /** Pre-resolved tone. If omitted, computed from `value / total`. */
+  tone?: MeterTone;
+  /** When true, the bar tweens to the new width on prop change. */
+  live?: boolean;
+  height?: number;
+}) {
+  const ratio = total > 0 ? value / total : 0;
+  const resolved = tone ?? meterTone(ratio);
+  const pct = Math.round(ratio * 100);
+  const ink = METER_TONE_TO_ROLE[resolved];
+
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-valuenow={value}
+      style={{
+        height,
+        borderRadius: LAYOUT.radius.pill,
+        background: T.sunken,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          height: '100%',
+          width: `${pct}%`,
+          background: ink,
+          borderRadius: LAYOUT.radius.pill,
+          transformOrigin: 'left center',
+          transition: live
+            ? 'width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease'
+            : 'background 0.5s ease',
+        }}
+      />
+    </div>
+  );
+}
 
 /**
  * One-time registration so a screen file can assert it never writes raw

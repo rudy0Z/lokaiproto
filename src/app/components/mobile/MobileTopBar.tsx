@@ -57,13 +57,13 @@ export function MobileTopBar({
         </IconButton>
       )}
 
-      {showWordmark ? <Wordmark size={19} color={ink} /> : <span />}
+      {showWordmark ? <Wordmark size={19} color={ink} /> : <span aria-hidden style={{ width: 44 }} />}
 
       {showNewChat ? (
         <IconButton label="New chat" onClick={onNewChat ?? (() => navigate('/mobile/home'))}>
           <IconNewChat size={ICON.row} color={ink} />
         </IconButton>
-      ) : <span style={{ width: 44 }} />}
+      ) : <span aria-hidden style={{ width: 44 }} />}
     </Row>
   );
 }

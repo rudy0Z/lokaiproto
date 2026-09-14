@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 // ─── Font constants ───────────────────────────────────────────────────────────
@@ -38,20 +38,20 @@ export const TYPE = {
   // calm page. wght is carried here too so font-variation-settings doesn't reset it.
   display1:    { family: EDITORIAL, size: '3.5rem',    weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em',  fontVariationSettings: "'wght' 300, 'opsz' 40, 'SOFT' 55, 'WONK' 0" },
   display2:    { family: EDITORIAL, size: '2.25rem',   weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em', fontVariationSettings: "'wght' 300, 'opsz' 36, 'SOFT' 55, 'WONK' 0" },
-  editorial:   { family: EDITORIAL, size: '1.75rem',   weight: 400, lineHeight: 1.2,  letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 30, 'SOFT' 60, 'WONK' 0" },
-  editorialSm: { family: EDITORIAL, size: '1.375rem',  weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 28, 'SOFT' 60, 'WONK' 0" },
-  // UI hierarchy — Hanken Grotesk. One size = one role. Do not invent px at call sites.
-  h3:          { family: SANS, size: '1.25rem',   weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
-  lead:        { family: SANS, size: '1.125rem',  weight: 500, lineHeight: 1.35 },
+  editorial:   { family: EDITORIAL, size: '1.5rem',    weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 30, 'SOFT' 60, 'WONK' 0" },
+  editorialSm: { family: EDITORIAL, size: '1.5rem',    weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 28, 'SOFT' 60, 'WONK' 0" },
+  // UI hierarchy — Hanken Grotesk. Consolidated 4-step scale.
+  h3:          { family: SANS, size: '1.125rem',  weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
+  lead:        { family: SANS, size: '1rem',      weight: 500, lineHeight: 1.35 },
   h4:          { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
-  title:       { family: SANS, size: '0.9375rem', weight: 600, lineHeight: 1.4  },
+  title:       { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
   body:        { family: SANS, size: '0.875rem',  weight: 400, lineHeight: 1.55 },
-  bodyStrong:  { family: SANS, size: '0.875rem',  weight: 500, lineHeight: 1.55 },
-  small:       { family: SANS, size: '0.8125rem', weight: 400, lineHeight: 1.5  },
+  bodyStrong:  { family: SANS, size: '0.875rem',  weight: 600, lineHeight: 1.55 },
+  small:       { family: SANS, size: '0.875rem',  weight: 400, lineHeight: 1.5  },
   caption:     { family: SANS, size: '0.75rem',   weight: 400, lineHeight: 1.45 },
   captionStrong:{ family: SANS, size: '0.75rem',  weight: 600, lineHeight: 1.45 },
-  micro:       { family: SANS, size: '0.75rem', weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
-  label:       { family: SANS, size: '0.75rem', weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
+  micro:       { family: SANS, size: '0.75rem',   weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
+  label:       { family: SANS, size: '0.75rem',   weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
 } as const;
 
 export type TypeRole = keyof typeof TYPE;
@@ -203,18 +203,18 @@ export const LAYOUT = {
   radius: {
     none:    '0',
     xs:      '4px',
-    sm:      '6px',
-    control: '10px',
-    panel:   '12px',
+    sm:      '8px',
+    control: '8px',
+    panel:   '16px',
     card:    '16px',
-    turn:    '18px',
-    plane:   '22px',
+    turn:    '16px',
+    plane:   '16px',
     pill:    '999px',
     full:    '50%', // avatars, orbs, dots — true circles
     // Legacy aliases (same values) — prefer role names above
-    md: '10px',
+    md: '8px',
     lg: '16px',
-    xl: '18px',
+    xl: '16px',
   },
 } as const;
 
@@ -300,6 +300,23 @@ export const SHADOW = {
   navySoft: '0 4px 14px rgba(16,42,76,0.2)',
   navy: '0 4px 12px rgba(16,42,76,0.28)',
   overlay: '0 24px 72px rgba(11,30,55,0.24)',
+} as const;
+
+/**
+ * Semantic shadow scale.
+ *
+ * The system Card picks `card`; a panel-pick (the document on Draft) picks
+ * `panel`; floating composer chrome picks `float`. A single token owns
+ * the call so a future shadow rework (a darker contact, a paper-tone
+ * shift) changes one place. Declared after SHADOW so it can reference
+ * the values; lives beside LAYOUT in the export surface so screens
+ * `import { LAYOUT }` once and find the shadow next to the radius.
+ */
+export const SHADOW_SCALE = {
+  card:  SHADOW.sm,
+  panel: SHADOW.md,
+  lift:  SHADOW.lg,
+  float: SHADOW.float,
 } as const;
 
 // ─── Device chrome ────────────────────────────────────────────────────────────
@@ -451,7 +468,7 @@ const SHARED_ANIM_CSS = `
   background: ${C.surface2};
 }
 .lokai-pressable:active:not(:disabled) {
-  background: #EDEAE4;
+  background: var(--role-ground);
 }
 /* Tap-row feedback for HairlineRow. The surface lives on the <button> itself
    with NO inline background, so these :active rules actually win — the row
@@ -549,18 +566,21 @@ export function useLokaiSharedStyles() {
  * drawer to a 96px onboarding hero without redrawing. On a dark ground the tile
  * lightens rather than inverting, so the mark never becomes a hole in the page.
  */
-export function LogoMark({ size = 40, light = false }: { size?: number; light?: boolean }) {
+export function LogoMark({ size = 40, light = false, animated = true }: { size?: number; light?: boolean; animated?: boolean }) {
   const tile  = light ? 'rgba(255,255,255,0.14)' : C.navy;
   const glyph = light ? '#FFFFFF' : '#F7F4ED';
   return (
-    <div style={{
-      width: `${size}px`, height: `${size}px`,
-      borderRadius: `${Math.round(size * 0.28)}px`,
-      background: tile,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
-      boxShadow: light ? 'inset 0 0 0 1px rgba(255,255,255,0.14)' : '0 2px 6px rgba(16,42,76,0.18)',
-    }}>
+    <div
+      className={animated && !light ? 'lokai-mark-breathe' : undefined}
+      style={{
+        width: `${size}px`, height: `${size}px`,
+        borderRadius: `${Math.round(size * 0.28)}px`,
+        background: tile,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+        boxShadow: light ? 'inset 0 0 0 1px rgba(255,255,255,0.14)' : '0 2px 6px rgba(16,42,76,0.18)',
+      }}
+    >
       <span style={{
         fontFamily: EDITORIAL,
         fontSize: `${Math.round(size * 0.6)}px`,

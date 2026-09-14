@@ -1,54 +1,57 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router';
 import { IconGrid, IconChat, IconFiles, IconFilePen, IconScanSearch, IconArrowRight } from '../ui/icons';
-import { C, LAYOUT, MONO, SANS, SHADOW, TYPE } from './shared';
+import { SANS, MONO, TYPE } from './shared';
+import { T, S, LAYOUT, SHADOW_SCALE } from '../ui';
 import { useConversations } from '../context/ConversationContext';
 
 const PALETTE_CSS = `
-  [cmdk-overlay] { position: fixed; inset: 0; background: rgba(16,25,22,0.42); z-index: 400; }
+  [cmdk-overlay] { position: fixed; inset: 0; background: ${T.scrim}; z-index: 400; }
   [cmdk-dialog]  {
     position: fixed; top: 16vh; left: 50%; transform: translateX(-50%);
-    width: min(560px, calc(100vw - 32px)); z-index: 401;
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    z-index: 401;
   }
   [cmdk-root] {
-    background: ${C.surface};
-    border: 1px solid ${C.border};
-    border-radius: 16px;
-    box-shadow: ${SHADOW.float};
+    background: ${T.raised};
+    border: 1px solid ${T.hairline};
+    border-radius: ${LAYOUT.radius.card};
+    box-shadow: ${SHADOW_SCALE.float};
     overflow: hidden;
   }
   [cmdk-input] {
     width: 100%; box-sizing: border-box;
-    font-family: ${SANS}; font-size: 16px; color: ${C.ink};
+    font-family: ${SANS}; font-size: 1rem; color: ${T.ink};
     padding: 18px 20px; border: none;
     background: transparent;
-    border-bottom: 1px solid ${C.border};
+    border-bottom: 1px solid ${T.hairline};
   }
   [cmdk-input]:focus-visible {
-    outline: 2px solid ${C.saffron};
+    outline: 2px solid var(--role-focus);
     outline-offset: -2px;
   }
-  [cmdk-input]::placeholder { color: ${C.muted}; }
-  [cmdk-list] { max-height: 360px; overflow-y: auto; padding: 8px; }
+  [cmdk-input]::placeholder { color: ${T.inkFaint}; }
+  [cmdk-list] { max-height: 360px; overflow-y: auto; padding: ${S[2]}; }
   [cmdk-list]::-webkit-scrollbar { width: 4px; }
-  [cmdk-list]::-webkit-scrollbar-thumb { background: #D8D4CC; border-radius: 2px; }
+  [cmdk-list]::-webkit-scrollbar-thumb { background: ${T.hairline}; border-radius: ${LAYOUT.radius.xs}; }
   [cmdk-group-heading] {
-    font-family: ${SANS}; font-size: 10px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; color: ${C.muted};
-    padding: 12px 12px 6px;
+    font-family: ${SANS}; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase; color: ${T.inkFaint};
+    padding: ${S[3]} ${S[3]} ${S[2]};
   }
   [cmdk-item] {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px; border-radius: 10px; cursor: pointer;
-    font-family: ${SANS}; font-size: 14px; color: ${C.ink};
+    display: flex; align-items: center; gap: ${S[3]};
+    padding: ${S[2]} ${S[3]}; border-radius: ${LAYOUT.radius.control}; cursor: pointer;
+    font-family: ${SANS}; font-size: 0.875rem; color: ${T.ink};
     transition: background 0.12s ease;
   }
-  [cmdk-item][data-selected="true"] { background: rgba(16,42,76,0.07); }
+  [cmdk-item][data-selected="true"] { background: ${T.anchorTint}; }
   [cmdk-item][data-disabled="true"] { opacity: 0.4; pointer-events: none; }
   [cmdk-empty] {
-    font-family: ${SANS}; font-size: 13px; color: ${C.muted};
-    text-align: center; padding: 28px 12px;
+    font-family: ${SANS}; font-size: 0.8125rem; color: ${T.inkFaint};
+    text-align: center; padding: 28px ${S[3]};
   }
 `;
 
@@ -109,9 +112,9 @@ export function CommandPalette() {
         <Command.Group heading="Go to">
           {NAV.map(item => (
             <Command.Item key={item.id} value={`go ${item.label}`} onSelect={() => openNav(item)}>
-              <item.Icon size={16} color={C.navy} />
+              <item.Icon size={16} color={T.anchor} />
               <span style={{ flex: 1 }}>{item.label}</span>
-              <IconArrowRight size={13} color={C.muted} />
+              <IconArrowRight size={13} color={T.inkFaint} />
             </Command.Item>
           ))}
         </Command.Group>
@@ -126,13 +129,13 @@ export function CommandPalette() {
               >
                 <span style={{
                   width: 7, height: 7, borderRadius: LAYOUT.radius.full, flexShrink: 0,
-                  background: conv.status === 'Ready to File' ? C.green
-                    : conv.status === 'Out of Scope' ? C.muted : C.saffron,
+                  background: conv.status === 'Ready to File' ? T.ok
+                    : conv.status === 'Out of Scope' ? T.inkFaint : T.flag,
                 }} />
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {conv.title === 'New conversation' ? 'Untitled matter' : conv.title}
                 </span>
-                <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted }}>
+                <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: T.inkFaint }}>
                   {conv.tags[0] || conv.status}
                 </span>
               </Command.Item>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { C, EDITORIAL, LAYOUT, MONO, PLANE, SANS, SHADOW, TYPE, typeStyle } from '../components/shared';
@@ -216,7 +216,7 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
 /* Rail reading (L1/L4/L7): one caps eyebrow for the whole rail, sections
    divided by hairlines — not four bordered groups each with its own label.
    Key sections are copy-on-click rows; facts and laws are plain lists. */
-function ContextPanel({ panel }: { panel: ContextPanel | null }) {
+function ContextPanel({ panel, focusedCitationId }: { panel: ContextPanel | null; focusedCitationId?: string | null }) {
   const [copied, setCopied] = useState<string|null>(null);
 
   const handleCopyRef = (ref: string) => {
@@ -224,6 +224,14 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
     setCopied(ref);
     setTimeout(() => setCopied(null), 1500);
   };
+
+  /* When a chip is tapped, the matching section row gets a focus tint — the
+     rail becomes the desktop mirror of the mobile citation sheet. */
+  const focused = (s: { ref: string }) => focusedCitationId != null && (
+    s.ref === focusedCitationId
+    || s.ref.includes(focusedCitationId)
+    || focusedCitationId.includes(s.ref)
+  );
 
   if (!panel) {
     return (
@@ -235,7 +243,7 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
     );
   }
 
-  const label = { fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:700, color:C.muted,
+  const label = { fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:600, color:C.muted,
     textTransform:'uppercase' as const, letterSpacing:'0.1em' };
 
   return (
@@ -253,15 +261,23 @@ function ContextPanel({ panel }: { panel: ContextPanel | null }) {
         </p>
       </div>
 
-      {/* Key sections — copy-on-click hairline rows */}
+      {/* Key sections — copy-on-click hairline rows; a focused citation
+          lights the matching row in the rail (the rail is the desktop
+          mirror of the mobile citation sheet). */}
       {panel.sections.length > 0 && (
         <div>
           <div style={{ ...label, marginBottom:2 }}>Key sections</div>
           {panel.sections.map((s,i) => (
             <div key={i} style={{ borderTop: i ? `1px solid ${C.rule}` : 'none' }}>
               <button type="button" onClick={() => handleCopyRef(s.ref)} aria-label={`Copy source reference ${s.ref}`}
-                style={{ width:'100%', textAlign:'left', background:'none', border:'none',
-                  padding:'10px 0', cursor:'pointer', position:'relative', font:'inherit' }}>
+                style={{ width:'100%', textAlign:'left', cursor:'pointer', position:'relative', font:'inherit',
+                  background: focused(s) ? 'var(--role-anchor-tint)' : 'none',
+                  border: 'none',
+                  borderRadius: focused(s) ? 6 : 0,
+                  margin: focused(s) ? '0 -8px' : 0,
+                  padding: focused(s) ? '8px 8px' : '10px 0',
+                  transition: 'background 0.18s ease',
+                }}>
                 <span style={{ fontFamily:MONO, fontSize: TYPE.micro.size, fontWeight:600, color:C.navy }}>{s.ref}</span>
                 {copied === s.ref && (
                   <span style={{ position:'absolute', right:0, top:8, fontFamily:SANS, fontSize: TYPE.label.size,
@@ -359,7 +375,7 @@ function DesktopStopState({ turn, onSafeAction }: { turn: ResponseTurn; onSafeAc
           minHeight: 48, marginTop: 2, alignSelf: 'flex-start',
           borderRadius: LAYOUT.radius.control, border: 'none',
           background: 'var(--role-stop-ink)', color: 'var(--role-stop-ground)',
-          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, cursor: 'pointer',
+          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, cursor: 'pointer',
           display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 20px',
         }}
       >
@@ -395,6 +411,10 @@ export default function Chat() {
   const [lastMsg,  setLastMsg]  = useState<string|null>(null);
   const [copyToast, setCopyToast] = useState(false);
   const [hybridTurns, setHybridTurns] = useState<ResponseTurn[]>([]);
+  /* The chat column's right rail is the desktop mirror of the mobile
+     citation sheet. Tapping a chip scrolls the rail into the source
+     detail (no full-sheet takeover on desktop — the rail is the door). */
+  const [focusedCitationId, setFocusedCitationId] = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
   const showCopyToast = useCallback(() => {
@@ -484,6 +504,10 @@ export default function Chat() {
           turn={{ ...turn, language }}
           onCopy={showCopyToast}
           onSpeak={() => toast.message('Prepared read-aloud · demo playback')}
+          onOpenSource={(c) => {
+            setFocusedCitationId(c.id);
+            toast.message(`${c.title} — focus set`, { description: 'The right rail shows the source detail.' });
+          }}
         />,
       );
     });
@@ -592,7 +616,7 @@ export default function Chat() {
                   /* The rail changes job with the stop: it becomes the escalation
                      path — the human-handoff surface — not a law reference. */
                   <div style={{ padding:'24px 20px 40px' }}>
-                    <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:700,
+                    <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:600,
                       color:C.oxblood, textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:10 }}>
                       Your matter needs a human
                     </div>
@@ -610,7 +634,7 @@ export default function Chat() {
                 ) : (
                   <>
                     <LegalTermPanel />
-                    <ContextPanel panel={panelData}/>
+                    <ContextPanel panel={panelData} focusedCitationId={focusedCitationId}/>
                   </>
                 )}
               </div>
@@ -649,7 +673,7 @@ export default function Chat() {
             display:'flex', alignItems:'center', gap:6,
           }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 6L5 9L10 3" stroke={C.onDark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Copied to clipboard
           </div>

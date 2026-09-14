@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { IconPlus, IconExternalLink, IconDownload } from '../ui/icons';
+import { IconFile, IconPlus, IconExternalLink, IconDownload } from '../ui/icons';
+import { Badge, Text } from '../ui';
 import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from '../components/shared';
 import { ScopedAskButton, ScopedAskSheet } from '../components/ai/Turn';
 import { useDemo } from '../context/DemoContext';
@@ -11,42 +12,22 @@ const PAGE_CSS = `
   .docs-scroll::-webkit-scrollbar       { width: 5px; }
   .docs-scroll::-webkit-scrollbar-track { background: transparent; }
   .docs-scroll::-webkit-scrollbar-thumb { background: var(--role-hairline); border-radius: 3px; }
-  .docs-scroll::-webkit-scrollbar-thumb:hover { background: ${C.saffron}; }
 
+  /* Card hover: surface change only — transform/lift was removed from the
+     system as marketing-button physics that visually stuck on touch. The
+     card lifts through the contact shadow only on hover, never translates. */
   .doc-card {
     background: var(--role-raised);
     border: 1px solid var(--role-hairline);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(26,25,22,0.04), 0 2px 8px rgba(26,25,22,0.05);
     overflow: hidden;
-    transition: box-shadow 0.18s ease, transform 0.18s ease;
+    transition: box-shadow 0.18s ease;
     cursor: pointer;
   }
   .doc-card:hover {
-    box-shadow: 0 8px 24px rgba(26,25,22,0.09), 0 2px 8px rgba(26,25,22,0.06);
-    transform: translateY(-3px);
+    box-shadow: 0 4px 14px rgba(26,25,22,0.07), 0 8px 24px rgba(26,25,22,0.06);
   }
-
-  .doc-footer-btn {
-    font-family: ${SANS};
-    font-size: 12px;
-    border-radius: 8px;
-    padding: 6px 0;
-    cursor: pointer;
-    flex: 1;
-    transition: background 0.13s ease;
-    background: transparent;
-  }
-  .doc-footer-btn-primary {
-    color: ${C.navy};
-    border: 1px solid ${C.navy};
-  }
-  .doc-footer-btn-primary:hover { background: rgba(28,58,110,0.06); }
-  .doc-footer-btn-secondary {
-    color: ${C.muted};
-    border: 1px solid ${C.border};
-  }
-  .doc-footer-btn-secondary:hover { background: var(--role-ground); }
 
   .filter-tab {
     font-family: ${SANS};
@@ -58,8 +39,6 @@ const PAGE_CSS = `
     transition: background 0.14s ease, color 0.14s ease;
     white-space: nowrap;
   }
-
-  .create-btn:hover { opacity: 0.88; }
 `;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -151,27 +130,23 @@ const DOCUMENTS: DocItem[] = [
 ];
 
 // ─── Status Chip ──────────────────────────────────────────────────────────────
-const STATUS_STYLES: Record<DocStatus, React.CSSProperties> = {
-  'Draft':     { background: 'var(--role-flag-fill)', color: C.saffron },
-  'Completed': { background: 'var(--role-anchor-tint)', color: C.navy },
+const STATUS_BADGE_TONE: Record<DocStatus, 'flag' | 'ok'> = {
+  'Draft':     'flag',
+  'Completed': 'ok',
 };
 
 function StatusChip({ status }: { status: DocStatus }) {
   return (
-    <div style={{
-      position: 'absolute', top: '10px', right: '10px', zIndex: 2,
-      ...STATUS_STYLES[status],
-      fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
-      borderRadius: LAYOUT.radius.xs, padding: '3px 8px',
-      letterSpacing: '0.02em',
-    }}>
-      {status}
+    <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 2 }}>
+      <Badge tone={STATUS_BADGE_TONE[status]}>{status}</Badge>
     </div>
   );
 }
 
 // ─── Document Thumbnail ───────────────────────────────────────────────────────
-// Renders a miniaturized paper-feel document preview — no icon, rendered content
+// Renders a miniaturized paper-feel document preview — no icon, no colored
+// top stripe (the stripe was a per-type accent, deleted as the generic
+// SaaS tell — coverage now travels in the <Badge>).
 function DocThumbnail({ doc }: { doc: DocItem }) {
   return (
     <div style={{
@@ -192,15 +167,9 @@ function DocThumbnail({ doc }: { doc: DocItem }) {
         overflow: 'hidden',
         display: 'flex', flexDirection: 'column',
       }}>
-        {/* Document type accent stripe — 5px, colored by doc type */}
-        <div style={{
-          height: '5px', flexShrink: 0,
-          background: doc.accentColor,
-          opacity: 0.8,
-        }} />
-
-        {/* Content area */}
-        <div style={{ padding: '10px 12px', flex: 1, overflow: 'hidden' }}>
+        {/* Content area — no colored top stripe. Status travels in the chip
+           above; the doc type lives in the body label below. */}
+        <div style={{ padding: '14px 12px 10px', flex: 1, overflow: 'hidden' }}>
           {doc.thumbLines.map((line, i) => {
             if (line.kind === 'title') {
               return (
@@ -263,76 +232,84 @@ function DocCard({ doc, onOpenChat }: { doc: DocItem; onOpenChat: (path: string)
       {/* Card body */}
       <div style={{ padding: '14px 16px 12px' }}>
         {/* Document type chip */}
-        <div style={{
+        <Text role="label" tone="faint" measured={false} style={{
           display: 'inline-block',
-          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
-          color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
           background: C.surface2, borderRadius: LAYOUT.radius.xs,
           padding: '3px 8px', marginBottom: '9px',
         }}>
           {doc.type}
-        </div>
+        </Text>
 
         {/* Title — 2 lines max */}
-        <h3 style={{
-          fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
-          color: C.ink, lineHeight: 1.4, margin: '0 0 7px',
+        <Text role="bodyStrong" tone="default" as="h3" measured={false} style={{
+          lineHeight: 1.4, margin: '0 0 7px',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         } as React.CSSProperties}>
           {doc.title}
-        </h3>
+        </Text>
 
         {/* Date */}
-        <div style={{
-          fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted,
-          marginBottom: '7px',
-        }}>
+        <Text role="caption" tone="faint" measured={false} style={{ marginBottom: '7px' }}>
           {doc.date}
-        </div>
+        </Text>
 
-        {/* Linked chat — 11px, link style */}
+        {/* Linked chat — link style */}
         <div
           onClick={e => { e.stopPropagation(); onOpenChat(doc.linkedPath); }}
-          style={{
-            fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted,
-            cursor: 'pointer',
-          }}
+          style={{ cursor: 'pointer' }}
         >
-          Linked to:{' '}
-          <span style={{
-            color: C.navy,
-            borderBottom: `1px solid rgba(28,58,110,0.28)`,
-            paddingBottom: '1px',
-          }}>
-            {doc.linkedChat}
-          </span>
+          <Text role="meta" tone="faint" measured={false}>
+            Linked to:{' '}
+            <span style={{
+              color: C.navy,
+              borderBottom: `1px solid rgba(28,58,110,0.28)`,
+              paddingBottom: '1px',
+            }}>
+              {doc.linkedChat}
+            </span>
+          </Text>
         </div>
       </div>
 
-      {/* Card footer */}
+      {/* Card footer — primary + quiet. Two filled buttons was the form-wizard
+         tell; the L5 rule (one anchor per screen) forbids an outlined twin. */}
       <div style={{
         padding: '10px 16px',
         borderTop: `1px solid ${C.border}`,
-        display: 'flex', gap: '8px',
+        display: 'flex', gap: '8px', alignItems: 'center',
       }}>
         <button
-          className="doc-footer-btn doc-footer-btn-primary"
+          type="button"
+          className="lokai-pressable"
           onClick={e => { e.stopPropagation(); onOpenChat(doc.linkedPath); }}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            flex: 1, minHeight: 36, padding: '0 12px',
+            background: C.navy, color: 'var(--role-on-anchor)',
+            border: 'none', borderRadius: LAYOUT.radius.control,
+            fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, cursor: 'pointer',
+          }}
         >
-          <IconExternalLink style={{ width: '11px', height: '11px' }} />
+          <IconExternalLink style={{ width: '12px', height: '12px' }} />
           Open
         </button>
         <button
-          className="doc-footer-btn doc-footer-btn-secondary"
+          type="button"
+          className="lokai-pressable"
           onClick={e => { e.stopPropagation(); downloadDocument(doc); }}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            minHeight: 36, padding: '0 10px',
+            background: 'none', color: C.muted,
+            border: 'none', borderRadius: LAYOUT.radius.sm,
+            fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 500, cursor: 'pointer',
+          }}
         >
-          <IconDownload style={{ width: '11px', height: '11px' }} />
-          Download text
+          <IconDownload style={{ width: '12px', height: '12px' }} />
+          Download
         </button>
       </div>
     </div>
@@ -475,19 +452,20 @@ export default function Documents() {
               </p>
             </div>
 
-            {/* Right: Create Document CTA */}
+            {/* Right: Create Document CTA — uses the system Button primitive
+                (flat navy fill) instead of the legacy GRAD.buttonPrimary
+                two-stop gradient, which read as decoration on a legal tool. */}
             <button
-              className="create-btn"
+              type="button"
+              className="lokai-pressable"
               onClick={() => navigate('/desktop/document-draft')}
               style={{
-                display: 'flex', alignItems: 'center', gap: '7px',
-                background: GRAD.buttonPrimary,
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                background: C.navy,
                 border: 'none', borderRadius: LAYOUT.radius.control,
                 fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600,
                 color: 'var(--role-on-anchor)', padding: '10px 22px',
                 cursor: 'pointer', flexShrink: 0,
-                boxShadow: SHADOW.sm,
-                transition: 'opacity 0.15s ease',
                 opacity: draftAllowed ? 1 : 0.55,
               }}
               title={draftAllowed ? 'Open the demand-notice packet' : 'Draft blocked until facts and policy allow it'}
@@ -532,16 +510,7 @@ export default function Documents() {
                 marginBottom: '20px',
                 boxShadow: SHADOW.sm,
               }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                    stroke={C.navy} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points="14 2 14 8 20 8"
-                    stroke={C.navy} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="8" y1="13" x2="16" y2="13"
-                    stroke={C.navy} strokeWidth="1.3" strokeLinecap="round" />
-                  <line x1="8" y1="17" x2="12" y2="17"
-                    stroke={C.navy} strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
+                <IconFile style={{ width: 24, height: 24, color: C.navy }} />
               </div>
               <p style={{
                 fontFamily: SANS, fontSize: TYPE.title.size, fontWeight: 600,
@@ -556,6 +525,8 @@ export default function Documents() {
                 Packets, source notes, evidence summaries, and case history will appear here.
               </p>
               <button
+                type="button"
+                className="lokai-pressable"
                 onClick={() => navigate('/desktop/chat')}
                 style={{
                   fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500,

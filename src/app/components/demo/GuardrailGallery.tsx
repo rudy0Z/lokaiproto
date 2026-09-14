@@ -24,7 +24,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
           color: C.saffronDark,
           fontFamily: SANS,
           fontSize: TYPE.micro.size,
-          fontWeight: 700,
+          fontWeight: 600,
           letterSpacing: '0.08em',
           margin: '0 0 6px',
           textTransform: 'uppercase',
@@ -102,7 +102,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
             display: 'inline-flex',
             fontFamily: SANS,
             fontSize: TYPE.micro.size,
-            fontWeight: 700,
+            fontWeight: 600,
             gap: 6,
             marginBottom: 10,
             padding: '5px 9px',
@@ -119,7 +119,7 @@ export function GuardrailGallery({ compact = false }: { compact?: boolean }) {
         </div>
 
         <div style={{ borderLeft: compact ? 0 : `1px solid ${C.border}`, paddingLeft: compact ? 0 : 20 }}>
-          <div style={{ color: C.muted, fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
+          <div style={{ color: C.muted, fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
             Available now
           </div>
           <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>

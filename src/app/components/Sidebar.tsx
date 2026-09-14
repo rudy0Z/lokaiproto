@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   IconBack, IconFilePen, IconFiles, IconGrid, IconChat,
   IconScanSearch,
@@ -23,16 +23,16 @@ const NAV_ITEMS = [
 type NavItem = (typeof NAV_ITEMS)[number];
 
 const D = {
-  text: '#FFFFFF',
-  text2: 'rgba(255,255,255,0.72)',
-  text3: 'rgba(255,255,255,0.44)',
-  line: 'rgba(255,255,255,0.10)',
-  hover: 'rgba(255,255,255,0.075)',
-  active: 'rgba(255,255,255,0.13)',
+  text: 'var(--role-on-anchor)',
+  text2: 'rgba(248,245,238,0.72)',
+  text3: 'rgba(248,245,238,0.44)',
+  line: 'rgba(248,245,238,0.10)',
+  hover: 'rgba(248,245,238,0.075)',
+  active: 'rgba(248,245,238,0.13)',
 };
 
 /**
- * Sidebar surface — flat.
+ * Sidebar surface — one flat navy field.
  *
  * Was a navy poster: two radial washes (cool blue top, saffron bottom — the
  * tricolour again) over a 3-stop navy gradient, plus an SVG turbulence
@@ -43,15 +43,6 @@ const D = {
  *
  * Now one flat navy field. The rail recedes; the matter is the content.
  */
-function SidebarAura() {
-  return (
-    <div style={{
-      position: 'absolute',
-      inset: 0,
-      background: C.navyDark,
-    }} />
-  );
-}
 
 function shortTitle(title: string) {
   if (title === 'New conversation') return 'Untitled matter';
@@ -114,7 +105,7 @@ export function Sidebar() {
         borderRight: '1px solid rgba(255,255,255,0.08)',
         boxShadow: SHADOW.insetEdge,
       }}>
-        <SidebarAura />
+        <div style={{ position: 'absolute', inset: 0, background: C.navyDark }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div style={{
             minHeight: expanded ? 118 : 82,
@@ -219,7 +210,7 @@ export function Sidebar() {
                 <span style={{
                   color: D.text3,
                   fontSize: TYPE.label.size,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
                 }}>
@@ -330,12 +321,12 @@ export function Sidebar() {
                   boxShadow: SHADOW.xs,
                 }}
               >
-                <span style={{ fontSize: TYPE.body.size, fontWeight: 700 }}>P</span>
+                <span style={{ fontSize: TYPE.body.size, fontWeight: 600 }}>P</span>
               </button>
               {expanded && (
                 <>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: D.text, fontSize: TYPE.small.size, fontWeight: 650 }}>Priya Sharma</div>
+                    <div style={{ color: D.text, fontSize: TYPE.small.size, fontWeight: 600 }}>Priya Sharma</div>
                     <div style={{ color: D.text3, fontSize: TYPE.micro.size, marginTop: 3 }}>Mumbai · India</div>
                   </div>
                   <button

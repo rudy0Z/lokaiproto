@@ -64,7 +64,7 @@ function TermContent({ compact = false }: { compact?: boolean }) {
         color: C.saffronDark,
         fontFamily: SANS,
         fontSize: TYPE.micro.size,
-        fontWeight: 700,
+        fontWeight: 600,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
         marginBottom: 10,
@@ -91,7 +91,7 @@ function TermContent({ compact = false }: { compact?: boolean }) {
         padding: 12,
         marginBottom: 14,
       }}>
-        <div style={{ color: C.muted, fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, marginBottom: 5, textTransform: 'uppercase' }}>
+        <div style={{ color: C.muted, fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, marginBottom: 5, textTransform: 'uppercase' }}>
           Example
         </div>
         <p style={{ color: C.inkSoft, fontFamily: SANS, fontSize: TYPE.small.size, lineHeight: 1.55, margin: 0 }}>

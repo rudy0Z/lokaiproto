@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IconArrowRight, IconCheck, IconClose, IconCopy, IconFile, IconPencil, IconPrint, IconShield } from '../ui/icons';
 import { C, LAYOUT, MONO, S, SANS, SERIF, SHADOW, TYPE, typeStyle } from './shared';
 import { Sheet } from './Sheet';
@@ -20,7 +20,20 @@ import {
   RISK_VIEW,
   SOURCE_COVERAGE_VIEW,
 } from '../data/statusVocabulary';
-import { Badge, Button, Stack, useHaptic } from '../ui';
+import {
+  Badge,
+  Button,
+  Stack,
+  Text,
+  Label,
+  Amount,
+  HairlineList,
+  HairlineRow,
+  Meter,
+  meterTone,
+  meterColor,
+  useHaptic,
+} from '../ui';
 
 const CSS = `
   @keyframes lokaiProgressIn {
@@ -51,62 +64,33 @@ const CSS = `
 `;
 
 /** Shows observable source coverage, never model confidence.
- *  Ground-level (L1): the meter is a reading, not an object — no box. */
+ *  Ground-level (L1): the meter is a reading, not an object — no box.
+ *  Built on the system <Meter> primitive so the tone comes from the
+ *  role layer (theme-correct) and the bar geometry is shared. */
 export function GroundingMeter({ grounded, total, note, live = false }: { grounded: number; total: number; note?: string; live?: boolean }) {
   const ratio = total > 0 ? grounded / total : 0;
-  const pct = Math.round(ratio * 100);
-  const tone = ratio >= 0.85 ? C.green : ratio >= 0.7 ? C.amber : C.oxblood;
+  const tone = meterTone(ratio);
   return (
     <div style={{ marginBottom: 11 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.inkSoft }}>
-          Claims checked against sources
-        </span>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: tone, lineHeight: 1, transition: 'color 0.5s ease' }}>
+        <Text role="label" tone="quiet" measured={false}>Claims checked against sources</Text>
+        <Text role="bodyStrong" tone="default" measured={false} style={{ color: meterColor(tone), lineHeight: 1, transition: 'color 0.5s ease' }}>
           {grounded} of {total}
-        </span>
+        </Text>
       </div>
-      <div style={{ height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden' }}>
-        <div
-          className="lokai-meter-fill"
-          style={{
-            height: '100%',
-            width: `${pct}%`,
-            background: tone,
-            borderRadius: LAYOUT.radius.pill,
-            transformOrigin: 'left center',
-            ...(live
-              ? { transition: 'width 0.7s cubic-bezier(0.22,1,0.36,1), background 0.5s ease' }
-              : { animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both' }),
-          }}
-        />
-      </div>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.45, margin: '7px 0 0' }}>
+      <Meter value={grounded} total={total} tone={tone} live={live} />
+      <Text role="meta" tone="faint" measured={false} style={{ marginTop: 7 }}>
         {note ?? `${grounded} of ${total} key claims map to an illustrative source note. Expert review is still pending.`}
-      </p>
+      </Text>
     </div>
   );
 }
 
 /* Labels for coverage, risk, evidence and draft states live in
    data/statusVocabulary.ts — one vocabulary app-wide (audit V4); tones ride
-   the Badge primitive. The old COVERAGE_COLOR map died with the left stripe. */
-
-function SmallLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      fontFamily: SANS,
-      fontSize: TYPE.label.size,
-      fontWeight: 700,
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
-      color: C.muted,
-      marginBottom: 8,
-    }}>
-      {children}
-    </div>
-  );
-}
+   the Badge primitive. The old COVERAGE_COLOR map died with the left stripe.
+   SmallLabel deleted 2026-09-06 — the system's <Label> primitive owns the
+   one caps eyebrow a screen is allowed (L7). */
 
 export function LokAIProgressList({ items }: { items: string[] }) {
   /* Ground-level (L1): a progress reading sits on the page — label + hairline
@@ -114,7 +98,7 @@ export function LokAIProgressList({ items }: { items: string[] }) {
   return (
     <div aria-live="polite">
       <style>{CSS}</style>
-      <SmallLabel>LokAI is checking</SmallLabel>
+      <Label>LokAI is checking</Label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {items.map((item, index) => (
           <div
@@ -144,9 +128,9 @@ export function LokAIProgressList({ items }: { items: string[] }) {
                 <span style={{ width: 5, height: 5, borderRadius: LAYOUT.radius.full, background: C.saffron }} />
               )}
             </span>
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45 }}>
+            <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.45 }}>
               {item}
-            </span>
+            </Text>
           </div>
         ))}
       </div>
@@ -176,19 +160,17 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
       padding: compact ? '10px 11px' : '12px 13px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, fontWeight: 700, color: C.navy }}>
-          {source.section}
-        </span>
+        <Amount tone="anchor">{source.section}</Amount>
         <SourceCoveragePill coverage={source.coverage} />
       </div>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, margin: '7px 0 4px', lineHeight: 1.35 }}>
+      <Text role="captionStrong" tone="default" measured={false} style={{ margin: '7px 0 4px', lineHeight: 1.35 }}>
         {source.title}
-      </p>
+      </Text>
       {!compact && (
         <>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: '0 0 6px' }}>
+          <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.5, marginBottom: 6 }}>
             {expanded ? source.excerpt : shortPlain}
-          </p>
+          </Text>
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
@@ -196,7 +178,7 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
             style={{
               fontFamily: SANS,
               fontSize: TYPE.micro.size,
-              fontWeight: 700,
+              fontWeight: 600,
               color: C.navy,
               background: 'none',
               border: 'none',
@@ -210,13 +192,13 @@ export function SourceCard({ source, compact = false }: { source: WorkflowSource
             {expanded ? 'Hide original legal text' : 'Inspect original legal text'}
           </button>
           {expanded && (
-            <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '0 0 5px' }}>
+            <Text role="meta" tone="faint" measured={false} style={{ lineHeight: 1.5, marginBottom: 5 }}>
               How LokAI used this: {source.howUsed}
-            </p>
+            </Text>
           )}
-          <p style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted, margin: 0 }}>
+          <Amount tone="faint" style={{ display: 'block' }}>
             {source.jurisdiction} · {source.lastReviewed}
-          </p>
+          </Amount>
         </>
       )}
     </div>
@@ -255,19 +237,10 @@ function ClaimLedger({ trust }: { trust: CaseWorkflowState['trust'] }) {
             of {trust.totalClaims} claims trace to a source
           </span>
         </div>
-        <div style={{ height: 6, borderRadius: LAYOUT.radius.pill, background: C.surface2, overflow: 'hidden', margin: '10px 0 8px' }}>
-          <div
-            className="lokai-meter-fill"
-            style={{
-              height: '100%', width: `${Math.round(ratio * 100)}%`, background: tone,
-              borderRadius: LAYOUT.radius.pill, transformOrigin: 'left center',
-              animation: 'lokaiMeterFill 0.9s cubic-bezier(0.22,1,0.36,1) both',
-            }}
-          />
-        </div>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: 0 }}>
+        <Meter value={trust.groundedClaims} total={trust.totalClaims} tone={meterTone(ratio)} />
+        <Text role="meta" tone="faint" measured={false} style={{ marginTop: 8 }}>
           Coverage is claim counts, not model confidence. Expert review is still pending.
-        </p>
+        </Text>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -278,7 +251,7 @@ function ClaimLedger({ trust }: { trust: CaseWorkflowState['trust'] }) {
           }}>
             <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted }}>{label}</span>
             {typeof value === 'string'
-              ? <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, textTransform: cap ? 'capitalize' : 'none' }}>{value}</span>
+              ? <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600, color: C.ink, textTransform: cap ? 'capitalize' : 'none' }}>{value}</span>
               : value}
           </div>
         ))}
@@ -323,7 +296,7 @@ export function LokAISourceDrawer({
           gap: 12,
         }}>
           <div>
-            <SmallLabel>Legal basis</SmallLabel>
+            <Label>Legal basis</Label>
             <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0 }}>
               {title}
             </h2>
@@ -350,7 +323,7 @@ export function LokAISourceDrawer({
           {trust && <ClaimLedger trust={trust} />}
           {trust && <div style={{ borderTop: `1px solid ${C.rule}` }} />}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {trust && <SmallLabel>Sources behind each claim</SmallLabel>}
+            {trust && <Label>Sources behind each claim</Label>}
             {sources.map(source => <SourceCard key={source.id} source={source} />)}
           </div>
         </div>
@@ -369,7 +342,7 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
         : 'var(--role-hairline-firm)';
 
   return (
-    <div style={{
+    <span style={{
       width: 24,
       height: 24,
       borderRadius: LAYOUT.radius.full,
@@ -377,13 +350,14 @@ function StepDot({ step, index }: { step: WorkflowActionStep; index: number }) {
       color: step.status === 'locked' ? 'var(--role-ink-faint)' : 'var(--role-on-anchor)',
       fontFamily: MONO,
       fontSize: TYPE.label.size,
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 1,
+      flexShrink: 0,
     }}>
       {step.status === 'done' ? <IconCheck size={13} /> : index + 1}
-    </div>
+    </span>
   );
 }
 
@@ -439,24 +413,24 @@ export function WorkflowActionPlan({
   return (
     <div>
       <style>{CSS}</style>
-      <SmallLabel>Living action plan</SmallLabel>
+      <Label>Living action plan</Label>
       <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 12 }}>
         {render.map((step, index) => (
           <React.Fragment key={step.id}>
             <div style={{ display: 'grid', gridTemplateColumns: '24px 1fr', gap: 10 }}>
               <StepDot step={step} index={index} />
               <div>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
+                <Text role="bodyStrong" tone="default" measured={false} style={{ marginBottom: 3 }}>
                   {step.title}
-                </p>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.48, margin: 0 }}>
+                </Text>
+                <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.48 }}>
                   {step.description}
-                </p>
+                </Text>
 
                 {step.status === 'blocked' && step.blockedReason && (
-                  <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.45, margin: '6px 0 0', fontWeight: 600 }}>
+                  <Text role="caption" tone="flag" measured={false} style={{ lineHeight: 1.45, marginTop: 6, fontWeight: 600 }}>
                     {step.blockedReason}
-                  </p>
+                  </Text>
                 )}
 
                 {/* Live controls — the primary is the forward action; blocked
@@ -504,15 +478,15 @@ export function WorkflowActionPlan({
                   animation: 'lokaiGateIn 0.3s cubic-bezier(0.22,1,0.36,1) both',
                 }}
               >
-                <p style={{ fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 700, color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '0 0 4px' }}>
+                <Text role="label" tone="flag" measured={false} style={{ marginBottom: 4, letterSpacing: '0.07em' }}>
                   Plan adapted
-                </p>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>
+                </Text>
+                <Text role="bodyStrong" tone="default" measured={false} style={{ marginBottom: 3 }}>
                   {reroute.title}
-                </p>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+                </Text>
+                <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.5 }}>
                   {reroute.description}
-                </p>
+                </Text>
               </div>
             )}
           </React.Fragment>
@@ -556,16 +530,16 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-          <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.2 }}>
+          <Text role="answer" as="h3" measured={false} style={{ lineHeight: 1.2 }}>
             Evidence locker
-          </h3>
-          <span style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, whiteSpace: 'nowrap' }}>
+          </Text>
+          <Text role="label" tone="faint" measured={false} style={{ whiteSpace: 'nowrap' }}>
             {uploadedCount} of {items.length} gathered
-          </span>
+          </Text>
         </div>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '6px 0 0' }}>
+        <Text tone="quiet" style={{ lineHeight: 1.55, marginTop: 6 }}>
           What LokAI checked before trusting the facts below — including whether any two documents disagree.
-        </p>
+        </Text>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {items.map((item, i) => {
@@ -580,12 +554,10 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
                 background: C.cautionSoft, borderRadius: LAYOUT.radius.panel, padding: 12, margin: '9px 0',
               } : undefined}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink, margin: 0 }}>
-                    {item.label}
-                  </p>
-                  <span style={{ ...typeStyle('label', { color: style.labelColor, whiteSpace: 'nowrap', flexShrink: 0 }) }}>
+                  <Text role="bodyStrong" tone="default" measured={false}>{item.label}</Text>
+                  <Text role="label" measured={false} style={{ color: style.labelColor, whiteSpace: 'nowrap', flexShrink: 0 }}>
                     {EVIDENCE_STATUS_VIEW[item.status].label}
-                  </span>
+                  </Text>
                 </div>
                 {item.extractedFacts && item.extractedFacts.length > 0 && (
                   <div style={{ marginTop: 7, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -601,9 +573,9 @@ export function EvidenceLocker({ items }: { items: EvidenceItem[] }) {
                   </div>
                 )}
                 {item.conflictNote && (
-                  <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.amber, lineHeight: 1.5, margin: '8px 0 0' }}>
+                  <Text role="caption" tone="flag" measured={false} style={{ lineHeight: 1.5, marginTop: 8 }}>
                     {item.conflictNote}
-                  </p>
+                  </Text>
                 )}
               </div>
             </div>
@@ -670,13 +642,13 @@ export function VerificationScratchpad({
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
       <style>{CSS}</style>
       <div>
-        <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, lineHeight: 1.2, margin: '0 0 6px' }}>
+        <Text role="answer" as="h3" measured={false} style={{ lineHeight: 1.2, marginBottom: 6 }}>
           Are these facts right?
-        </h3>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+        </Text>
+        <Text tone="quiet" style={{ lineHeight: 1.55 }}>
           LokAI pulled these from what you shared and your invoice. Confirm or fix each one — your
           guidance is only as accurate as these facts, so you own them, not the AI.
-        </p>
+        </Text>
       </div>
 
       {/* Single claim-count indicator — climbs as facts are confirmed, never a % */}
@@ -723,13 +695,13 @@ export function VerificationScratchpad({
                         }}
                       />
                     ) : (
-                      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink, margin: 0, lineHeight: 1.35 }}>
+                      <Text role="bodyStrong" tone="default" measured={false} style={{ lineHeight: 1.35 }}>
                         {fact.value}
-                      </p>
+                      </Text>
                     )}
-                    <p style={{ ...typeStyle('caption', { color: C.muted, margin: '2px 0 0' }) }}>
+                    <Text role="caption" tone="faint" measured={false} style={{ marginTop: 2 }}>
                       {fact.label}
-                    </p>
+                    </Text>
                   </div>
 
                   {!isEditing && (
@@ -745,7 +717,7 @@ export function VerificationScratchpad({
                         style={{
                           display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
                           background: 'none', border: 'none', cursor: 'pointer',
-                          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted,
+                          fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.muted,
                         }}
                       >
                         <IconCheck size={15} color={C.green} />
@@ -760,9 +732,9 @@ export function VerificationScratchpad({
                 {needsReview && !isEditing && (
                   <>
                     {fact.hint && (
-                      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.amber, lineHeight: 1.45, margin: '8px 0 10px' }}>
+                      <Text role="meta" tone="flag" measured={false} style={{ lineHeight: 1.45, margin: '8px 0 10px' }}>
                         {fact.hint}
-                      </p>
+                      </Text>
                     )}
                     <div style={{ display: 'flex', gap: 7, marginTop: fact.hint ? 0 : 10 }}>
                       <Button
@@ -861,16 +833,16 @@ export function ReviewGate({
       <style>{CSS}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <IconShield size={16} color={C.oxblood} />
-        <SmallLabel>Review before this leaves your hands</SmallLabel>
+        <Label>Review before this leaves your hands</Label>
       </div>
-      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, lineHeight: 1.25, margin: '0 0 7px' }}>
+      <Text role="lead" as="h3" style={{ lineHeight: 1.25, marginBottom: 7 }}>
         LokAI won't send this for you.
-      </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 13px' }}>
+      </Text>
+      <Text tone="quiet" style={{ marginBottom: 13, lineHeight: 1.6 }}>
         A legal document carries weight, and an AI can misread a date or an amount. You stay
         in control — read each detail, then copy or print it yourself. A lawyer or trusted
         helper can confirm the wording before you use it.
-      </p>
+      </Text>
 
       {/* Deliberate consent step — unlocks the export actions */}
       <button
@@ -906,7 +878,7 @@ export function ReviewGate({
         }}>
           {reviewed && <IconCheck size={13} color="var(--role-on-anchor)" />}
         </span>
-        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink }}>
+        <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink }}>
           I've read the details and I'm ready to send it myself.
         </span>
       </button>
@@ -931,9 +903,9 @@ export function ReviewGate({
         </Button>
       </Stack>
 
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, lineHeight: 1.5, margin: '11px 0 0', textAlign: 'center' }}>
+      <Text role="meta" tone="faint" style={{ lineHeight: 1.5, marginTop: 11, textAlign: 'center' }}>
         LokAI prepared this draft. You are the sender. No message leaves the app on its own.
-      </p>
+      </Text>
     </div>
   );
 }
@@ -985,20 +957,18 @@ export function FirstActionChecklist({
 
   return (
     <div style={{ marginTop: 12 }}>
-      <SmallLabel>After you leave LokAI</SmallLabel>
-      <h3 style={{
-        fontFamily: SERIF,
-        fontSize: compact ? 18 : 20,
-        fontWeight: 400,
-        color: C.ink,
-        lineHeight: 1.25,
-        margin: '0 0 6px',
-      }}>
+      <Label>After you leave LokAI</Label>
+      <Text
+        role={compact ? 'bodyStrong' : 'title'}
+        as="h3"
+        measured={false}
+        style={{ fontFamily: SERIF, fontWeight: 400, lineHeight: 1.25, marginBottom: 6 }}
+      >
         Your first actions
-      </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 4px' }}>
+      </Text>
+      <Text tone="quiet" style={{ lineHeight: 1.55, marginBottom: 4 }}>
         The product ends here. These three steps stay with you — mark them as you go.
-      </p>
+      </Text>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {FIRST_ACTIONS.map((action, i) => {
           const on = checked[action.id];
@@ -1042,29 +1012,23 @@ export function FirstActionChecklist({
                   {on ? <IconCheck size={13} color="var(--role-on-anchor)" /> : i + 1}
                 </span>
                 <span>
-                  <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.ink, display: 'block' }}>
-                    {action.title}
-                  </span>
-                  <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, lineHeight: 1.45, display: 'block', marginTop: 2 }}>
-                    {action.hint}
-                  </span>
+                  <Text role="bodyStrong" measured={false} style={{ display: 'block' }}>{action.title}</Text>
+                  <Text role="caption" tone="faint" measured={false} style={{ display: 'block', marginTop: 2, lineHeight: 1.45 }}>{action.hint}</Text>
                 </span>
               </button>
             </li>
           );
         })}
       </ul>
-      <p style={{
-        fontFamily: SANS,
-        fontSize: TYPE.micro.size,
-        color: allDone ? C.green : C.muted,
-        margin: '12px 0 0',
-        fontWeight: allDone ? 700 : 500,
-      }}>
+      <Text
+        role="meta"
+        measured={false}
+        style={{ color: allDone ? C.green : C.muted, marginTop: 12, fontWeight: allDone ? 700 : 500 }}
+      >
         {allDone
           ? 'Exit checklist marked · you own the next steps outside LokAI'
           : `${doneCount} of ${FIRST_ACTIONS.length} marked`}
-      </p>
+      </Text>
     </div>
   );
 }
@@ -1093,28 +1057,28 @@ export function NoticeAssessmentCard({ assessment, onPrepareReply }: { assessmen
       gap: 10,
     }}>
       <Badge tone={isRisky ? 'halt' : 'ok'}>{isRisky ? 'Verify before trusting' : 'Looks genuine'}</Badge>
-      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.h3.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.25 }}>
+      <Text role="lead" as="h3" measured={false} style={{ lineHeight: 1.25 }}>
         {assessment.title}
-      </h3>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+      </Text>
+      <Text tone="quiet" style={{ lineHeight: 1.6 }}>
         {assessment.decodedSummary}
-      </p>
+      </Text>
       <div style={{ background: isRisky ? 'var(--role-halt-fill)' : 'var(--role-ok-fill)', borderRadius: LAYOUT.radius.control, padding: '10px 12px' }}>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: isRisky ? C.red : C.green, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <Text role="label" tone={isRisky ? 'halt' : 'ok'} measured={false} style={{ marginBottom: 4, letterSpacing: '0.05em' }}>
           Why LokAI flagged this
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: 0 }}>
+        </Text>
+        <Text role="body" tone="quiet" style={{ lineHeight: 1.55 }}>
           {assessment.riskExplanation}
-        </p>
+        </Text>
       </div>
       {assessment.extractedAmount && (
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, margin: 0 }}>
+        <Text role="bodyStrong" tone="default" measured={false}>
           <strong>Offer:</strong> {assessment.extractedAmount}
-        </p>
+        </Text>
       )}
-      <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, margin: 0 }}>
+      <Text role="caption" tone="faint" measured={false}>
         {assessment.deadline}
-      </p>
+      </Text>
       {!isRisky && assessment.suggestedReply && onPrepareReply && (
         <Button
           onClick={onPrepareReply}
@@ -1139,13 +1103,13 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
       <div>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, ...typeStyle('label', { color: C.oxblood }) }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: C.oxblood, ...typeStyle('label') }}>
           <IconShield size={14} />
           Professional guidance recommended
         </span>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, lineHeight: 1.55, margin: '8px 0 0' }}>
+        <Text tone="quiet" style={{ lineHeight: 1.55, marginTop: 8 }}>
           {workflow.humanReviewSummary}
-        </p>
+        </Text>
       </div>
       <div style={{
         background: C.surface2,
@@ -1153,13 +1117,13 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
         padding: 14,
         display: 'flex', flexDirection: 'column', gap: 9,
       }}>
-        <p style={{ ...typeStyle('captionStrong', { color: C.ink, margin: 0 }) }}>
+        <Text role="captionStrong" tone="default" measured={false}>
           Ready to hand off
-        </p>
+        </Text>
         {['Issue summary', 'Evidence collected', 'Sources checked', 'Draft packet'].map(item => (
           <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <IconCheck size={14} color={C.green} />
-            <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.ink }}>{item}</span>
+            <Text role="caption" tone="default" measured={false}>{item}</Text>
           </div>
         ))}
       </div>
@@ -1172,9 +1136,9 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
   // a plain vertical list, no outer card.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
-      <h3 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: 0, lineHeight: 1.2 }}>
+      <Text role="answer" as="h3" measured={false} style={{ lineHeight: 1.2 }}>
         Case history
-      </h3>
+      </Text>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {events.map(event => (
           <div key={event.id} style={{ display: 'grid', gridTemplateColumns: '22px 1fr', gap: 9 }}>
@@ -1193,14 +1157,14 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.ink, margin: '0 0 2px' }}>
+                <Text role="captionStrong" tone="default" measured={false} style={{ marginBottom: 2 }}>
                   {event.label}
-                </p>
-                <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted }}>{event.time}</span>
+                </Text>
+                <Amount tone="faint">{event.time}</Amount>
               </div>
-              <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.45, margin: 0 }}>
+              <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.45 }}>
                 {event.detail}
-              </p>
+              </Text>
             </div>
           </div>
         ))}

@@ -100,7 +100,7 @@ export function VoiceActiveArtboard() {
               it before anything is used.
             </Text>
           </Stack>
-          <Button variant="quiet" size="sm" onClick={voice.simulateUnclear} style={{ alignSelf: 'flex-start' }}>
+          <Button variant="quiet" size="sm" onClick={voice.simulateUnclear}>
             Simulate unclear audio
           </Button>
           <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
@@ -116,7 +116,9 @@ export function VoiceActiveArtboard() {
           <Text role="bodyStrong" style={{ textAlign: 'center' }}>
             {phase === 'listening' ? 'Playing prepared voice example…' : 'Turning the example into text…'}
           </Text>
-          <Button variant="quiet" size="sm" onClick={voice.skipToConfirm}>Skip animation</Button>
+          <Button variant="quiet" size="sm" onClick={voice.skipToConfirm} style={{ alignSelf: 'center' }}>
+            Skip animation
+          </Button>
         </Stack>
       )}
 

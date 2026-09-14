@@ -76,9 +76,16 @@ function OnboardingArtboard() {
           <OnboardingHero />
           <Stack gap={3} align="center">
             <Text role="pronounce" style={{ textAlign: 'center' }}>Legal help in words you understand</Text>
-            <Text tone="quiet" style={{ textAlign: 'center' }}>
+            <Text tone="quiet" style={{ textAlign: 'center', maxWidth: 320 }}>
               LokAI reads notices, letters, and forms in their own language and explains
               them in yours, with the amounts, deadlines, and next steps pulled out.
+            </Text>
+            {/* The "prepare, don't send" disclosure — surfaces the product's
+                strongest claim at the moment the user forms their first
+                expectation. Cements the founding thesis without
+                overclaiming. */}
+            <Text role="meta" tone="faint" measured={false} style={{ textAlign: 'center' }}>
+              LokAI prepares drafts for your review — you are the sender. It never sends anything on your behalf.
             </Text>
           </Stack>
         </Stack>

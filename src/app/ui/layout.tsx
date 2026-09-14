@@ -23,7 +23,7 @@
  */
 
 import React from 'react';
-import { LAYOUT, S, SHADOW } from '../components/shared';
+import { LAYOUT, S, SHADOW_SCALE } from '../components/shared';
 import { T, M } from './theme';
 import { ToneProvider, useInk, useTone, type ScreenTone } from './primitives';
 import { ARTBOARD } from '../embed';
@@ -48,6 +48,8 @@ export interface ScreenProps {
   children: React.ReactNode;
   /** Slot 4. Pinned above the composer/footer, never scrolled past. */
   action?: React.ReactNode;
+  /** When true, the action slot floats over the ground without a rigid dividing border. */
+  floatingAction?: boolean;
   /** Slot 5, plus any bottom nav. Fixed at the bottom of the artboard. */
   footer?: React.ReactNode;
   /** Extra bottom padding on the scroll area — set when a floating composer
@@ -66,6 +68,7 @@ export function Screen({
   context,
   children,
   action,
+  floatingAction = true,
   footer,
   scrollClearance,
   scrollViewportRef,
@@ -102,6 +105,11 @@ export function Screen({
 
         <div
           ref={scrollViewportRef}
+          /* The chat scroll surface is the new-content region; polite
+             aria-live so screen readers announce a new turn without
+             interrupting mid-read. */
+          aria-live="polite"
+          aria-label={onStop ? 'Stop state content' : 'Conversation'}
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -118,11 +126,11 @@ export function Screen({
           <div
             style={{
               flexShrink: 0,
-              padding: `${S[3]} ${M.padX} ${S[4]}`,
-              /* A hairline, not a shadow. The action zone is part of the page,
-                 not a floating bar docked over it. */
-              borderTop: `1px solid ${onStop ? T.stopHairline : T.hairline}`,
-              background: onStop ? T.stopGround : T.ground,
+              padding: floatingAction ? `0 ${M.padX} ${S[2]}` : `${S[3]} ${M.padX} ${S[4]}`,
+              borderTop: floatingAction ? 'none' : `1px solid ${onStop ? T.stopHairline : T.hairline}`,
+              background: floatingAction ? 'transparent' : (onStop ? T.stopGround : T.ground),
+              position: floatingAction ? 'relative' : undefined,
+              zIndex: floatingAction ? 20 : undefined,
             }}
           >
             {action}
@@ -354,7 +362,7 @@ export function Card({
      outlined-box look; a single separator reads as an object, not a diagram. */
   const surface: React.CSSProperties = tone === 'stop'
     ? {
-        background: 'rgba(255,255,255,0.07)',
+        background: T.stopRaised,
         borderRadius: LAYOUT.radius.panel,
         padding: S[4],
         boxSizing: 'border-box',
@@ -363,7 +371,7 @@ export function Card({
     : {
         background: T.raised,
         borderRadius: LAYOUT.radius.panel,
-        boxShadow: SHADOW.sm,
+        boxShadow: SHADOW_SCALE.card,
         padding: S[4],
         boxSizing: 'border-box',
         ...style,

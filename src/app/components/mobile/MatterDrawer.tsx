@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { IconChevronRight, IconFile, IconSettings, IconSearch, IconPlus, IconClose } from '../../ui/icons';
 import {
   Stack, Row, Rule, Text, Label, Amount, Badge, IconButton,
+  HairlineList, HairlineRow,
   T, M, S, LAYOUT, SHADOW, ICON, useSystemStyles,
 } from '../../ui';
 import { Wordmark } from '../shared';
@@ -132,6 +133,11 @@ function ActiveMatter({ matter, onOpen }: { matter: Conversation; onOpen: () => 
   const done = matter.completedSteps.length;
   const total = 6;
   const waiting = waitingLine(matter.status);
+  /* The pending facts carry the *what* of "what's waiting on you". The
+     rail above shows progress; this list is the actual decisions the
+     user has to make. A first-time user lands here knowing the count but
+     not the content — the list closes that gap. */
+  const pendingFacts = getVerificationFacts().filter((f) => f.status === 'needs_review');
 
   return (
     <button
@@ -191,6 +197,27 @@ function ActiveMatter({ matter, onOpen }: { matter: Conversation; onOpen: () => 
           <Text role="caption" tone="quiet" measured={false} style={{ flex: 1 }}>{waiting}</Text>
           <IconChevronRight size={ICON.inline} color={T.anchor} />
         </Row>
+
+        {pendingFacts.length > 0 && matter.status === 'Action Required' && (
+          <HairlineList>
+            {pendingFacts.slice(0, 3).map((f) => (
+              <HairlineRow key={f.id} leading={
+                <span style={{
+                  width: 6, height: 6, borderRadius: LAYOUT.radius.full,
+                  background: T.flag, flexShrink: 0, marginTop: 6,
+                }} />
+              }>
+                <Text role="captionStrong" tone="default" measured={false}>{f.label}</Text>
+                <Text role="caption" tone="faint" measured={false}>{f.value}</Text>
+              </HairlineRow>
+            ))}
+            {pendingFacts.length > 3 && (
+              <Text role="meta" tone="faint" measured={false}>
+                +{pendingFacts.length - 3} more waiting
+              </Text>
+            )}
+          </HairlineList>
+        )}
       </Stack>
     </button>
   );
@@ -371,7 +398,17 @@ export function MatterDrawer({ open, onClose }: { open: boolean; onClose: () => 
             {/* ── Account rail ──────────────────────────────────────────── */}
             <div style={{ flexShrink: 0, borderTop: `1px solid ${T.hairline}`, padding: `${S[3]} ${S[4]}`, marginTop: S[3] }}>
               <Row justify="between" gap={2}>
-                <Row gap={3} style={{ minWidth: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => go('/mobile/profile')}
+                  className="lokai-pressable"
+                  aria-label="Open profile"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    minWidth: 0, color: 'inherit', font: 'inherit',
+                  }}
+                >
                   <span
                     aria-hidden
                     style={{
@@ -387,7 +424,7 @@ export function MatterDrawer({ open, onClose }: { open: boolean; onClose: () => 
                     <Text role="bodyStrong" measured={false}>Priya S.</Text>
                     <Text role="caption" tone="faint" measured={false}>Karnataka</Text>
                   </Stack>
-                </Row>
+                </button>
                 <IconButton label="Settings" onClick={() => go('/mobile/profile')}>
                   <IconSettings size={ICON.row} />
                 </IconButton>

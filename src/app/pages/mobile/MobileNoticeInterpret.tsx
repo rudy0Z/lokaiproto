@@ -43,7 +43,7 @@ const DOC_META: Record<string, { Icon: React.ComponentType<{ size?: number }>; b
   'payment-receipt': { Icon: IconImage, blurb: 'A photo of a receipt, kept as evidence, nothing to act on.' },
 };
 
-function AttachSheet({
+export function AttachSheet({
   open, onClose, onPick,
 }: {
   open: boolean;

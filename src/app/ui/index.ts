@@ -28,6 +28,9 @@ export {
   CitationChip,
   shortStatuteLabel,
   AttachmentChip,
+  Meter,
+  meterTone,
+  meterColor,
   ICON,
   ICON_STROKE,
   ICON_WEIGHT,
@@ -37,7 +40,7 @@ export {
   useInk,
   useSystemStyles,
 } from './primitives';
-export type { ScreenTone, TextProps, TextTone, ButtonProps, FieldProps, TextareaProps } from './primitives';
+export type { ScreenTone, TextProps, TextTone, ButtonProps, FieldProps, TextareaProps, MeterTone } from './primitives';
 
 export {
   Screen,
@@ -77,4 +80,4 @@ export type { Script } from './script';
    `S` and `LAYOUT` are the raw spacing/radius scales; prefer `Stack`/`Row`
    and the primitives' own radii. `C` is the literal palette and exists only
    for values that motion/react has to interpolate. */
-export { S, LAYOUT, MOTION, SHADOW, TYPE, typeStyle, C, SANS, MONO, EDITORIAL } from '../components/shared';
+export { S, LAYOUT, MOTION, SHADOW, SHADOW_SCALE, TYPE, typeStyle, C, SANS, MONO, EDITORIAL } from '../components/shared';

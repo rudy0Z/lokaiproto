@@ -4,40 +4,40 @@
 /* ── LokAI design tokens (authoritative CSS source) ───────────────────────── */
 :root {
   /* Canvas */
-  --surface-bg:      #F8F5EE;
+  --surface-bg:      #FAF8F5;
   --surface-card:    #FFFFFF;
-  --surface-raised:  #FBF8F1;
-  --wash-blue:       #DDE7FF;
-  --wash-gold:       #FFE3B8;
-  --wash-rose:       #F5D8D4;
+  --surface-raised:  #FFFFFF;
+  --wash-blue:       #EEF4FF;
+  --wash-gold:       #FFF2DC;
+  --wash-rose:       #FAECE9;
 
   /* Ink */
-  --text-primary:    #181713;
-  --text-secondary:  #48453D;
+  --text-primary:    #161513;
+  --text-secondary:  #44413A;
   /* Was #858078 (3.60:1 on canvas — failed WCAG AA). Restored to the
      DTCG-specified step: 5.40:1 on canvas, 5.88:1 on white. */
   --text-tertiary:   #68645D;
   --text-on-dark:    #FFFFFF;
 
   /* Brand */
-  --navy:            #102A4C;
-  --navy-dark:       #0B1E37;
-  --navy-soft:       #EEF2F8;
-  --saffron:         #E9852B;
-  --saffron-dark:    #C86712;
-  --saffron-accessible: #CC5A10;
-  --terracotta:      #A94F2D;
+  --navy:            #0B1B32;
+  --navy-dark:       #061020;
+  --navy-soft:       #EEF3FA;
+  --saffron:         #E27A24;
+  --saffron-dark:    #C25B12;
+  --saffron-accessible: #C25B12;
+  --terracotta:      #A24625;
 
   /* Semantic */
-  --success:         #1F6B3A;
-  --danger:          #B8361C;
-  --caution:         #8A4500;
-  --oxblood:         #6B1F1F;
+  --success:         #196535;
+  --danger:          #B33218;
+  --caution:         #854000;
+  --oxblood:         #671D1D;
 
   /* Structure */
-  --lokai-border:    #E7E0D4;
-  --border-strong:   #CFC5B6;
-  --border-focus:    #102A4C;
+  --lokai-border:    rgba(22, 21, 19, 0.08);
+  --border-strong:   rgba(22, 21, 19, 0.16);
+  --border-focus:    #0B1B32;
 
   /* Soft fills */
   --success-soft:    rgba(31, 107, 58, 0.08);
@@ -58,44 +58,40 @@
   --space-8: 64px;
   --touch-target: 44px;
 
-  /* Radii — role scale (mirrors LAYOUT.radius) */
+  /* Radii — Geist 3-step scale mapped to elevation */
   --radius-none: 0;
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-control: 10px;
-  --radius-panel: 12px;
+  --radius-sm: 8px;
+  --radius-control: 8px;
+  --radius-panel: 16px;
   --radius-card: 16px;
-  --radius-turn: 18px;
-  --radius-plane: 22px;
-  --radius-dialog: 18px;
+  --radius-turn: 16px;
+  --radius-plane: 16px;
+  --radius-dialog: 16px;
   --radius-pill: 999px;
 
-  /* Type sizes (mirrors TYPE in shared.tsx).
-     rem, not px — px ignores the OS/browser text-size setting entirely,
-     which is the single biggest accessibility failure for this product's
-     users (older, lower-confidence, often reading outdoors under stress).
-     Floor raised from 10px to 12px: label/micro/caption now share 0.75rem
-     and differentiate by weight, tracking, and transform instead of size. */
-  --type-label: 0.75rem;      /* 12px — was 10px */
-  --type-micro: 0.75rem;      /* 12px — was 11px */
+  /* Type sizes — 4-step senior-craft system (NN/g target) */
+  --type-label: 0.75rem;      /* 12px */
+  --type-micro: 0.75rem;      /* 12px */
   --type-caption: 0.75rem;    /* 12px */
-  --type-small: 0.8125rem;    /* 13px */
+  --type-small: 0.875rem;     /* 14px */
   --type-body: 0.875rem;      /* 14px */
-  --type-title: 0.9375rem;    /* 15px */
+  --type-title: 1rem;         /* 16px */
   --type-h4: 1rem;            /* 16px */
-  --type-lead: 1.125rem;      /* 18px */
-  --type-h3: 1.25rem;         /* 20px */
-  --type-editorial-sm: 1.375rem; /* 22px */
-  --type-editorial: 1.75rem;  /* 28px */
-  --type-display2: 2.25rem;   /* 36px */
-  --type-display1: 3.5rem;    /* 56px */
+  --type-lead: 1rem;          /* 16px */
+  --type-h3: 1.125rem;        /* 18px */
+  --type-editorial-sm: 1.5rem; /* 24px */
+  --type-editorial: 1.5rem;   /* 24px */
+  --type-display2: 2rem;      /* 32px */
+  --type-display1: 2.75rem;   /* 44px */
 
   /* Elevation */
-  --elevation-xs: 0 1px 2px rgba(26, 25, 22, 0.04);
-  --elevation-sm: 0 1px 2px rgba(26, 25, 22, 0.035), 0 3px 10px rgba(26, 25, 22, 0.045);
-  --elevation-md: 0 2px 5px rgba(26, 25, 22, 0.04), 0 8px 24px rgba(26, 25, 22, 0.065);
-  --elevation-lg: 0 14px 42px rgba(26, 25, 22, 0.10), 0 3px 10px rgba(26, 25, 22, 0.04);
-  --elevation-float: 0 22px 60px rgba(26, 25, 22, 0.13), 0 6px 18px rgba(26, 25, 22, 0.07);
+  --elevation-xs: 0 1px 2px rgba(11, 27, 50, 0.04);
+  --elevation-sm: 0 1px 3px rgba(11, 27, 50, 0.04), 0 4px 12px rgba(11, 27, 50, 0.03);
+  --elevation-md: 0 2px 6px rgba(11, 27, 50, 0.04), 0 10px 28px rgba(11, 27, 50, 0.06);
+  --elevation-lg: 0 16px 44px rgba(11, 27, 50, 0.09), 0 4px 12px rgba(11, 27, 50, 0.03);
+  /* Comeau layered low-alpha shadow recipe for floating hero objects */
+  --elevation-float: 0 1px 2px rgba(11, 27, 50, 0.03), 0 4px 8px rgba(11, 27, 50, 0.04), 0 12px 24px rgba(11, 27, 50, 0.05);
 
   /* Motion — ladder + named recipes (mirrors MOTION in shared.tsx) */
   --duration-micro: 120ms;
@@ -182,6 +178,11 @@
      legal notice reads as a physical page laid on the desk, not a UI card. */
   --role-paper:         #FBF9F3;
 
+  /* A well/inset surface for a control sitting in a hero canvas. A hair
+     warmer than ground, for a button that wants to read as pressed into
+     the page. */
+  --role-mic-well:      #F4F0E8;
+
   /* Scrim behind a drawer or sheet. Warm-black, not neutral — a cool scrim
      over warm paper reads as a screen dimming rather than as shade. */
   --role-scrim:         rgba(24, 23, 19, 0.32);
@@ -191,6 +192,7 @@
   --role-stop-ink:      var(--text-on-dark);
   --role-stop-ink-quiet: rgba(255, 255, 255, 0.68);
   --role-stop-hairline: rgba(255, 255, 255, 0.16);
+  --role-stop-raised:   rgba(248, 245, 238, 0.07);
 
   /* Turn card surfaces, per response mode. Named vars (not literals in
      Turn.tsx) so dark re-tints them; light values are the hand-tuned tints. */
@@ -273,6 +275,12 @@
   --role-stop-ink:      #102A4C;
   --role-stop-ink-quiet: #3D4C61;
   --role-stop-hairline: rgba(16, 42, 76, 0.16);
+  /* Raised surface on the stop ground. A card on a full-bleed dark stop
+     state needs its own surface tone; on a paper theme the contact shadow
+     carries the lift, but on the stop ground shadows vanish, so the surface
+     is the lift. Light: faint warm white over the cream stop. Dark: faint
+     ink over the navy ground. */
+  --role-stop-raised:   rgba(16, 42, 76, 0.06);
 
   /* Turn cards — subtle tinted raiseds; ink holds ≥13:1 on all of them */
   --turn-bg-explain:  #16263C;
@@ -349,6 +357,72 @@ button, input, textarea, select {
 .lokai-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Modern Floating Composer (ChatGPT / Claude / Gemini pattern) ────────── */
+.lokai-composer-floating {
+  position: relative;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--role-hairline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--elevation-float);
+  transition: border-color var(--duration-micro) var(--ease-out),
+              box-shadow var(--duration-micro) var(--ease-out),
+              border-radius var(--duration-micro) var(--ease-out);
+}
+.lokai-composer-floating:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 14px 40px rgba(11, 27, 50, 0.11), 0 3px 10px rgba(11, 27, 50, 0.05);
+}
+[data-theme="dark"] .lokai-composer-floating {
+  background: rgba(22, 38, 60, 0.86);
+  border-color: var(--role-hairline);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36), 0 3px 10px rgba(0, 0, 0, 0.22);
+}
+[data-theme="dark"] .lokai-composer-floating:focus-within {
+  border-color: var(--role-hairline-firm);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+/* User speech bubble — sculpted, high-contrast, confident */
+.lokai-chat-bubble-user {
+  background: var(--role-anchor);
+  color: var(--role-on-anchor);
+  border-radius: 18px 18px 4px 18px;
+  padding: 10px 16px;
+  max-width: 82%;
+  box-shadow: var(--elevation-xs);
+  word-break: break-word;
+}
+
+/* Ambient living brand mark (ChatGPT Emotive Point / Gemini breath) */
+@keyframes lokaiMarkBreathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(11, 27, 50, 0.12);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 6px 18px rgba(11, 27, 50, 0.20);
+  }
+}
+.lokai-mark-breathe {
+  animation: lokaiMarkBreathe 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Ambient thinking state capsule — replaces verbose checklist */
+.lokai-thinking-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--role-raised);
+  border: 1px solid var(--role-hairline);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px 8px 14px;
+  box-shadow: var(--elevation-xs);
+  max-width: 100%;
+}
 
 .demo-disclosure {
   position: fixed;

@@ -54,6 +54,11 @@ export const T = {
   attest:       'var(--role-attest)',
   attestFill:   'var(--role-attest-fill)',
 
+  /** A well/inset surface for a control sitting in a hero canvas. A
+   *  hairline warmer than ground, for a button that wants to read as
+   *  pressed into the page. */
+  micWell:      'var(--role-mic-well)',
+
   ok:           'var(--role-ok)',
   okFill:       'var(--role-ok-fill)',
   halt:         'var(--role-halt)',
@@ -75,6 +80,10 @@ export const T = {
   stopInk:      'var(--role-stop-ink)',
   stopInkQuiet: 'var(--role-stop-ink-quiet)',
   stopHairline: 'var(--role-stop-hairline)',
+  /** A card surface that sits on the stop ground. On a paper theme the
+   *  contact shadow carries the lift; on the stop ground shadows vanish,
+   *  so the surface is the lift. */
+  stopRaised:   'var(--role-stop-raised)',
 } as const;
 
 export type ColorRole = keyof typeof T;

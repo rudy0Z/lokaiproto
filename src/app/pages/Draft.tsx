@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { IconBack, IconDownload, IconPencil } from '../ui/icons';
 import { useNavigate } from 'react-router';
 import { Btn, C, LAYOUT, PLANE, SANS, SERIF, SHADOW, TYPE } from '../components/shared';
@@ -61,7 +61,11 @@ function EditableField({ label, value, onChange }: {
     >
       <div style={{
         fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600,
-        color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em',
+        /* inkQuiet, not muted — at 12px + 600 + caps + tracking, the muted
+           tone reads as borderline low-contrast against the paper surface.
+           Bumping a step darker keeps the label legible without breaking
+           the muted-ink hierarchy. */
+        color: C.inkSoft, textTransform: 'uppercase', letterSpacing: '0.08em',
         marginBottom: '3px',
       }}>
         {label}
@@ -424,7 +428,7 @@ export default function Draft() {
               boxShadow: SHADOW.sm,
             }}>
               <p style={{
-                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700,
+                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600,
                 color: C.oxblood, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 10px',
               }}>
                 Draft held
@@ -447,7 +451,7 @@ export default function Draft() {
                   borderRadius: LAYOUT.radius.panel, padding: 14, marginBottom: 18,
                 }}>
                   <p style={{
-                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700,
+                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
                     color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px',
                   }}>
                     What is missing
@@ -629,7 +633,7 @@ export default function Draft() {
               color: C.navy,
               fontFamily: SANS,
               fontSize: TYPE.small.size,
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >

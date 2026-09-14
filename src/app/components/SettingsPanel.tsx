@@ -1,6 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { IconClose } from '../ui/icons';
 import { C, GRAD, LAYOUT, PLANE, SANS, SHADOW, TYPE } from './shared';
+import { S, M } from '../ui';
 import { useSidebar } from '../context/SidebarContext';
 import { useConversations } from '../context/ConversationContext';
 import { useDemo } from '../context/DemoContext';
@@ -23,7 +24,7 @@ function LangGrid({
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '8px', padding: '0 24px',
+      gap: S[2], padding: `0 ${M.padX}`,
     }}>
       {options.map(lang => {
         const active = lang.id === selected;
@@ -34,7 +35,7 @@ function LangGrid({
             style={{
               fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: active ? 500 : 400,
               color: active ? C.navy : C.inkSoft,
-              background: active ? 'linear-gradient(135deg, rgba(221,231,255,0.72), rgba(255,244,226,0.72))' : '#FFFFFF',
+              background: active ? 'linear-gradient(135deg, rgba(221,231,255,0.72), rgba(255,244,226,0.72))' : 'var(--role-raised)',
               border: `1px solid ${active ? C.navy : C.border}`,
               borderRadius: LAYOUT.radius.panel, padding: '11px 8px',
               cursor: 'pointer', textAlign: 'center',
@@ -56,7 +57,7 @@ function SectionHeading({ label }: { label: string }) {
     <div style={{
       fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 500,
       color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em',
-      padding: '20px 24px 10px',
+      padding: `${S[5]} ${M.padX} ${S[3]}`,
     }}>
       {label}
     </div>
@@ -65,7 +66,7 @@ function SectionHeading({ label }: { label: string }) {
 
 // ─── Thin divider ─────────────────────────────────────────────────────────────
 function Divider() {
-  return <div style={{ height: '1px', background: '#EEEBE4', flexShrink: 0 }} />;
+  return <div style={{ height: '1px', background: C.border, flexShrink: 0 }} />;
 }
 
 // ─── Settings Panel ──────────────────────────────────────────────────────────
@@ -136,7 +137,7 @@ export function SettingsPanel() {
         }}>
           <div>
             <div style={{
-              fontFamily: SANS, fontSize: TYPE.h3.size, fontWeight: 700,
+              fontFamily: SANS, fontSize: TYPE.h3.size, fontWeight: 600,
               color: C.ink, marginBottom: '14px',
             }}>
               Settings
@@ -149,10 +150,10 @@ export function SettingsPanel() {
                 justifyContent: 'center', flexShrink: 0,
                 boxShadow: SHADOW.sm,
               }}>
-                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: '#FFFFFF', fontWeight: 800, lineHeight: 1 }}>P</span>
+                <span style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.navy, fontWeight: 600, lineHeight: 1 }}>P</span>
               </div>
               <div>
-                <div style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink }}>
+                <div style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink }}>
                   Priya Sharma
                 </div>
                 <div style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.muted, marginTop: '2px' }}>
@@ -164,7 +165,7 @@ export function SettingsPanel() {
           <button
             onClick={closeSettings}
             style={{
-              background: '#FFFFFF', border: `1px solid ${C.border}`, cursor: 'pointer',
+              background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer',
               width: 34, height: 34, borderRadius: LAYOUT.radius.panel, color: C.muted, display: 'flex',
               alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               boxShadow: SHADOW.md,

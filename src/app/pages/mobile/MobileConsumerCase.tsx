@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BellRinging, Camera, Compass, FileText, Microphone, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BellRinging, Camera, Compass, FileText, Microphone, PencilSimple, ShieldCheck } from '@phosphor-icons/react';
 import { IconChevronRight } from '../../ui/icons';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { C, LAYOUT, PLANE, S, SANS, SERIF, SHADOW, TYPE, VoiceOrb, typeStyle } from '../../components/shared';
@@ -152,44 +152,20 @@ function HeaderBar({
   stageLabel: string;
   matterLabel?: string;
 }) {
-  const navigate = useNavigate();
   return (
     <div style={{
-      padding: '12px 20px 10px',
+      padding: '4px 20px 8px',
       display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      borderBottom: `1px solid ${C.border}`,
-      /* Translucent header background over the cream (light) / raised (dark)
-         ground — drawn from the role layer so dark mode re-paints it. */
-      background: 'color-mix(in srgb, var(--role-raised) 75%, transparent)',
+      flexDirection: 'column',
+      gap: 2,
+      background: 'transparent',
     }}>
-      <button
-        aria-label="Back to mobile home"
-        onClick={() => navigate('/mobile/home')}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: LAYOUT.radius.panel,
-          border: `1px solid ${C.border}`,
-          background: 'var(--role-raised)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
-      >
-        <ArrowLeft size={17} color={C.inkSoft} />
-      </button>
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px' }}>
-          {matterLabel}
-        </p>
-        <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 700, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {stageLabel}
-        </p>
-      </div>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+        {matterLabel}
+      </p>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.body.size, fontWeight: 600, color: C.ink, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {stageLabel}
+      </p>
     </div>
   );
 }
@@ -293,8 +269,9 @@ function IntakeView({ onNext }: { onNext: () => void }) {
                 style={{
                   minHeight: 64,
                   borderRadius: LAYOUT.radius.panel,
-                  border: `1.5px solid ${isSelected ? C.navy : C.border}`,
-                  background: isSelected ? 'var(--role-anchor-tint)' : 'var(--role-ground)',
+                  border: 'none',
+                  background: isSelected ? 'var(--role-anchor-tint)' : 'var(--role-sunken)',
+                  boxShadow: isSelected ? SHADOW.xs : 'none',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -315,9 +292,10 @@ function IntakeView({ onNext }: { onNext: () => void }) {
 
         {voiceActive ? (
           <div style={{
-            border: `1px solid ${C.border}`,
+            border: 'none',
+            boxShadow: SHADOW.xs,
             borderRadius: LAYOUT.radius.panel,
-            background: 'var(--role-paper)',
+            background: 'var(--role-raised)',
             padding: 14,
             display: 'flex',
             flexDirection: 'column',
@@ -327,23 +305,14 @@ function IntakeView({ onNext }: { onNext: () => void }) {
             {(voice.phase === 'listening' || voice.phase === 'transcribing') && (
               <>
                 <VoiceOrb size={64} state={voice.phase === 'listening' ? 'listening' : 'processing'} live />
-                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.inkSoft, margin: 0, textAlign: 'center' }}>
+                <Text role="body" style={{ textAlign: 'center' }}>
                   {voice.phase === 'listening'
                     ? 'Playing the prepared voice example…'
                     : 'Turning it into text…'}
-                </p>
-                <button
-                  type="button"
-                  onClick={voice.skipToConfirm}
-                  style={{
-                    minHeight: 36, padding: '0 14px', borderRadius: LAYOUT.radius.control,
-                    border: `1px solid ${C.border}`, background: C.surface,
-                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
-                    color: C.navy, cursor: 'pointer',
-                  }}
-                >
+                </Text>
+                <Button variant="quiet" size="sm" onClick={voice.skipToConfirm}>
                   Skip
-                </button>
+                </Button>
               </>
             )}
 
@@ -364,9 +333,9 @@ function IntakeView({ onNext }: { onNext: () => void }) {
                     if (idx >= 0) el.setSelectionRange(idx, idx + entity.value.length);
                   }}
                 />
-                <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.muted, margin: '10px 0 6px' }}>
+                <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
                   Check this is what you meant, then continue.
-                </p>
+                </Text>
                 <Textarea
                   ref={intakeTranscriptRef}
                   value={voice.transcript}
@@ -379,33 +348,25 @@ function IntakeView({ onNext }: { onNext: () => void }) {
 
             {voice.phase === 'unclear' && (
               <div style={{ width: '100%', textAlign: 'center' }}>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.ink, fontWeight: 600, margin: '0 0 4px' }}>
+                <Text role="bodyStrong" style={{ marginBottom: 4 }}>
                   That sample was unclear
-                </p>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.5, margin: '0 0 10px' }}>
+                </Text>
+                <Text role="caption" tone="quiet" style={{ marginBottom: 10 }}>
                   LokAI will not guess. Retry, or use the prepared text instead.
-                </p>
-                <button
-                  type="button"
-                  onClick={voice.startSample}
-                  style={{
-                    minHeight: 36, padding: '0 14px', borderRadius: LAYOUT.radius.control,
-                    border: `1px solid ${C.border}`, background: C.surface,
-                    fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600,
-                    color: C.navy, cursor: 'pointer',
-                  }}
-                >
+                </Text>
+                <Button variant="quiet" size="sm" onClick={voice.startSample}>
                   Retry sample
-                </button>
+                </Button>
               </div>
             )}
           </div>
         ) : (
           <div style={{
             minHeight: 86,
-            border: `1px solid ${C.border}`,
+            border: 'none',
+            boxShadow: SHADOW.xs,
             borderRadius: LAYOUT.radius.panel,
-            background: 'var(--role-paper)',
+            background: 'var(--role-raised)',
             padding: 12,
             fontFamily: SANS,
             fontSize: TYPE.body.size,
@@ -532,7 +493,7 @@ function AssessmentView({
         size="sm"
         onClick={onOpenSources}
         iconAfter={<ArrowRight size={ICON.inline} strokeWidth={ICON_STROKE} />}
-        style={{ alignSelf: 'flex-start' }}
+        align="start"
       >
         View the source trail
       </Button>
@@ -614,10 +575,10 @@ export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChan
   const active = AUTONOMY_OPTIONS.find(o => o.level === value);
   return (
     <div style={{
-      background: 'var(--role-raised)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.turn,
+      background: 'var(--role-raised)', border: 'none', boxShadow: SHADOW.xs, borderRadius: LAYOUT.radius.turn,
       padding: 14, display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         How much should LokAI do?
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
@@ -631,14 +592,15 @@ export function AutonomyDial({ value, onChange }: { value: AutonomyLevel; onChan
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                 padding: '10px 6px', borderRadius: LAYOUT.radius.panel,
-                border: `1.5px solid ${isActive ? C.navy : C.border}`,
-                background: isActive ? 'var(--role-anchor-tint)' : 'var(--role-raised)',
+                border: 'none',
+                background: isActive ? 'var(--role-anchor-tint)' : 'var(--role-sunken)',
+                boxShadow: isActive ? SHADOW.xs : 'none',
                 cursor: 'pointer',
               }}
             >
               <Icon size={16} color={isActive ? C.navy : C.muted} />
               <span style={{
-                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: isActive ? 700 : 500,
+                fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: isActive ? 600 : 500,
                 color: isActive ? C.navy : C.inkSoft, textAlign: 'center', lineHeight: 1.25,
               }}>
                 {label}
@@ -661,10 +623,10 @@ export function IntentPreviewCard({ packet, onApprove, onBack }: { packet: Filin
   const basis = packet.fields.find(f => f.id === 'basis')?.value;
   return (
     <div style={{
-      background: 'var(--role-raised)', border: `1.5px solid ${C.navy}`, borderRadius: LAYOUT.radius.card,
+      background: 'var(--role-raised)', border: 'none', boxShadow: SHADOW.sm, borderRadius: LAYOUT.radius.card,
       padding: 18, display: 'flex', flexDirection: 'column', gap: 12,
     }}>
-      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+      <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
         Before LokAI prepares this
       </p>
       <p style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, lineHeight: 1.2, color: C.ink, margin: 0 }}>
@@ -757,7 +719,7 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
 
   return (
     <div style={{
-      background: 'var(--role-raised)', border: `1px solid ${C.border}`,
+      background: 'var(--role-raised)', border: 'none', boxShadow: SHADOW.xs,
       borderRadius: LAYOUT.radius.turn, padding: 18,
       display: 'flex', flexDirection: 'column', gap: 12,
     }}>
@@ -771,8 +733,8 @@ function UnsupportedMatterCard({ matterId }: { matterId: string }) {
         not implemented for it — so it stops here instead of running you through the wrong flow.
       </p>
       {captured.length > 0 && (
-        <div style={{ background: 'var(--role-paper)', border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.panel, padding: '11px 13px' }}>
-          <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
+        <div style={{ background: 'var(--role-sunken)', border: 'none', borderRadius: LAYOUT.radius.panel, padding: '11px 13px' }}>
+          <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 7px' }}>
             What LokAI captured
           </p>
           <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -938,7 +900,7 @@ function CaseArtboard() {
     }}>
       <style>{CASE_CSS}</style>
       <StatusBar />
-      <MobileTopBar />
+      <MobileTopBar onBack={() => navigate('/mobile/home')} />
       <HeaderBar
         stageLabel={!isSupportedMatter ? 'Not built in this prototype' : isOverview ? 'Consumer refund case' : workflow.stageLabel}
         matterLabel={isSupportedMatter ? (isOverview ? 'Your matter' : 'Consumer refund case') : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
@@ -948,7 +910,7 @@ function CaseArtboard() {
       {selectedLanguage !== 'en' && (
         <div style={{
           margin: '10px 20px 0', padding: '8px 12px',
-          background: 'var(--role-anchor-tint)', border: `1px solid ${C.border}`,
+          background: 'var(--role-anchor-tint)', border: 'none',
           borderRadius: LAYOUT.radius.control, display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <ShieldCheck size={13} color={C.navy} />
@@ -968,12 +930,13 @@ function CaseArtboard() {
               <GuardrailGallery compact />
               <div style={{
                 background: C.surface,
-                border: `1px solid ${C.border}`,
+                border: 'none',
+                boxShadow: SHADOW.xs,
                 borderRadius: LAYOUT.radius.panel,
                 padding: 14,
                 marginTop: 4,
               }}>
-                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 700, color: C.navy, margin: '0 0 6px' }}>
+                <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, fontWeight: 600, color: C.navy, margin: '0 0 6px' }}>
                   {scenario.statusTitle}
                 </p>
                 <p style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.inkSoft, lineHeight: 1.55, margin: '0 0 10px' }}>
@@ -1013,11 +976,12 @@ function CaseArtboard() {
           {isGuardrailScene && (
             <div style={{
               background: 'var(--role-anchor-tint)',
-              border: `1px solid ${C.border}`,
+              border: 'none',
+              boxShadow: SHADOW.xs,
               borderRadius: LAYOUT.radius.panel,
               padding: 12,
             }}>
-              <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 700, color: C.navy, margin: '0 0 4px' }}>
+              <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, fontWeight: 600, color: C.navy, margin: '0 0 4px' }}>
                 {scenario.label}
               </p>
               <p style={{ fontFamily: SANS, fontSize: TYPE.micro.size, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
@@ -1190,14 +1154,21 @@ function CaseArtboard() {
           {stage !== 'failure' && (
             /* One primary CTA; the human-review escape is a quiet text link,
                not an outlined twin (the double-button was the generic tell).
-               System Button, so it inherits the app's shape and press. */
+               System Button, so it inherits the app's shape and press. The
+               quiet escape is stage-conditional: it only makes sense when
+               the user has just received an answer (assess) or is still
+               working through inputs (intake/clarify/verify) — not on
+               plan/packet/audit/escalation, where the matter is already
+               in motion and the next step is the primary action. */
             <Stack gap={2}>
               <Button onClick={() => goStage(nextStage(stage))} disabled={blocksNext}>
                 {primaryCtaLabel(stage, blocksNext, isVerifyStage)}
               </Button>
-              <Button variant="quiet" onClick={() => goStage('human-review')}>
-                Ask for human review
-              </Button>
+              {(stage === 'intake' || stage === 'clarify' || stage === 'verify' || stage === 'assess') && (
+                <Button variant="quiet" onClick={() => goStage('human-review')}>
+                  Ask for human review
+                </Button>
+              )}
             </Stack>
           )}
 
@@ -1213,12 +1184,12 @@ function CaseArtboard() {
                 style={{
                   minHeight: 32,
                   borderRadius: LAYOUT.radius.pill,
-                  border: `1px solid ${C.border}`,
-                  background: 'var(--role-raised)',
+                  border: 'none',
+                  background: 'var(--role-sunken)',
                   color: C.muted,
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   padding: '0 9px',
                   cursor: 'pointer',
                 }}
@@ -1244,12 +1215,12 @@ function CaseArtboard() {
                 style={{
                   minHeight: 32,
                   borderRadius: LAYOUT.radius.pill,
-                  border: `1px solid ${C.saffron}`,
-                  background: 'var(--role-raised)',
+                  border: 'none',
+                  background: 'var(--role-anchor-tint)',
                   color: C.amber,
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   padding: '0 9px',
                   cursor: 'pointer',
                 }}

@@ -1,10 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { ArrowCounterClockwise, BookOpen, CaretDown, Check, Copy, Info, SpeakerHigh } from '@phosphor-icons/react';
 import { C, EDITORIAL, MONO, SANS, SHADOW, LAYOUT, MOTION, TYPE, COMPOSER, DEVANAGARI, TAMIL, useLokaiSharedStyles } from '../shared';
 import { Sheet } from '../Sheet';
-import { CitationChip, AttachmentChip, FadeRise, Row, shortStatuteLabel } from '../../ui';
+import {
+  CitationChip,
+  AttachmentChip,
+  FadeRise,
+  Row,
+  Text,
+  Label,
+  Amount,
+  Badge,
+  T,
+  shortStatuteLabel,
+  SHADOW_SCALE,
+  S,
+  useInk,
+} from '../../ui';
 import { LegalText } from '../demo/LegalTerms';
-import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent } from '../../data/responseTurns';
+import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent, TurnCitation } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { useDemo } from '../../context/DemoContext';
 import { useVoiceCapture } from '../../hooks/useVoiceCapture';
@@ -88,6 +103,22 @@ const MODE_META: Record<ResponseMode, { label: string; border: string; bg: strin
   recover:  { label: 'Paused',         border: C.amber,   bg: 'var(--turn-bg-recover)',  chip: C.cautionSoft },
 };
 
+/** Map a response mode to a <Badge> tone. Distinct from MODE_META.chip
+ *  (which is the older soft-fill chip) so the badge and the per-mode
+ *  surface tint stay independently adjustable. */
+function badgeToneForMode(mode: ResponseMode): 'neutral' | 'flag' | 'ok' | 'halt' | 'attest' {
+  switch (mode) {
+    case 'stop':     return 'halt';
+    case 'disclose': return 'flag';
+    case 'clarify':  return 'flag';
+    case 'confirm':  return 'ok';
+    case 'recover':  return 'attest';
+    case 'progress': return 'neutral';
+    case 'explain':
+    default:         return 'attest';
+  }
+}
+
 function scriptProps(lang: DemoLanguage): { lang?: string; style: React.CSSProperties } {
   if (lang === 'hi' || lang === 'mr') {
     return { lang, style: { fontFamily: DEVANAGARI, lineHeight: 1.85, fontSize: 'calc(1em + 1px)' } };
@@ -114,126 +145,92 @@ export function TurnStatus({
 }) {
   const list = stages && stages.length > 0 ? stages : [label];
   const idx = Math.max(0, Math.min(activeIndex, list.length - 1));
+  const currentText = list[idx] || label;
 
   return (
     <div
       aria-live="polite"
+      className="lokai-thinking-capsule"
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        padding: '12px 16px',
-        borderRadius: LAYOUT.radius.card,
-        border: `1px solid ${C.border}`,
-        background: C.surface,
-        marginBottom: 16,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 16px',
+        borderRadius: LAYOUT.radius.pill,
+        background: C.surface2,
+        color: C.inkSoft,
+        marginBottom: 12,
+        border: 'none',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span
-            className="lokai-progress-dot"
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: LAYOUT.radius.full,
-              background: C.saffron,
-              animation: 'lokaiPulseRing 1.4s ease-out infinite',
-            }}
-          />
-          <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.inkSoft }}>
-            {label}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {onSkip && (
-            <button
-              type="button"
-              onClick={onSkip}
-              className="lokai-chip"
-              style={{
-                minHeight: 36,
-                padding: '0 12px',
-                borderRadius: LAYOUT.radius.control,
-                border: `1px solid ${C.border}`,
-                background: C.surface,
-                fontFamily: SANS,
-                fontSize: TYPE.caption.size,
-                fontWeight: 600,
-                color: C.navy,
-                cursor: 'pointer',
-              }}
-            >
-              Skip
-            </button>
-          )}
-          {onReplay && (
-            <button
-              type="button"
-              onClick={onReplay}
-              aria-label="Replay progress"
-              className="lokai-pressable"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: LAYOUT.radius.control,
-                border: `1px solid ${C.border}`,
-                background: C.surface,
-                color: C.muted,
-                cursor: 'pointer',
-                display: 'grid',
-                placeItems: 'center',
-              }}
-            >
-              <ArrowCounterClockwise size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {list.length > 1 && (
-        <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {list.map((stage, i) => {
-            const done = i < idx;
-            const active = i === idx;
-            return (
-              <li
-                key={stage}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontFamily: SANS,
-                  fontSize: TYPE.caption.size,
-                  fontWeight: active ? 700 : 500,
-                  color: done || active ? C.navy : C.muted,
-                  opacity: done || active ? 1 : 0.72,
-                  transition: `opacity ${MOTION.status} ${MOTION.ease}, color ${MOTION.status} ${MOTION.ease}`,
-                }}
-              >
-                <span
-                  aria-hidden
-                  style={{
-                    width: 14,
-                    textAlign: 'center',
-                    fontFamily: MONO,
-                    fontSize: TYPE.micro.size,
-                    color: done ? C.green : active ? C.saffron : C.muted,
-                  }}
-                >
-                  {done ? '✓' : active ? '●' : '○'}
-                </span>
-                {stage}
-              </li>
-            );
-          })}
-        </ol>
+      <span
+        className="lokai-progress-dot"
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: LAYOUT.radius.full,
+          background: C.saffron,
+          animation: 'lokaiPulseRing 1.4s ease-out infinite',
+          flexShrink: 0,
+        }}
+      />
+      <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 500, color: C.inkSoft }}>
+        {currentText}
+      </span>
+      {onSkip && (
+        <button
+          type="button"
+          onClick={onSkip}
+          className="lokai-pressable"
+          style={{
+            border: 'none',
+            background: 'none',
+            fontFamily: SANS,
+            fontSize: TYPE.caption.size,
+            fontWeight: 600,
+            color: C.navy,
+            cursor: 'pointer',
+            padding: '2px 6px',
+            marginLeft: 4,
+          }}
+        >
+          Skip
+        </button>
+      )}
+      {onReplay && (
+        <button
+          type="button"
+          onClick={onReplay}
+          aria-label="Replay progress"
+          className="lokai-pressable"
+          style={{
+            border: 'none',
+            background: 'none',
+            color: C.inkSoft,
+            cursor: 'pointer',
+            padding: '2px 4px',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          <ArrowCounterClockwise size={13} />
+        </button>
       )}
     </div>
   );
 }
 
-export function TurnCitations({ turn }: { turn: ResponseTurn }) {
+export function TurnCitations({
+  turn,
+  onOpenSource,
+}: {
+  turn: ResponseTurn;
+  /** When provided, tapping a chip opens the source detail surface
+   *  (mobile sheet / desktop rail scroll) instead of copying. The
+   *  citation is the door; what the user reads on the other side is
+   *  the source, not a clipboard string. */
+  onOpenSource?: (citation: TurnCitation) => void;
+}) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   if (!turn.citations.length) return null;
 
@@ -253,6 +250,10 @@ export function TurnCitations({ turn }: { turn: ResponseTurn }) {
             title={`${c.title} — ${c.reference} (${c.reviewLabel})`}
             copied={copied}
             onClick={() => {
+              if (onOpenSource) {
+                onOpenSource(c);
+                return;
+              }
               void navigator.clipboard?.writeText(`${c.title} — ${c.reference}`).catch(() => {});
               setCopiedId(c.id);
               window.setTimeout(() => setCopiedId(null), Number.parseInt(MOTION.confirm, 10) + 1200);
@@ -339,7 +340,7 @@ function VerificationTrace({ turn }: { turn: ResponseTurn }) {
                   lineHeight: 1.45,
                 }}
               >
-                <span style={{ color: C.green, fontWeight: 700, flexShrink: 0 }} aria-hidden>✓</span>
+                <span style={{ color: C.green, fontWeight: 600, flexShrink: 0 }} aria-hidden>✓</span>
                 {step}
               </li>
             ))}
@@ -430,41 +431,45 @@ function Zone({
   children,
   large,
   script,
+  visible = true,
   revealMs = 240,
 }: {
   label: string;
   children: React.ReactNode;
   large?: boolean;
   script: ReturnType<typeof scriptProps>;
+  /** When false, the zone is mounted but invisible — used for the continuous
+   *  reveal so the answer accumulates without layout shifts. */
+  visible?: boolean;
   /** Entrance duration — the craft's revealStepMs, so the mode paces its own arrival. */
   revealMs?: number;
 }) {
+  const seconds = revealMs / 1000;
   return (
-    <FadeRise duration={revealMs} y={6}>
-      <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
+    <motion.div
+      initial={false}
+      animate={{
+        opacity: visible ? 1 : 0,
+        y: visible ? 0 : 6,
+      }}
+      transition={{ duration: seconds, ease: [0.22, 1, 0.36, 1] }}
+      style={{ pointerEvents: visible ? 'auto' : 'none' }}
+    >
+      <div style={{ padding: large ? `${S[1]} 0 ${S[3]}` : `${S[2]} 0 ${S[3]}` }}>
         {/* Label diet (L4/L7): the serif zone IS the law speaking — a caps
            eyebrow above it restates the register the type already carries.
-           Supporting zones keep their quiet label. */}
-        {!large && (
-          <div style={{
-            fontFamily: SANS,
-            fontSize: TYPE.label.size,
-            fontWeight: 700,
-            color: C.muted,
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            marginBottom: 8,
-          }}>
-            {label}
-          </div>
-        )}
+           Supporting zones keep their quiet label. <Label> is the system's
+           one caps eyebrow primitive. */}
+        {!large && <Label style={{ marginBottom: 6 }}>{label}</Label>}
         <div
           {...(script.lang ? { lang: script.lang } : {})}
           style={{
             /* Zone 1 is THE LAW SPEAKING — the serif register, same decision
                as the assess screen. Indic scripts have no display serif by
                design (ui/script.ts): they take the script sans at weight 500,
-               which the lang-conditional weight below provides. */
+               which the lang-conditional weight below provides. We keep this
+               inline because the lang-driven font weight override is a
+               script-system property, not a typography property. */
             fontFamily: large ? EDITORIAL : SANS,
             fontSize: large ? 22 : 14,
             fontWeight: large && script.lang ? 500 : 400,
@@ -476,7 +481,7 @@ function Zone({
           {children}
         </div>
       </div>
-    </FadeRise>
+    </motion.div>
   );
 }
 
@@ -502,21 +507,15 @@ export function TurnBody({ turn, revealed = 3 }: { turn: ResponseTurn; revealed?
   if (p.mode === 'clarify') {
     return (
       <>
-        {revealed >= 1 && (
-          <Zone label="Check this fact" large script={script}>
+        <Zone label="Check this fact" large script={script} visible={revealed >= 1}>
             {p.data.question}
           </Zone>
-        )}
-        {revealed >= 2 && (
-          <Zone label="Why it matters" script={script}>
+        <Zone label="Why it matters" script={script} visible={revealed >= 2}>
             {p.data.whyItMatters}
           </Zone>
-        )}
-        {revealed >= 3 && (
-          <Zone label="What it unlocks" script={script}>
+        <Zone label="What it unlocks" script={script} visible={revealed >= 3}>
             {p.data.unlocks}
           </Zone>
-        )}
       </>
     );
   }
@@ -524,28 +523,22 @@ export function TurnBody({ turn, revealed = 3 }: { turn: ResponseTurn; revealed?
   if (p.mode === 'explain') {
     return (
       <>
-        {revealed >= 1 && (
-          <Zone label="What the rule means" large script={script}>
+        <Zone label="What the rule means" large script={script} visible={revealed >= 1}>
             <LegalText>{p.data.ruleMeans}</LegalText>
           </Zone>
-        )}
-        {revealed >= 2 && (
-          <Zone label="How it applies here" script={script}>
+        <Zone label="How it applies here" script={script} visible={revealed >= 2}>
             <LegalText>{p.data.appliesHere}</LegalText>
           </Zone>
-        )}
-        {revealed >= 3 && (
-          <Zone label="What you can do next" script={script}>
+        <Zone label="What you can do next" script={script} visible={revealed >= 3}>
             <ol style={{ margin: '0 0 10px', padding: '0 0 0 18px' }}>
               {p.data.nextSteps.map((s) => (
                 <li key={s} style={{ marginBottom: 6 }}>{s}</li>
               ))}
             </ol>
-            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 700, color: C.navy, margin: 0 }}>
+            <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.navy, margin: 0 }}>
               → {p.data.cta}
             </p>
           </Zone>
-        )}
       </>
     );
   }
@@ -553,25 +546,19 @@ export function TurnBody({ turn, revealed = 3 }: { turn: ResponseTurn; revealed?
   if (p.mode === 'disclose') {
     return (
       <>
-        {revealed >= 1 && (
-          <Zone label="What we can say" large script={script}>
+        <Zone label="What we can say" large script={script} visible={revealed >= 1}>
             {p.data.partialAnswer}
           </Zone>
-        )}
-        {revealed >= 2 && (
-          <Zone label="What is missing" script={script}>
+        <Zone label="What is missing" script={script} visible={revealed >= 2}>
             {p.data.gap}
           </Zone>
-        )}
-        {revealed >= 3 && (
-          <Zone label="What you can still do" script={script}>
+        <Zone label="What you can still do" script={script} visible={revealed >= 3}>
             <ul style={{ margin: 0, padding: '0 0 0 18px' }}>
               {p.data.whatYouCanStillDo.map((s) => (
                 <li key={s} style={{ marginBottom: 6 }}>{s}</li>
               ))}
             </ul>
           </Zone>
-        )}
       </>
     );
   }
@@ -579,18 +566,13 @@ export function TurnBody({ turn, revealed = 3 }: { turn: ResponseTurn; revealed?
   if (p.mode === 'stop') {
     return (
       <>
-        {revealed >= 1 && (
-          <Zone label="Why LokAI stopped" large script={script}>
+        <Zone label="Why LokAI stopped" large script={script} visible={revealed >= 1}>
             {p.data.reason}
           </Zone>
-        )}
-        {revealed >= 2 && (
-          <Zone label="What is preserved" script={script}>
+        <Zone label="What is preserved" script={script} visible={revealed >= 2}>
             {p.data.preservedSummary}
           </Zone>
-        )}
-        {revealed >= 3 && (
-          <Zone label="Still available" script={script}>
+        <Zone label="Still available" script={script} visible={revealed >= 3}>
             <ul style={{ margin: 0, padding: '0 0 0 18px' }}>
               {p.data.stillAvailable.map((s) => (
                 <li key={s} style={{ marginBottom: 6 }}>{s}</li>
@@ -610,7 +592,6 @@ export function TurnBody({ turn, revealed = 3 }: { turn: ResponseTurn; revealed?
               </p>
             )}
           </Zone>
-        )}
       </>
     );
   }
@@ -655,10 +636,12 @@ export function Turn({
   turn,
   onCopy,
   onSpeak,
+  onOpenSource,
 }: {
   turn: ResponseTurn;
   onCopy?: () => void;
   onSpeak?: () => void;
+  onOpenSource?: (citation: TurnCitation) => void;
 }) {
   const meta = MODE_META[turn.mode];
   const craft = EMOTION_CRAFT[turn.emotionalIntent];
@@ -696,74 +679,56 @@ export function Turn({
     return turn.title;
   }, [turn]);
 
+  const isStop = turn.mode === 'stop';
+
   return (
     <article
       aria-label={`${meta.label}: ${turn.title}`}
       data-emotional-intent={turn.emotionalIntent}
       style={{
-        background: meta.bg,
-        border: `1px solid ${C.border}`,
-        borderRadius: LAYOUT.radius.turn,
+        background: isStop ? meta.bg : 'transparent',
+        borderRadius: isStop ? LAYOUT.radius.turn : 0,
+        boxShadow: isStop ? SHADOW_SCALE.card : 'none',
+        border: isStop ? `1px solid ${C.border}` : 'none',
         overflow: 'hidden',
-        marginBottom: 20,
+        marginBottom: S[4],
+        padding: isStop ? `${S[4]} ${S[4]}` : 0,
       }}
     >
       <header style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 10,
-        padding: '12px 16px',
-        borderBottom: `1px solid ${C.border}`,
+        gap: S[2],
+        padding: isStop ? `0 0 ${S[3]}` : `0 0 ${S[2]}`,
+        borderBottom: isStop ? `1px solid ${C.border}` : 'none',
       }}>
-        <div>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            fontFamily: SANS,
-            fontSize: TYPE.micro.size,
-            fontWeight: 700,
-            color: craft.statusTone,
-            background: meta.chip,
-            borderRadius: LAYOUT.radius.pill,
-            padding: '3px 9px',
-            marginBottom: 4,
-          }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: S[2], flexWrap: 'wrap' }}>
+          <Badge
+            tone={badgeToneForMode(turn.mode)}
+          >
             {meta.label}
-          </span>
-          <h3 style={{
-            fontFamily: TYPE.title.family,
-            fontSize: craft.denser ? TYPE.body.size : TYPE.title.size,
-            fontWeight: 700,
-            color: C.ink,
-            margin: 0,
-          }}>
-            {turn.title}
-          </h3>
-          <p style={{
-            fontFamily: TYPE.micro.family,
-            fontSize: TYPE.micro.size,
-            fontWeight: TYPE.micro.weight,
-            letterSpacing: '0.02em',
-            textTransform: 'none' as const,
-            color: craft.statusTone,
-            margin: '4px 0 0',
-            opacity: 0.85,
-          }}>
+          </Badge>
+          <Text
+            role="meta"
+            tone="faint"
+            measured={false}
+            style={{ opacity: 0.95 }}
+          >
             {craft.statusLine}
-          </p>
+          </Text>
         </div>
         {turn.totalClaims > 0 && (
-          <span style={{ fontFamily: MONO, fontSize: TYPE.label.size, color: C.muted, whiteSpace: 'nowrap' }}>
-            {turn.groundedClaims} of {turn.totalClaims} claims sourced
-          </span>
+          <Amount tone="faint" style={{ whiteSpace: 'nowrap' }}>
+            {turn.groundedClaims} of {turn.totalClaims} sourced
+          </Amount>
         )}
       </header>
 
       <TurnBody turn={turn} revealed={revealed} />
 
-      <div style={{ padding: '0 16px 14px' }}>
-        <TurnCitations turn={turn} />
+      <div style={{ padding: isStop ? `${S[3]} 0 0` : `0 0 ${S[2]}` }}>
+        <TurnCitations turn={turn} onOpenSource={onOpenSource} />
         <VerificationTrace turn={turn} />
         <TurnActions
           primaryFirst={craft.primaryFirst}
@@ -833,7 +798,7 @@ function BusyDots({ light = false }: { light?: boolean }) {
           key={i}
           style={{
             width: 4, height: 4, borderRadius: LAYOUT.radius.full,
-            background: light ? '#fff' : C.navy,
+            background: light ? T.onAnchor : C.navy,
             animation: 'lokaiPulseRing 1.2s ease-in-out infinite',
             animationDelay: `${i * 0.16}s`,
           }}
@@ -944,7 +909,7 @@ export function Composer({
         </div>
       )}
       <div
-        className="lokai-composer-shell"
+        className="lokai-composer-shell lokai-composer-floating"
         onClick={() => {
           if (!disabled && !voice.isBusy) textareaRef.current?.focus();
         }}
@@ -952,13 +917,8 @@ export function Composer({
           display: 'flex',
           alignItems: compact ? 'center' : 'flex-end',
           gap: 6,
-          background: C.surface,
-          /* Border, not border + shadow: the input reads as part of the dock it
-             sits in rather than a pill floating above the page (the "why is the
-             chat bar a separate container" note). */
-          border: `1px solid ${C.border}`,
           borderRadius: compact ? LAYOUT.radius.pill : LAYOUT.radius.plane,
-          padding: compact ? '5px 6px' : '12px 14px',
+          padding: compact ? '5px 8px' : '10px 14px',
         }}
       >
         {onAttach && (
@@ -1012,7 +972,7 @@ export function Composer({
                   : 'transparent',
               color:
                 voice.phase === 'listening' || voice.phase === 'transcribing'
-                  ? '#fff'
+                  ? T.onAnchor
                   : C.muted,
               cursor: disabled ? 'default' : 'pointer',
               flexShrink: 0,
@@ -1029,6 +989,7 @@ export function Composer({
           ref={textareaRef}
           value={value}
           disabled={disabled || voice.isBusy}
+          aria-label="Message LokAI"
           placeholder={resolvedPlaceholder}
           rows={COMPOSER.minRows}
           onChange={(e) => {
@@ -1074,13 +1035,14 @@ export function Composer({
             height: compact ? 38 : 42,
             borderRadius: LAYOUT.radius.full,
             border: 'none',
-            background: canSend ? C.navy : C.surface2,
-            color: canSend ? '#fff' : C.muted,
+            background: canSend ? T.anchor : T.sunken,
+            color: canSend ? T.onAnchor : T.inkFaint,
             cursor: canSend ? 'pointer' : 'default',
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,
             transition: `background ${MOTION.press} ${MOTION.ease}, transform ${MOTION.press} ${MOTION.ease}`,
+            boxShadow: canSend ? SHADOW.sm : 'none',
           }}
         >
           {voice.isBusy ? <BusyDots light /> : <SendGlyph size={compact ? 17 : 19} />}
@@ -1125,10 +1087,10 @@ export function ScopedAskButton({
         borderRadius: LAYOUT.radius.pill,
         border: `1px solid ${C.navy}`,
         background: C.navy,
-        color: '#fff',
+        color: T.onAnchor,
         fontFamily: SANS,
         fontSize: TYPE.small.size,
-        fontWeight: 700,
+        fontWeight: 600,
         cursor: 'pointer',
         boxShadow: SHADOW.lg,
       }}
@@ -1160,7 +1122,7 @@ export function ScopedAskSheet({
   return (
     <Sheet open={open} onClose={onClose} side="bottom" label={title}>
       <div style={{ padding: 20 }}>
-        <h2 style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 700, color: C.ink, margin: '0 0 12px' }}>
+        <h2 style={{ fontFamily: SANS, fontSize: TYPE.h4.size, fontWeight: 600, color: C.ink, margin: '0 0 12px' }}>
           {title}
         </h2>
         <Composer

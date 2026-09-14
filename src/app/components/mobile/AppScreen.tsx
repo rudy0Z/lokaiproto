@@ -29,6 +29,7 @@ export function AppScreen({
   scrollViewportRef,
   showWordmark = true,
   showNewChat = true,
+  floatingAction = true,
 }: {
   children: React.ReactNode;
   context?: React.ReactNode;
@@ -42,6 +43,8 @@ export function AppScreen({
   /** Passthrough to the top bar — Home hides both (it is the chat canvas). */
   showWordmark?: boolean;
   showNewChat?: boolean;
+  /** When true, the action slot floats without a wall-to-wall dividing border. */
+  floatingAction?: boolean;
 }) {
   const { open, closeDrawer } = useDrawer();
   const stop = tone === 'stop';
@@ -52,6 +55,7 @@ export function AppScreen({
       chrome={<><StatusBar light={stop} /><MobileTopBar onBack={onBack} onNewChat={onNewChat} tone={tone} showWordmark={showWordmark} showNewChat={showNewChat} /></>}
       context={context}
       action={action}
+      floatingAction={floatingAction}
       footer={
         <>
           <HomeIndicator light={stop} />

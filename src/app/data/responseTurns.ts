@@ -339,6 +339,40 @@ export const PREPARED_TURNS: ResponseTurn[] = [
     },
   },
   {
+    /* Triggered from chat-first when the user says "the seller says it's
+       fine" — the two facts (purchase date / defect) conflict with the
+       seller's reported position, and LokAI stops to ask the user which is
+       right (the anti-hallucination gate run on the dialogue rather than
+       the documents). riskLevel review_recommended. */
+    id: 'conflicting-rules-stop',
+    scenarioId: 'conflicting_jurisdiction',
+    mode: 'stop',
+    title: 'Two stories disagree',
+    emotionalIntent: 'protective_stop',
+    trigger: /seller (says|said|claims|argued)|they (say|said|claim)|i disagree|but the seller|he says|she says|they told me/i,
+    language: 'en',
+    citations: [],
+    groundedClaims: 1,
+    totalClaims: 2,
+    draftAllowed: false,
+    payload: {
+      mode: 'stop',
+      data: {
+        reason:
+          'What you described and what the seller has reportedly told you do not line up. LokAI does not draft a complaint from a contested record.',
+        preservedSummary:
+          'Your intake, the invoice, and the seller-reported position are all preserved. The conflict is the next decision, not an open question.',
+        stillAvailable: [
+          'Review the evidence locker to see which facts the AI trusted',
+          'Open the audit trail to see what LokAI did',
+          'Talk to a person to sort the conflict with a human in the loop',
+        ],
+        systemsNote:
+          'Disagreement between the buyer and the seller is the case, not a problem with the data. LokAI hands the choice back to you rather than picking a side.',
+      },
+    },
+  },
+  {
     id: 'temporary-recover',
     scenarioId: 'temporary_failure',
     mode: 'recover',

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { IconArrowRight, IconCheck, IconChevronDown, IconChevronRight, IconFile } from '../../ui/icons';
@@ -7,10 +7,10 @@ import { useConversations, type Conversation } from '../../context/ConversationC
 import { LANGUAGE_REGISTRY, type LanguageEntry, clarifyOptionsFor, type ClarifyOption } from '../../data/languagePacks';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
 import { Composer, Turn, TurnStatus } from '../../components/ai/Turn';
-import { DEMO_PROGRESS_STAGES, type ResponseTurn } from '../../data/responseTurns';
+import { DEMO_PROGRESS_STAGES, type ResponseTurn, type TurnCitation } from '../../data/responseTurns';
 import {
-  Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow, FadeRise,
-  Text, Label, Amount, Button, T, M, S, ICON, typeStyle, useHaptic, useSystemStyles,
+  Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow, FadeRise, Stagger, WorkingDots,
+  Text, Label, Amount, Badge, Button, T, M, S, ICON, typeStyle, useHaptic, useSystemStyles,
 } from '../../ui';
 import { Sheet } from '../../components/Sheet';
 import { useDemo } from '../../context/DemoContext';
@@ -34,6 +34,7 @@ import {
   TrackingBanner,
   type AutonomyLevel,
 } from './MobileConsumerCase';
+import { AttachSheet } from './MobileNoticeInterpret';
 import { factToVerification, getConsumerWorkflowState, getEvidenceLocker } from '../../data/caseWorkflow';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -197,7 +198,7 @@ export function MobileInputDock({
   return (
     <div style={{
       flexShrink: 0, background: 'var(--role-raised)',
-      borderTop: `1px solid ${C.border}`, padding: '12px 16px',
+      borderTop: 'none', padding: '12px 16px',
     }}>
       <Composer
         compact
@@ -274,13 +275,14 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                   padding: '12px 8px',
-                  background: isSel ? 'var(--role-anchor-tint)' : C.bg,
-                  border: isSel ? `2px solid ${C.navy}` : `1px solid ${C.border}`,
+                  background: isSel ? 'var(--role-anchor-tint)' : 'var(--role-sunken)',
+                  border: 'none',
+                  boxShadow: isSel ? SHADOW.xs : 'none',
                   borderRadius: LAYOUT.radius.control,
                   cursor: available ? 'pointer' : 'not-allowed',
                   position: 'relative',
                   opacity: available ? 1 : 0.45,
-                  transition: 'background 0.15s ease, border-color 0.15s ease',
+                  transition: 'background 0.15s ease, box-shadow 0.15s ease',
                 }}
               >
                 {isSel && (
@@ -294,7 +296,7 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
             );
           })}
         </div>
-        <div style={{ height: '60px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ height: '60px', borderTop: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <button onClick={onClose} style={{ fontFamily: SANS, fontSize: TYPE.body.size, color: C.textSoft, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 24px' }}>
             Close
           </button>
@@ -316,37 +318,31 @@ const LANG_CHIPS: Record<string, { label: string; question: string }[]> = {
     { label: 'Damaged mixer, seller refused', question: 'I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a refund. What can I do?' },
     { label: 'Marketplace policy overrides?', question: 'The marketplace says its private return policy overrides my rights.' },
     { label: 'Purchase from Jan 2022',        question: 'I bought a damaged mixer in January 2022. The seller still refuses a refund. Can I file a consumer complaint now?' },
-    { label: 'Seller refused my refund',      question: 'The seller refused my refund. Help me file a complaint.' },
   ],
   hi: [
     { label: 'खराब मिक्सर, रिफंड मना',       question: 'मैंने ₹8,999 का मिक्सर खरीदा। खराब पहुँचा और विक्रेता ने रिफंड से मना कर दिया। मैं क्या करूँ?' },
     { label: 'मार्केटप्लेस नीति हावी?',      question: 'मार्केटप्लेस कहता है उसकी निजी रिटर्न नीति मेरे अधिकारों पर हावी है।' },
     { label: 'जनवरी 2022 की खरीद',           question: 'मैंने जनवरी 2022 में खराब मिक्सर खरीदा। विक्रेता अभी भी रिफंड नहीं दे रहा। क्या अब शिकायत दर्ज कर सकता हूँ?' },
-    { label: 'रिफंड से इनकार',                question: 'विक्रेता ने मेरे रिफंड से मना कर दिया। शिकायत दर्ज करने में मदद करें।' },
   ],
   mr: [
     { label: 'खराब मिक्सर, परतावा नाही',     question: 'मी ₹8,999 चा मिक्सर विकत घेतला. तो खराब आला आणि विक्रेत्याने परतावा नाकारला. मी काय करू?' },
     { label: 'मार्केटप्लेस धोरण वरचढ?',      question: 'मार्केटप्लेस म्हणतो त्यांचे खाजगी रिटर्न धोरण माझ्या हक्कांवर वरचढ आहे.' },
     { label: 'जानेवारी 2022 ची खरेदी',       question: 'मी जानेवारी 2022 मध्ये खराब मिक्सर विकत घेतला. विक्रेता अजून परतावा देत नाही. आता तक्रार दाखल करता येईल का?' },
-    { label: 'परतावा नाकारला',               question: 'विक्रेत्याने माझा परतावा नाकारला. तक्रार दाखल करण्यात मदत करा.' },
   ],
   ta: [
     { label: 'சேத மிக்சர், refund மறுப்பு',  question: 'நான் ₹8,999க்கு மிக்சர் வாங்கினேன். சேதத்துடன் வந்தது; விற்பனையாளர் refund மறுத்தார். நான் என்ன செய்வது?' },
     { label: 'மார்கெட் கொள்கை மேலோங்கும்?', question: 'மார்கெட் பிளேஸ் தன் தனி ரிட்டர்ன் கொள்கை என் உரிமைகளை மீறும் என்கிறது.' },
     { label: 'ஜனவரி 2022 வாங்குதல்',         question: 'ஜனவரி 2022இல் சேதமடைந்த மிக்சர் வாங்கினேன். விற்பனையாளர் இன்னும் refund தரவில்லை. இப்போது புகார் செய்யலாமா?' },
-    { label: 'Refund மறுத்தார்',              question: 'விற்பனையாளர் என் refund மறுத்தார். புகார் தாக்கல் செய்ய உதவுங்கள்.' },
   ],
   te: [
     { label: 'పాడైన మిక్సర్, రిఫండ్ నిరాకరణ', question: 'నేను ₹8,999కి మిక్సర్ కొన్నాను. పాడై వచ్చింది; విక్రేత రిఫండ్ ఇవ్వలేదు. నేను ఏమి చేయాలి?' },
     { label: 'మార్కెట్ పాలసీ అధిగమిస్తుందా?', question: 'మార్కెట్‌ప్లేస్ తన ప్రైవేట్ రిటర్న్ పాలసీ నా హక్కులను అధిగమిస్తుందని చెబుతోంది.' },
     { label: 'జనవరి 2022 కొనుగోలు',          question: 'జనవరి 2022లో పాడైన మిక్సర్ కొన్నాను. విక్రేత ఇంకా రిఫండ్ ఇవ్వడం లేదు. ఇప్పుడు ఫిర్యాదు చేయవచ్చా?' },
-    { label: 'రిఫండ్ నిరాకరణ',               question: 'విక్రేత నా రిఫండ్ నిరాకరించాడు. ఫిర్యాదు దాఖలు చేయడంలో సహాయం చేయండి.' },
   ],
   bn: [
     { label: 'ভাঙা মিক্সার, রিফান্ড না',     question: 'আমি ₹8,999-এ মিক্সার কিনেছি। ভাঙা অবস্থায় এসেছে আর বিক্রেতা রিফান্ড দিতে রাজি নয়। আমি কী করব?' },
     { label: 'মার্কেটপ্লেস নীতি চাপায়?',     question: 'মার্কেটপ্লেস বলে তাদের ব্যক্তিগত রিটার্ন নীতি আমার অধিকারের উপর চাপা দেয়।' },
     { label: 'জানুয়ারি ২০২২ কেনা',          question: 'জানুয়ারি ২০২২-এ ভাঙা মিক্সার কিনেছি। বিক্রেতা এখনও রিফান্ড দিচ্ছে না। এখন অভিযোগ করা যাবে?' },
-    { label: 'রিফান্ড অস্বীকার',              question: 'বিক্রেতা আমার রিফান্ড দিতে অস্বীকার করেছে। অভিযোগ দায়ের করতে সাহায্য করুন।' },
   ],
 };
 
@@ -355,27 +351,27 @@ function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: strin
   const chips = LANG_CHIPS[lang] ?? LANG_CHIPS['en'];
   return (
     <Stack gap={2}>
-      <Label>Quick start</Label>
-      <Row gap={2} wrap>
+      <Row gap={2} wrap style={{ justifyContent: 'center' }}>
         {chips.map(chip => (
-          <button
-            key={chip.label}
-            type="button"
-            className="lokai-chip"
-            onClick={() => onSelect(chip.question)}
-            style={{
-              ...typeStyle('small'),
-              fontWeight: 500,
-              color: T.anchor,
-              background: T.raised,
-              border: `1px solid ${T.hairline}`,
-              borderRadius: LAYOUT.radius.pill,
-              padding: '8px 14px',
-              cursor: 'pointer',
-            }}
-          >
-            {chip.label}
-          </button>
+          <FadeRise key={chip.label} delay={0.04 * chips.indexOf(chip)}>
+            <button
+              type="button"
+              className="lokai-chip lokai-pressable"
+              onClick={() => onSelect(chip.question)}
+              style={{
+                ...typeStyle('small'),
+                fontWeight: 500,
+                color: T.inkQuiet,
+                background: T.sunken,
+                border: 'none',
+                borderRadius: LAYOUT.radius.pill,
+                padding: '9px 16px',
+                cursor: 'pointer',
+              }}
+            >
+              {chip.label}
+            </button>
+          </FadeRise>
         ))}
       </Row>
     </Stack>
@@ -449,8 +445,19 @@ function nextStepChips(turn: ResponseTurn): { label: string; tool: Tool }[] {
         { label: 'Talk to a person', tool: 'escalation' },
         { label: 'What LokAI checked', tool: 'audit' },
       ];
-    case 'stop':
-      return [{ label: 'Talk to a person', tool: 'escalation' }];
+    case 'stop': {
+      /* Human-required stops (high_risk) have a single safe action: the
+         user must talk to a person. Review-recommended stops (statute
+         expiry, conflicting rules) still get a "what was checked" door so
+         the user can inspect the decision without leaving the chat. */
+      const tools: { label: string; tool: Tool }[] = [
+        { label: 'Talk to a person', tool: 'escalation' },
+      ];
+      if (turn.id !== 'high-risk-stop') {
+        tools.push({ label: 'What LokAI did', tool: 'audit' });
+      }
+      return tools;
+    }
     default:
       return [];
   }
@@ -533,30 +540,31 @@ function ClarifyOptions({ options, onAnswer, disabled = false }: { options: Clar
   return (
     <Stack gap={2}>
       <Row gap={2} wrap>
-        {options.map((opt) => (
-          <button
-            key={opt.nextTurnId}
-            type="button"
-            className={disabled ? undefined : 'lokai-pressable'}
-            disabled={disabled}
-            onClick={() => onAnswer(opt)}
-            style={{
-              ...typeStyle('small'),
-              fontWeight: 600,
-              color: disabled ? T.inkFaint : T.anchor,
-              background: T.raised,
-              border: `1px solid ${T.hairline}`,
-              borderRadius: LAYOUT.radius.pill,
-              padding: '9px 16px',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              opacity: disabled ? 0.6 : 1,
-            }}
-          >
-            {opt.label}
-          </button>
+        {options.map((opt, i) => (
+          <FadeRise key={opt.nextTurnId} delay={0.05 * i}>
+            <button
+              type="button"
+              className={disabled ? undefined : 'lokai-pressable'}
+              disabled={disabled}
+              onClick={() => onAnswer(opt)}
+              style={{
+                ...typeStyle('small'),
+                fontWeight: 500,
+                color: disabled ? T.inkFaint : T.anchor,
+                background: T.sunken,
+                border: 'none',
+                borderRadius: LAYOUT.radius.pill,
+                padding: '9px 16px',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.6 : 1,
+              }}
+            >
+              {opt.label}
+            </button>
+          </FadeRise>
         ))}
       </Row>
-      <Text role="meta" tone="faint" measured={false}>…or type your answer above.</Text>
+      <Text role="meta" tone="faint" measured={false}>…or type your answer below.</Text>
     </Stack>
   );
 }
@@ -579,7 +587,7 @@ export function HomeArtboard() {
   const haptic = useHaptic();
   const { selectedLanguage } = useConversations();
   const {
-    runPreparedConversation, resolveClarify, resetConversation,
+    runPreparedInput, resolveClarify, resetConversation,
     progressLabel, progressIndex, skipProgress, isProgressing,
     facts, confirmFact, correctFact, addAuditEvent,
     draftApproved, setDraftApproved, draftAllowed,
@@ -643,13 +651,19 @@ export function HomeArtboard() {
   const send = async (text: string) => {
     const workingId = nextId();
     setItems((prev) => [...prev, { id: nextId(), role: 'user', text }, { id: workingId, role: 'working' }]);
-    const turn = await runPreparedConversation(text);
+    const turn = await runPreparedInput(text);
     resolveWorking(workingId, turn);
   };
 
   const answerClarify = async (option: ClarifyOption) => {
     const workingId = nextId();
-    setItems((prev) => [...prev, { id: nextId(), role: 'user', text: option.label }, { id: workingId, role: 'working' }]);
+    const confirmId = nextId();
+    setItems((prev) => [
+      ...prev,
+      { id: nextId(), role: 'user', text: option.label },
+      { id: confirmId, role: 'note', text: `You said: ${option.label}` },
+      { id: workingId, role: 'working' },
+    ]);
     const turn = await resolveClarify(option.nextTurnId);
     resolveWorking(workingId, turn);
   };
@@ -658,6 +672,11 @@ export function HomeArtboard() {
   const [tool, setTool] = useState<Tool | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
   const [previewApproved, setPreviewApproved] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  /* Citation detail — opened by tapping a citation chip in the answer.
+     Distinct from `tool` because the sheet body is a single citation,
+     not a multi-tool stage. */
+  const [openCitation, setOpenCitation] = useState<TurnCitation | null>(null);
   const workflow = getConsumerWorkflowState();
 
   const finishVerify = () => {
@@ -692,19 +711,29 @@ export function HomeArtboard() {
       case 'user':
         return (
           <Row justify="end">
-            <div style={{ background: T.anchorTint, borderRadius: LAYOUT.radius.card, padding: `${S[2]} ${S[3]}`, maxWidth: '82%' }}>
-              <Text role="body" tone="anchor" measured={false}>{item.text}</Text>
+            <div className="lokai-chat-bubble-user">
+              <Text role="body" tone="onAnchor" measured={false}>{item.text}</Text>
             </div>
           </Row>
         );
       case 'working':
-        return (
+        return progressLabel ? (
           <TurnStatus
-            label={progressLabel ?? 'Working through the prepared steps'}
+            label={progressLabel}
             stages={DEMO_PROGRESS_STAGES}
             activeIndex={Math.max(0, progressIndex)}
             onSkip={skipProgress}
           />
+        ) : (
+          /* The first beat of the await — no progress label yet, just three
+             breathing dots. The user's eyes get something alive on screen
+             instead of a static page that pops an answer into later. */
+          <Row gap={2} align="center" style={{ padding: '6px 0' }}>
+            <WorkingDots />
+            <Text role="meta" tone="faint" measured={false}>
+              Working through the prepared steps
+            </Text>
+          </Row>
         );
       case 'done':
         return <AuditLine claims={item.claims} onOpen={() => setTool('audit')} />;
@@ -718,14 +747,14 @@ export function HomeArtboard() {
       case 'clarify':
         return (
           <Stack gap={2}>
-            <Turn turn={item.turn} />
+            <Turn turn={item.turn} onOpenSource={setOpenCitation} />
             <ClarifyOptions options={item.options} onAnswer={answerClarify} disabled={isProgressing} />
           </Stack>
         );
       default:
         return (
           <Stack gap={3}>
-            <Turn turn={item.turn} />
+            <Turn turn={item.turn} onOpenSource={setOpenCitation} />
             <NextSteps turn={item.turn} onOpenTool={setTool} />
           </Stack>
         );
@@ -734,6 +763,7 @@ export function HomeArtboard() {
 
   return (
     <AppScreen
+      floatingAction
       action={
         <Stack gap={2}>
           {!empty && awayFromBottom && (
@@ -746,9 +776,9 @@ export function HomeArtboard() {
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   minHeight: 36, padding: '0 16px',
                   borderRadius: LAYOUT.radius.pill,
-                  border: `1px solid ${T.hairline}`,
+                  border: 'none',
                   background: T.raised,
-                  boxShadow: 'none',
+                  boxShadow: SHADOW.sm,
                   ...typeStyle('caption'),
                   fontWeight: 600,
                   color: T.anchor,
@@ -760,9 +790,13 @@ export function HomeArtboard() {
               </button>
             </Row>
           )}
-          {/* Locked while a working beat is in flight — a second send would
-             clobber the progress controller and fork the stream. */}
-          <Composer compact placeholder="Describe what happened…" onSubmit={send} disabled={isProgressing} />
+          <Composer
+            compact
+            placeholder="Describe what happened…"
+            onSubmit={send}
+            disabled={isProgressing}
+            onAttach={() => setAttachOpen(true)}
+          />
         </Stack>
       }
       scrollClearance={M.zoneGap}
@@ -776,12 +810,11 @@ export function HomeArtboard() {
     >
       {empty ? (
         <>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: S[3], textAlign: 'center', minHeight: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: S[2], textAlign: 'center', minHeight: 0 }}>
             <LogoMark size={52} />
-            <Text role="answer" style={{ textAlign: 'center' }}>What can I help you sort out?</Text>
-            <Text tone="quiet" style={{ textAlign: 'center' }}>
-              Tell me a consumer problem in your own words. A refund refused, a
-              damaged product, or a notice you can’t read.
+            <Text role="answer" style={{ textAlign: 'center', marginTop: S[2] }}>What can I help you sort out?</Text>
+            <Text tone="quiet" style={{ textAlign: 'center', maxWidth: 300 }}>
+              Plain-language Indian consumer law with citations.
             </Text>
           </div>
 
@@ -794,7 +827,7 @@ export function HomeArtboard() {
             size="sm"
             onClick={() => navigate('/mobile/notice')}
             iconAfter={<IconArrowRight size={ICON.inline} />}
-            style={{ alignSelf: 'flex-start' }}
+            align="start"
           >
             Read a notice you can’t understand
           </Button>
@@ -819,8 +852,9 @@ export function HomeArtboard() {
         contain
         maxHeight="88%"
       >
-        <Stack gap={4} style={{ padding: `${S[4]} ${S[5]} ${S[6]}`, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {tool === 'verify' && (
+        <FadeRise duration={0.22} y={4}>
+          <Stack gap={4} style={{ padding: `${S[4]} ${S[5]} ${S[6]}`, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {tool === 'verify' && (
             <>
               <EvidenceLocker items={getEvidenceLocker()} />
               <VerificationScratchpad
@@ -902,8 +936,56 @@ export function HomeArtboard() {
           )}
           {tool === 'audit' && <AuditTrailList events={workflow.auditTrail} />}
           {tool === 'escalation' && <HumanReviewCard workflow={workflow} />}
-        </Stack>
+          </Stack>
+        </FadeRise>
       </Sheet>
+
+      {/* Citation detail — a chip tap opens this. Per the case-study claim
+          (D-02), a chip is a door, not a copy control: the user reads the
+          source on the other side. */}
+      <Sheet
+        open={openCitation !== null}
+        onClose={() => setOpenCitation(null)}
+        label={openCitation ? openCitation.title : 'Source'}
+        contain
+        maxHeight="78%"
+      >
+        {openCitation && (
+          <Stack gap={3} style={{ padding: `${S[4]} ${S[5]} ${S[6]}`, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <Row gap={2} align="center">
+              <Amount tone="anchor">{openCitation.reference}</Amount>
+              <Badge tone="attest">Source</Badge>
+            </Row>
+            <Text role="answer" as="h3" measured={false}>
+              {openCitation.title}
+            </Text>
+            <Text tone="quiet">
+              This is the authority LokAI cited for a claim in the answer above.
+              The prepared example is illustrative; expert review is still pending.
+            </Text>
+            <Stack gap={1}>
+              <Label>What this source supports</Label>
+              <Text tone="quiet">
+                The full provision is consulted to ground the rule that follows in the answer.
+                Tap a different chip in the answer to compare authorities; the
+                audit line at the top of the answer shows the total coverage.
+              </Text>
+            </Stack>
+            <Text role="meta" tone="faint" measured={false}>
+              {openCitation.reviewLabel}
+            </Text>
+          </Stack>
+        )}
+      </Sheet>
+
+      <AttachSheet
+        open={attachOpen}
+        onClose={() => setAttachOpen(false)}
+        onPick={(doc) => {
+          setAttachOpen(false);
+          navigate(`/mobile/notice?doc=${doc.id}`);
+        }}
+      />
     </AppScreen>
   );
 }
