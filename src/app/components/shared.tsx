@@ -94,9 +94,9 @@ export const C = {
   bg:           'var(--role-ground)',
   surface:      'var(--role-raised)',
   surface2:     'var(--role-sunken)',
-  washBlue:     '#DDE7FF',
-  washGold:     '#FFE3B8',
-  washRose:     '#F5D8D4',
+  washBlue:     '#EEF4FF',   /* 2026-09-14: synced to --wash-blue (was drifted #DDE7FF) */
+  washGold:     '#FFF2DC',   /* 2026-09-14: synced to --wash-gold (was drifted #FFE3B8) */
+  washRose:     '#FAECE9',   /* 2026-09-14: synced to --wash-rose (was drifted #F5D8D4) */
   // Ink — roles
   ink:          'var(--role-ink)',
   inkSoft:      'var(--role-ink-quiet)',
@@ -109,7 +109,7 @@ export const C = {
   borderStrong: 'var(--role-hairline-firm)',
   // Brand — navy becomes the anchor ROLE (inverts in dark)
   navy:         'var(--role-anchor)',
-  saffron:      '#E9852B',
+  saffron:      '#E27A24',   /* 2026-09-14: synced to --saffron (was drifted #E9852B) */
   oxblood:      'var(--role-attest)',
   // Semantic — roles
   green:        'var(--role-ok)',
@@ -119,12 +119,12 @@ export const C = {
   bgRaised:     'var(--role-sunken)',
   navyDark:     'var(--role-anchor-deep)',
   navySoft:     'var(--role-anchor-tint)',
-  saffronDark:  '#C86712',
+  saffronDark:  '#C25B12',   /* 2026-09-14: synced to --saffron-dark (was drifted #C86712) */
   /* The only saffron legal on a focus ring or any UI boundary:
      3.83:1 on canvas / 4.17:1 on white, clearing WCAG 2.2 1.4.11's 3:1.
      Plain `saffron` is 2.46:1 and must never carry accessibility meaning. */
   saffronAccessible: 'var(--role-focus)',
-  saffronSoft:  'rgba(233,133,43,0.10)',
+  saffronSoft:  'rgba(226,122,36,0.10)', /* 2026-09-14: synced to the #E27A24 base */
   terracotta:   'var(--role-flag)',
   oxbloodSoft:  'var(--role-attest-fill)',
   onDark:       'var(--role-on-anchor)',
@@ -1068,4 +1068,5 @@ export function DisclaimerText({ center = false }: { center?: boolean }) {
     </p>
   );
 }
+
 
