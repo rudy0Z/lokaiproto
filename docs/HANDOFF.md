@@ -1,3 +1,5 @@
+> **STATUS 2026-09-14: HISTORICAL.** This log stops at 2026-09-04 and predates the desktop Phase 7 and the 2026-09-14 foundation sweep. Current state lives in `docs/UPGRADE-2026-09.md` + `docs/AUDIT-2026-09-14.md`; read this file for context only.
+
 # LokAI Session Handoff
 
 **Last updated:** 2026-09-04. **Read this first**, then `MOBILE_AI_SYSTEM.md` (the design spec), `MOBILE_SCREENS.md` (the whole mobile shape, screen by screen), and `LLM_DESIGN_SYSTEM.md` (the build sheet) before writing any screen.

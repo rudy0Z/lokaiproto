@@ -40,7 +40,12 @@ A screen never reaches past the barrel into raw hex, raw px, `C.*`, `fontFamily`
 
 - **No raw** color / `fontFamily` / `fontSize` / `borderRadius` / `boxShadow` / `lineHeight` outside the system definition files: `components/shared.tsx`, `ui/theme.ts`, `ui/script.ts`, `ui/primitives.tsx`, `ui/layout.tsx`, `ui/motion.tsx` (must stay identical to `SYSTEM_FILES` in `ui-debt.mjs`). Use `T.*`, `typeStyle()`/`TYPE.*`, `LAYOUT.radius.*`, `SHADOW.*`.
 - **Ratchet** (`scripts/ui-debt.json`): raw-style line count per file may only fall, never rise.
-- **Icons:** import `IconXxx` from `ui/icons.tsx` (aliased `@animateicons/react`). Lucide/Phosphor are retired repo-wide — don't reintroduce them. Composer send/attach/mic stay bespoke in `Turn.tsx`.
+- **Icons — three tiers, do not mix within a tier:** (1) bespoke SVG glyphs for the
+  composer send/attach/mic (hand-drawn in `ai/Turn.tsx`); (2) the aliased animated set
+  in `ui/icons.tsx` (`@animateicons/react`, imported as app-semantic names like
+  `IconMenu`) for chrome and system gestures; (3) `@phosphor-icons/react` (weight
+  `ICON_WEIGHT`, static) for inline content icons inside reading surfaces. Lucide is
+  retired repo-wide — do not reintroduce it.
 - **One primary button per screen**; the second action is `variant="quiet"`.
 - **Multilingual:** `<Text role>` picks the script-appropriate family and line-height per active language (en/hi/mr/ta via `data/languagePacks.ts`). Hand-written `fontFamily: SERIF` renders tofu in Devanagari; set `lang` attributes for Indic content.
 - **WCAG contrast gate** parses both light and dark themes (`[data-theme="dark"]`) — new tokens must pass in both.
@@ -64,9 +69,12 @@ A screen never reaches past the barrel into raw hex, raw px, `C.*`, `fontFamily`
 
 ## Docs to read before sensitive work
 
-- `docs/HANDOFF.md` — session log, what's done/remaining, known gaps (read first)
+- `docs/HANDOFF.md` — historical session log (stale at 2026-09-04; read for context only)
+- `docs/AUDIT-2026-09-14.md` — the full verification & foundation-sweep record (read first for state)
+- `PORTFOLIO-DIRECTION.md` — portfolio authority chain and scope
 - `docs/LLM_DESIGN_SYSTEM.md` — the how: copy-pasteable patterns, four layers, six bans
 - `docs/MOBILE_AI_SYSTEM.md` — the why: composition law and the accountability-surface bet
 - `docs/MOBILE_SCREENS.md` — per-screen mobile shape and status
 - `PRODUCT.md` / `DESIGN.md` — product and design contracts (boundaries, response modes, type)
 - `docs/UPGRADE-2026-09.md` — decision log for the current upgrade phases
+

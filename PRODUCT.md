@@ -17,9 +17,7 @@ The same prepared matter appears on desktop and mobile. Additional selectable sc
 - The interface provides legal information, not legal advice.
 
 ## Navigation
-
-- Compact mobile: bottom navigation.
-- Tablet: navigation rail.
+- Compact mobile: chat canvas with drawer navigation (no persistent tab bar).
 - Desktop: sidebar, central matter workspace, contextual right panel.
 
 ## Content principles
@@ -35,3 +33,4 @@ The same prepared matter appears on desktop and mobile. Additional selectable sc
 ## Success criteria
 
 The prototype succeeds when a reviewer can complete the consumer-refund story, trigger every guardrail state, understand why LokAI stopped or proceeded, inspect simple legal-term explanations, and observe zero network or device-permission requests.
+

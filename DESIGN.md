@@ -5,16 +5,13 @@
 Calm, editorial legal guidance: warm neutral canvas, white working surfaces, deep navy structure, and limited saffron emphasis. The interface should feel patient and trustworthy without borrowing institutional authority.
 
 ## Type
-
 - Fraunces: page and matter titles.
-- Inter: interface, controls, and body copy.
+- Hanken Grotesk: interface, controls, and body copy.
 - JetBrains Mono: source and evidence metadata.
-- Noto Sans families: Indian scripts.
+- Noto Sans Devanagari / Tamil: Indian scripts.
 
 ## Layout
-
-- Mobile: single-column task flow and four-item bottom navigation.
-- Tablet: navigation rail plus content.
+- Mobile: single-column task flow; navigation is the drawer (no bottom tab bar).
 - Desktop: persistent sidebar, central matter workspace, right contextual panel.
 - One primary action per state. Supporting evidence is available without competing with the current decision.
 
@@ -34,3 +31,4 @@ Prepared inputs advance through four short progress stages. Motion communicates 
 ## Avoid
 
 Generic chatbot-only composition, unexplained confidence percentages, repeated colored card edges, nested card grids, inert controls, live-service affordances, commercial upgrade screens, and legal certainty claims.
+

@@ -45,7 +45,7 @@ export const router = createHashRouter([
         ],
       },
 
-      // ── Mobile shell (390px frame, bottom nav) ──────────────────────────────────
+      // ── Mobile shell (390px frame; the drawer is the whole nav) ────────────────
       {
         path: '/mobile',
         Component: MobileShell,
