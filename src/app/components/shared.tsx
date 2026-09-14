@@ -568,7 +568,11 @@ export function useLokaiSharedStyles() {
  */
 export function LogoMark({ size = 40, light = false, animated = true }: { size?: number; light?: boolean; animated?: boolean }) {
   const tile  = light ? 'rgba(255,255,255,0.14)' : C.navy;
-  const glyph = light ? '#FFFFFF' : '#F7F4ED';
+  /* 2026-09-14 audit P1: the glyph rode a hardcoded cream, so dark mode —
+     where C.navy re-points to the cream anchor — rendered a blank tile.
+     onAnchor is the ink PAIRED with the anchor in both themes by the
+     contrast gate, so the mark can no longer split from its ground. */
+  const glyph = light ? '#FFFFFF' : 'var(--role-on-anchor)';
   return (
     <div
       className={animated && !light ? 'lokai-mark-breathe' : undefined}
@@ -1064,3 +1068,4 @@ export function DisclaimerText({ center = false }: { center?: boolean }) {
     </p>
   );
 }
+

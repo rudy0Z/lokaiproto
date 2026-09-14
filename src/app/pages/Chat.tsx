@@ -12,10 +12,10 @@ import { Turn, TurnStatus, Composer } from '../components/ai/Turn';
 import { toast } from 'sonner';
 import type { ResponseTurn } from '../data/responseTurns';
 import { DEMO_PROGRESS_STAGES, getTurnById, resolvePreparedTurn } from '../data/responseTurns';
-import { localizeConsumerExplain } from '../data/languagePacks';
+import { localizeConsumerExplain, clarifyOptionsFor, type ClarifyOption } from '../data/languagePacks';
 import { useLokaiSharedStyles } from '../components/shared';
 import { useMotionStyles } from '../ui/motion';
-import { Stack, Label } from '../ui';
+import { Stack, Label, T } from '../ui';
 import { scriptProps } from '../ui/script';
 import { IconArrowRight } from '../ui/icons';
 import { HumanReviewCard } from '../components/LokAIWorkflow';
@@ -164,7 +164,7 @@ const CHIPS = [
   { label:'Explain deficiency', question:'In the consumer example, what does deficiency mean?' },
 ];
 
-function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
+function QuickChips({ onSelect, onClarifyAnswer, clarifyOptions }: { onSelect: (q: string) => void; onClarifyAnswer?: (o: ClarifyOption) => void; clarifyOptions?: ClarifyOption[] }) {
   useLokaiSharedStyles();
   return (
     <motion.div
@@ -189,6 +189,31 @@ function QuickChips({ onSelect }: { onSelect: (q: string) => void }) {
       <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: '0 0 28px' }}>
         This visual prototype uses scripted examples and sends no data.
       </p>
+      {clarifyOptions && clarifyOptions.length > 0 && (
+        /* 2026-09-14 P1: the desktop clarify finally has tappable answers —
+           the copy says "pick the closest answer below" and now it means it.
+           Hairline rows, the tap IS the answer; typing still works. */
+        <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 460, margin: '0 auto 24px', textAlign: 'left' }}>
+          {clarifyOptions.map((opt) => (
+            <button
+              key={opt.nextTurnId}
+              type="button"
+              className="lokai-pressable"
+              onClick={() => onClarifyAnswer?.(opt)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                width: '100%', minHeight: 44, padding: '12px 16px',
+                ...typeStyle('small'), fontWeight: 500,
+                color: T.anchor, background: 'transparent',
+                borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+              }}
+            >
+              {opt.label}
+              <IconArrowRight size={14} color="var(--role-ink-faint)" />
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
         {CHIPS.map((chip, i) => (
           <motion.button
@@ -395,7 +420,7 @@ export default function Chat() {
   const sidebarW     = collapsed ? 64 : 240;
   const {
     scenario, runPreparedInput, activeTurn, isProgressing, progressLabel, progressIndex,
-    skipProgress, replayProgress, language, draftAllowed,
+    skipProgress, replayProgress, language, draftAllowed, selectScenario, resolveClarify,
   } = useDemo();
 
   const { conversations, activeId, setActiveId, getConversation,
@@ -426,6 +451,23 @@ export default function Chat() {
   useEffect(() => {
     if (convId) setActiveId(convId);
   }, [convId, setActiveId]);
+
+  /* 2026-09-14 audit P0 fixes. Seeded conversations hydrate their prepared turn
+     on cold start — the first click shows the full exchange, not an empty
+     column — and the URL's chatId drives the guardrail scenario, so
+     /desktop/chat/out-of-scope can no longer answer as the consumer scene.
+     Guarded to the two seeded ids so a brand-new conversation inherits none
+     of it. */
+  useEffect(() => {
+    if (convId !== 'consumer' && convId !== 'out-of-scope') return;
+    const wanted = convId === 'out-of-scope' ? 'out_of_scope' : 'consumer';
+    if (scenario.id !== wanted) selectScenario(wanted);
+    if (hybridTurns.length === 0) {
+      const seed = seedTurnForConversation(convId, language);
+      if (seed) setHybridTurns([seed]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convId, language]);
 
   useEffect(() => {
     const el = chatRef.current;
@@ -475,6 +517,18 @@ export default function Chat() {
     }
   }, [conv, createConversation, handleSend, navigate]);
 
+  /* The clarify middle on desktop (2026-09-14 P1): options ride with the
+     QuickChips empty state; answering runs the same resolveClarify path the
+     mobile chat uses, so both surfaces route identically. */
+  const [clarifyOptions] = useState<ClarifyOption[]>(() => clarifyOptionsFor(language));
+  const [clarifyShown, setClarifyShown] = useState(false);
+  const handleClarifyAnswer = useCallback(async (opt: ClarifyOption) => {
+    setClarifyShown(true);
+    await handleSend(opt.label);
+    const turn = await resolveClarify(opt.nextTurnId);
+    setHybridTurns((prev) => [...prev, turn]);
+  }, [handleSend, resolveClarify]);
+
   const handleRetry = useCallback(() => {
     if (lastMsg) handleSend(lastMsg);
   }, [lastMsg, handleSend]);
@@ -508,7 +562,12 @@ export default function Chat() {
             setFocusedCitationId(c.id);
             toast.message(`${c.title} — focus set`, { description: 'The right rail shows the source detail.' });
           }}
-        />,
+          onClarifyAnswer={async (opt) => {
+            setClarifyShown(true);
+            const turn = await resolveClarify(opt.nextTurnId);
+            setHybridTurns((prev) => [...prev, turn]);
+          }}
+          />
       );
     });
     return out;
@@ -574,7 +633,7 @@ export default function Chat() {
                 )}
 
                 {isEmpty && !loading && !isProgressing && (
-                  <QuickChips onSelect={handleChipSelect}/>
+                  <QuickChips onSelect={handleChipSelect} onClarifyAnswer={handleClarifyAnswer} clarifyOptions={(scenario.id === 'consumer' && !clarifyShown && hybridTurns.length === 0) ? clarifyOptions : undefined}/>
                 )}
 
                 {renderedMessages}
@@ -682,3 +741,9 @@ export default function Chat() {
     </>
   );
 }
+
+
+
+
+
+

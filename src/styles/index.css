@@ -359,30 +359,25 @@ button, input, textarea, select {
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
 /* ── Modern Floating Composer (ChatGPT / Claude / Gemini pattern) ────────── */
+/* 2026-09-14 audit: the glass composer is gone. backdrop-filter is paint-
+   heavy, contradicted the paper metaphor, and the border+shadow pair broke
+   the one-separator law. Now: a solid raised surface, shadow only — the
+   same separation ladder as every other lifted object. */
 .lokai-composer-floating {
   position: relative;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--role-hairline);
-  border-radius: var(--radius-pill);
+  background: var(--role-raised);
   box-shadow: var(--elevation-float);
-  transition: border-color var(--duration-micro) var(--ease-out),
-              box-shadow var(--duration-micro) var(--ease-out),
-              border-radius var(--duration-micro) var(--ease-out);
+  transition: box-shadow var(--duration-micro) var(--ease-out);
 }
 .lokai-composer-floating:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: 0 14px 40px rgba(11, 27, 50, 0.11), 0 3px 10px rgba(11, 27, 50, 0.05);
+  box-shadow: 0 14px 40px rgba(11, 27, 50, 0.11), 0 3px 10px rgba(11, 27, 50, 0.05), 0 0 0 3px var(--role-anchor-tint);
 }
 [data-theme="dark"] .lokai-composer-floating {
-  background: rgba(22, 38, 60, 0.86);
-  border-color: var(--role-hairline);
+  background: var(--role-raised);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36), 0 3px 10px rgba(0, 0, 0, 0.22);
 }
 [data-theme="dark"] .lokai-composer-floating:focus-within {
-  border-color: var(--role-hairline-firm);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.28), 0 0 0 3px var(--role-anchor-tint);
 }
 
 /* User speech bubble — sculpted, high-contrast, confident */
@@ -500,3 +495,5 @@ button, input, textarea, select {
     left: 92px !important;
   }
 }
+
+

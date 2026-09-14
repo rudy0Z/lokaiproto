@@ -13,12 +13,15 @@ import {
   Amount,
   Badge,
   T,
+  M,
   shortStatuteLabel,
   SHADOW_SCALE,
   S,
   useInk,
+  typeStyle,
 } from '../../ui';
 import { LegalText } from '../demo/LegalTerms';
+import { clarifyOptionsFor, type ClarifyOption } from '../../data/languagePacks';
 import type { ResponseTurn, ResponseMode, DemoLanguage, EmotionalIntent, TurnCitation } from '../../data/responseTurns';
 import { DEMO_PROGRESS_STAGES } from '../../data/responseTurns';
 import { useDemo } from '../../context/DemoContext';
@@ -637,11 +640,16 @@ export function Turn({
   onCopy,
   onSpeak,
   onOpenSource,
+  onClarifyAnswer,
 }: {
   turn: ResponseTurn;
   onCopy?: () => void;
   onSpeak?: () => void;
   onOpenSource?: (citation: TurnCitation) => void;
+  /** 2026-09-14 audit P1 (desktop clarify): when provided, a clarify turn
+     renders its tappable answer rows beneath the question — the same
+     resolveClarify routing the mobile chat uses. */
+  onClarifyAnswer?: (option: ClarifyOption) => void;
 }) {
   const meta = MODE_META[turn.mode];
   const craft = EMOTION_CRAFT[turn.emotionalIntent];
@@ -726,6 +734,31 @@ export function Turn({
       </header>
 
       <TurnBody turn={turn} revealed={revealed} />
+      {onClarifyAnswer && turn.mode === 'clarify' && (
+        /* 2026-09-14 audit P1: the clarify copy says "pick the closest answer
+           below" — on desktop it now means it. The rows are the mobile chat's
+           options ported: the tap IS the answer, typing still works. */
+        <div style={{ padding: `${S[2]} 0 0` }}>
+          {clarifyOptionsFor(turn.language).map((opt) => (
+            <button
+              key={opt.nextTurnId}
+              type="button"
+              className="lokai-pressable"
+              onClick={() => onClarifyAnswer(opt)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                width: '100%', minHeight: M.tap, padding: `0 ${S[3]}`,
+                ...typeStyle('small'), fontWeight: 500,
+                color: T.anchor, background: 'transparent',
+                borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
+              }}
+            >
+              {opt.label}
+              <span style={{ color: 'var(--role-ink-faint)' }} aria-hidden>→</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={{ padding: isStop ? `${S[3]} 0 0` : `0 0 ${S[2]}` }}>
         <TurnCitations turn={turn} onOpenSource={onOpenSource} />
@@ -1138,3 +1171,6 @@ export function ScopedAskSheet({
     </Sheet>
   );
 }
+
+
+

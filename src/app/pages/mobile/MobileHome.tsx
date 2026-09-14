@@ -361,8 +361,8 @@ function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: strin
               style={{
                 ...typeStyle('small'),
                 fontWeight: 500,
-                color: T.inkQuiet,
-                background: T.sunken,
+                color: T.anchor,
+                background: T.anchorTint, /* 2026-09-14 audit P0: sunken-on-ground measured 1.06:1 — the chips read as plain text. The anchor tint is the paired fill for anchor-inked chips and clears 3:1 in both themes. */
                 border: 'none',
                 borderRadius: LAYOUT.radius.pill,
                 padding: '9px 16px',
@@ -998,3 +998,4 @@ export default function MobileHome() {
     </MobileRouteCanvas>
   );
 }
+
