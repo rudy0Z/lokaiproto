@@ -123,8 +123,8 @@ The strategic frame, set by the product owner: **mobile users are the majority; 
 ## 4. What remains
 
 ### Mobile residuals (small, sequenced)
-- Language packs for the two non-explain clarify follow-up turns (statute expiry, source gap) — the standard 3-file change; until then non-Latin chats offer the localized explain path only.
-- The retired `TopNav` export in MobileHome (zero render sites, documented) — delete when convenient.
+- ~~Language packs for the two non-explain clarify follow-up turns~~ **DONE (verified 2026-09-15):** `FOLLOWUP_I18N` in `languagePacks.ts` covers hi/mr/ta for both turns, resolved via `localizeConsumerFollowUp`.
+- ~~The retired `TopNav` export in MobileHome~~ **DONE (verified 2026-09-15):** the export was deleted outright on 2026-09-06; no `TopNav` remains (MobileHome.tsx carries the retirement note).
 
 ### Phase 7 — desktop, a separate stage (~3–3.5 focused days)
 Scoped and owned separately per the product owner (2026-09-04). In priority order:
@@ -161,3 +161,4 @@ The v3 content draft is written and awaiting the owner's section mix — see `CA
 | `91adc1f` predecessor context | P6 follow-up (PrimaryButton on-anchor) |
 
 Pre-upgrade context (the original mobile build) lives in `HANDOFF.md`'s historical entries and `MOBILE_AI_SYSTEM.md` §4.
+
