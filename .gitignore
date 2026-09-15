@@ -3,3 +3,6 @@ dist
 .env
 .env.local
 .env.*.local
+
+# Dev logs parked in attic
+attic/logs/
