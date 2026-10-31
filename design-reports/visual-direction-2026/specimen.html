@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LokAI — Visual Direction 2026 · Vellum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght@9..144,400;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============ page chrome (not the product) ============ */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  body {
+    font-family:"Hanken Grotesk",sans-serif;
+    background:#101013; color:#E9E7E1;
+    transition: background .4s cubic-bezier(.23,1,.32,1);
+  }
+  .topbar {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 32px; backdrop-filter:blur(24px);
+    background:rgba(16,16,19,.72); border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .topbar h1 { font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  .topbar h1 span { color:#E27A24; }
+  .topbar p { font-size:12px; color:rgba(233,231,225,.55); margin-top:2px; }
+  .toggle {
+    display:flex; border:1px solid rgba(255,255,255,.14); border-radius:999px; overflow:hidden;
+  }
+  .toggle button {
+    border:none; background:transparent; color:rgba(233,231,225,.6);
+    font:600 12px "Hanken Grotesk"; padding:8px 18px; cursor:pointer;
+    transition:all .18s cubic-bezier(.23,1,.32,1);
+  }
+  .toggle button.on { background:#E9E7E1; color:#101013; }
+  .wrap { max-width:1200px; margin:0 auto; padding:56px 32px 120px; }
+  .section-label {
+    font:600 11px "Hanken Grotesk"; letter-spacing:.18em; text-transform:uppercase;
+    color:rgba(233,231,225,.45); margin:72px 0 20px;
+  }
+  .section-label:first-of-type { margin-top:0; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+  @media (max-width:900px){ .duo { grid-template-columns:1fr; } }
+  .frame-caption { text-align:center; margin-top:16px; font-size:13px; color:rgba(233,231,225,.6); }
+  .frame-caption b { color:#E9E7E1; font-weight:700; }
+
+  /* ============ palettes ============ */
+  /* CURRENT — flat cream, Fraunces editorial */
+  .cur {
+    --g:#FAF8F5; --card:#FFFFFF; --ink:#161513; --ink2:#44413A; --ink3:#68645D;
+    --hair:rgba(22,21,19,.08); --anchor:#0B1B32; --on-anchor:#fff;
+    --saff:#E27A24; --paper:#FBF9F3;
+    --sh:0 1px 2px rgba(26,25,22,.06), 0 4px 10px rgba(26,25,22,.06);
+  }
+  .cur.dark {
+    --g:#0E1A2B; --card:#16263C; --ink:#F8F5EE; --ink2:rgba(248,245,238,.72); --ink3:rgba(248,245,238,.5);
+    --hair:rgba(255,255,255,.1); --anchor:#F8F5EE; --on-anchor:#0B1B32;
+    --sh:0 1px 2px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.25);
+  }
+  /* VELLUM — mesh + grain ground, layered light, Instrument register */
+  .vel {
+    --g:#F6F4EF; --card:#FEFDFB; --ink:#191813; --ink2:#56524A; --ink3:#8A857A;
+    --hair:rgba(22,21,19,.09); --anchor:#1D2B42; --anchor2:#16233A; --on-anchor:#FCFBF8;
+    --saff:#E27A24; --glass:rgba(253,252,250,.78); --tint:rgba(22,21,19,.04);
+    --inner:inset 0 1px 0 rgba(255,255,255,.75);
+    --sh:0 1px 2px rgba(20,18,12,.05), 0 4px 12px rgba(20,18,12,.04), 0 16px 40px rgba(20,18,12,.07);
+    --mesh:
+      radial-gradient(120% 90% at 85% -10%, rgba(226,122,36,.15), transparent 55%),
+      radial-gradient(100% 80% at -10% 110%, rgba(11,27,50,.11), transparent 60%);
+  }
+  .vel.dark {
+    --g:#0D1524; --card:#141E30; --ink:#F3EFE6; --ink2:rgba(243,239,230,.7); --ink3:rgba(243,239,230,.45);
+    --hair:rgba(255,255,255,.09); --anchor:#F3EFE6; --anchor2:#E4DFD2; --on-anchor:#101A2C;
+    --glass:rgba(20,30,48,.72); --tint:rgba(255,255,255,.05);
+    --inner:inset 0 1px 0 rgba(255,255,255,.08);
+    --sh:0 1px 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.25), 0 16px 40px rgba(0,0,0,.35);
+    --mesh:
+      radial-gradient(120% 90% at 85% -10%, rgba(226,122,36,.12), transparent 55%),
+      radial-gradient(110% 90% at -10% 110%, rgba(64,98,160,.18), transparent 60%);
+  }
+
+  /* ============ phone frames ============ */
+  .phone {
+    width:390px; margin:0 auto; border-radius:52px; padding:10px;
+    background:#0A0A0C; box-shadow:0 0 0 2px rgba(255,255,255,.06), 0 30px 80px rgba(0,0,0,.6);
+    position:relative;
+  }
+  .screen {
+    border-radius:43px; overflow:hidden; height:760px; position:relative;
+    background:var(--g); color:var(--ink);
+    display:flex; flex-direction:column;
+    transition:background .4s cubic-bezier(.23,1,.32,1), color .4s;
+  }
+  /* vellum mesh + grain layer */
+  .vel .screen::before {
+    content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:var(--mesh);
+  }
+  .vel .screen::after {
+    content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.028;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .dark .screen::after { opacity:.04; }
+  .screen > * { position:relative; z-index:1; }
+
+  .statusbar {
+    display:flex; justify-content:space-between; padding:14px 24px 6px;
+    font:600 12px "Hanken Grotesk"; color:var(--ink); opacity:.85;
+  }
+  .appbar {
+    display:flex; align-items:center; justify-content:space-between; padding:8px 18px 10px;
+  }
+  .appbar .brand { font:700 16px "Hanken Grotesk"; letter-spacing:-.02em; }
+  .cur .appbar .brand { font-family:"Fraunces",serif; font-weight:600; letter-spacing:0; }
+  .iconbtn {
+    width:34px; height:34px; border-radius:999px; border:1px solid var(--hair);
+    display:grid; place-items:center; color:var(--ink); background:var(--card);
+  }
+
+  .chat { flex:1; overflow:hidden; padding:6px 16px 0; display:flex; flex-direction:column; gap:14px; }
+
+  /* user bubble */
+  .user {
+    align-self:flex-end; max-width:78%;
+    background:var(--anchor); color:var(--on-anchor);
+    padding:11px 16px; border-radius:20px 20px 6px 20px;
+    font-size:13.5px; line-height:1.5; font-weight:500;
+  }
+  .cur .user { box-shadow:none; }
+  .vel .user { box-shadow:0 4px 12px rgba(11,27,50,.18); }
+
+  /* working beat */
+  .beat { display:flex; flex-direction:column; gap:7px; padding:2px 4px; }
+  .stage { display:flex; align-items:center; gap:9px; font-size:12.5px; font-weight:500; }
+  .cur .stage { color:var(--ink3); }
+  .vel .stage { color:var(--ink2); }
+  .stage .dot { width:7px; height:7px; border-radius:99px; background:var(--saff); opacity:.9; }
+  .stage.done { opacity:.45; }
+  .stage.done .dot { background:var(--ink3); opacity:.5; }
+  .stage .tick { color:var(--ink3); font-size:11px; }
+  .trail {
+    margin-top:2px; font:500 11px "JetBrains Mono",monospace; color:var(--ink3);
+    letter-spacing:.02em; display:flex; align-items:center; gap:6px;
+  }
+  .vel .trail { color:var(--ink3); }
+  .trail .sep { opacity:.4; }
+
+  /* answer card */
+  .answer { display:flex; flex-direction:column; gap:12px; }
+  .meta-row { display:flex; align-items:center; gap:8px; }
+  .chip {
+    font:700 10px "Hanken Grotesk"; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 9px; border-radius:6px;
+  }
+  .chip.mode { background:var(--anchor); color:var(--on-anchor); }
+  .vel .chip.mode { background:linear-gradient(180deg, var(--anchor), var(--anchor2)); box-shadow:var(--inner); }
+  .chip.sub { color:var(--ink3); background:transparent; padding-left:0; letter-spacing:.08em; }
+  .ledger { margin-left:auto; font:500 11px "JetBrains Mono",monospace; color:var(--ink2); }
+  .law {
+    font-size:20px; line-height:1.28; color:var(--ink);
+  }
+  .cur .law { font-family:"Fraunces",serif; font-weight:600; font-size:21px; }
+  .vel .law { font-family:"Instrument Serif",serif; font-weight:400; font-size:23px; letter-spacing:.001em; }
+  .zone-h {
+    font:700 10px "Hanken Grotesk"; letter-spacing:.14em; text-transform:uppercase; color:var(--ink3);
+  }
+  .zone-p { font-size:13.5px; line-height:1.6; color:var(--ink2); }
+  .steps { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .steps li { font-size:13.5px; line-height:1.5; color:var(--ink2); padding-left:18px; position:relative; }
+  .steps li::before { content:""; position:absolute; left:2px; top:8px; width:5px; height:5px; border-radius:99px; background:var(--saff); opacity:.75; }
+  .cta-row { display:flex; align-items:center; gap:10px; margin-top:2px; }
+  .cta {
+    display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer;
+    background:var(--anchor); color:var(--on-anchor);
+    font:600 13px "Hanken Grotesk"; padding:11px 8px 11px 18px; border-radius:999px;
+  }
+  .vel .cta { box-shadow:var(--inner), 0 6px 16px rgba(11,27,50,.22); }
+  .cur .cta { box-shadow:var(--sh); }
+  .cta .orb {
+    width:26px; height:26px; border-radius:99px; display:grid; place-items:center;
+    background:rgba(255,255,255,.14);
+  }
+  .src-row { display:flex; gap:7px; }
+  .src {
+    font:500 11px "JetBrains Mono",monospace; padding:5px 10px; border-radius:8px;
+    border:1px solid var(--hair); color:var(--ink2); background:var(--card);
+  }
+  .vel .src { box-shadow:var(--inner); }
+
+  /* composer island */
+  .composer-wrap { padding:10px 16px 18px; }
+  .composer {
+    display:flex; align-items:center; gap:10px; padding:8px 8px 8px 16px;
+    border-radius:999px; border:1px solid var(--hair);
+  }
+  .cur .composer { background:var(--card); box-shadow:var(--sh); }
+  .vel .composer { background:var(--glass); backdrop-filter:blur(24px); box-shadow:var(--sh), var(--inner); }
+  .composer .ph { flex:1; font-size:13.5px; color:var(--ink3); }
+  .send {
+    width:38px; height:38px; border-radius:99px; border:none; cursor:pointer;
+    background:var(--anchor); color:var(--on-anchor); display:grid; place-items:center;
+  }
+  .vel .send { box-shadow:var(--inner), 0 4px 12px rgba(11,27,50,.25); }
+  .disclaimer { text-align:center; font-size:10.5px; color:var(--ink3); margin-top:9px; }
+
+  /* ============ stop state ============ */
+  .stopphone { margin-top:48px; }
+  .stop {
+    flex:1; margin:0; border-radius:43px; padding:26px 24px;
+    display:flex; flex-direction:column;
+  }
+  .cur .stop { background:var(--g); color:var(--ink); } /* current: NOT inverted — the defect */
+  .vel .stop { background:#0B1220; color:#F3EFE6; }     /* vellum light: full-bleed dark (L6) */
+  .vel.dark .stop { background:#F6EFDD; color:#191813; } /* vellum dark: warm luminous (L8) */
+  .stop .kicker { font:700 10.5px "Hanken Grotesk"; letter-spacing:.16em; text-transform:uppercase; opacity:.65; }
+  .cur .stop .law { font-family:"Fraunces",serif; font-size:24px; font-weight:600; margin:12px 0 10px; }
+  .vel .stop .law { font-family:"Instrument Serif",serif; font-size:27px; margin:12px 0 10px; }
+  .stop .why { font-size:13.5px; line-height:1.6; opacity:.78; max-width:300px; }
+  .stop .preserve {
+    margin-top:18px; padding:12px 14px; border-radius:14px; font-size:12.5px; line-height:1.55;
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  }
+  .vel.dark .stop .preserve { background:rgba(20,18,12,.05); border-color:rgba(20,18,12,.1); }
+  .stop .safe {
+    margin-top:auto; border:none; cursor:pointer; width:100%;
+    padding:15px; border-radius:999px; font:600 14px "Hanken Grotesk";
+  }
+  .cur .stop .safe { background:var(--anchor); color:var(--on-anchor); }
+  .vel .stop .safe { background:#F3EFE6; color:#0B1220; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+  .vel.dark .stop .safe { background:#0B1220; color:#F3EFE6; }
+  .stop .alt { margin-top:12px; text-align:center; font:600 12.5px "Hanken Grotesk"; text-decoration:underline; text-underline-offset:3px; opacity:.7; }
+
+  /* ============ material lab ============ */
+  .lab { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  @media (max-width:900px){ .lab { grid-template-columns:1fr; } }
+  .labcard {
+    border-radius:22px; padding:22px; min-height:190px;
+    background:var(--g); color:var(--ink); border:1px solid rgba(255,255,255,.07);
+    position:relative; overflow:hidden;
+  }
+  .labcard .tag { font:600 10px "JetBrains Mono",monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:14px; }
+  .vel .labcard::before { content:""; position:absolute; inset:0; background:var(--mesh); pointer-events:none; }
+  .labrow { display:flex; gap:12px; align-items:center; position:relative; }
+  .mini { border-radius:14px; padding:13px 15px; font-size:12.5px; font-weight:600; color:var(--ink); }
+  .m-flat { background:var(--card); border:1px solid var(--hair); }
+  .m-mach { background:var(--card); border:1px solid var(--hair); box-shadow:var(--sh), var(--inner); }
+  .m-bezel { background:var(--tint); border:1px solid var(--hair); border-radius:18px; padding:5px; }
+  .m-bezel .core { background:var(--card); border-radius:14px; padding:12px 14px; font-size:12.5px; font-weight:600; box-shadow:var(--inner); }
+  .m-glass { background:var(--glass); backdrop-filter:blur(20px); border:1px solid var(--hair); box-shadow:var(--sh); }
+  .typeblock { position:relative; }
+  .typeblock .sample { margin-bottom:16px; }
+  .typeblock .tname { font:600 10px "JetBrains Mono",monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--ink3); margin-bottom:5px; }
+  .t-display { font-size:26px; letter-spacing:-.02em; line-height:1.12; font-weight:800; color:var(--ink); }
+  .t-law { font-family:"Instrument Serif",serif; font-size:26px; line-height:1.15; color:var(--ink); }
+  .t-editorial { font-family:"Fraunces",serif; font-weight:600; font-size:26px; line-height:1.15; color:var(--ink); }
+  .t-body { font-size:13.5px; line-height:1.6; color:var(--ink2); }
+  .t-mono { font:500 12px "JetBrains Mono",monospace; color:var(--ink2); }
+  .t-mono b { font-variant-numeric:tabular-nums; color:var(--ink); }
+  .footnote { font-size:12px; color:rgba(233,231,225,.45); max-width:760px; line-height:1.6; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>LokAI <span>·</span> Visual Direction 2026 — “Vellum”</h1>
+    <p>Before / after · mesh + grain ground · sans display · Instrument Serif law register · machined objects · glass chrome</p>
+  </div>
+  <div class="toggle">
+    <button id="btn-light" class="on" onclick="setTheme(false)">Light</button>
+    <button id="btn-dark" onclick="setTheme(true)">Dark</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="section-label">01 · The answer moment — current vs vellum</div>
+  <div class="duo">
+    <div>
+      <div class="phone"><div class="screen cur" id="s-cur">
+        <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+        <div class="appbar"><span class="iconbtn">☰</span><span class="brand">LokAI</span><span class="iconbtn">✎</span></div>
+        <div class="chat">
+          <div class="user">What if the seller says the damage is my fault?</div>
+          <div class="beat">
+            <div class="stage done"><span class="dot"></span>Checking what your question covers <span class="tick">✓</span></div>
+            <div class="stage"><span class="dot"></span>Matching the law to your facts</div>
+            <div class="trail">G6_FACTS <span class="sep">·</span> 2 of 3 sourced</div>
+          </div>
+          <div class="answer">
+            <div class="meta-row">
+              <span class="chip mode">Explanation</span>
+              <span class="chip sub">Clear next step</span>
+              <span class="ledger">4 of 5 sourced</span>
+            </div>
+            <div class="law">When a product arrives damaged, that can count as a consumer issue.</div>
+            <div>
+              <div class="zone-h">How it applies here</div>
+              <p class="zone-p" style="margin-top:5px">Your mixer arrived damaged and the seller refused a replacement. The invoice and written refusal give you a solid next step.</p>
+            </div>
+            <div>
+              <div class="zone-h">What you can do next</div>
+              <ul class="steps" style="margin-top:5px">
+                <li>Send a written demand notice by registered post with acknowledgement due.</li>
+              </ul>
+            </div>
+            <div class="cta-row">
+              <button class="cta">Prepare demand notice <span class="orb">→</span></button>
+            </div>
+            <div class="src-row"><span class="src">S.2(10)</span><span class="src">S.35</span></div>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <div class="composer"><span class="ph">Type a question…</span><button class="send">↑</button></div>
+          <div class="disclaimer">Legal information, not legal advice · prepared demo</div>
+        </div>
+      </div></div>
+      <div class="frame-caption"><b>Current.</b> Flat cream, Fraunces everywhere, flat cards, generic shadow.</div>
+    </div>
+    <div>
+      <div class="phone"><div class="screen vel" id="s-vel">
+        <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+        <div class="appbar"><span class="iconbtn">☰</span><span class="brand">LokAI</span><span class="iconbtn">✎</span></div>
+        <div class="chat">
+          <div class="user">What if the seller says the damage is my fault?</div>
+          <div class="beat">
+            <div class="stage done"><span class="dot"></span>Checking what your question covers <span class="tick">✓</span></div>
+            <div class="stage"><span class="dot"></span>Matching the law to your facts</div>
+            <div class="trail">G6_FACTS <span class="sep">·</span> 2 of 3 sourced</div>
+          </div>
+          <div class="answer">
+            <div class="meta-row">
+              <span class="chip mode">Explanation</span>
+              <span class="chip sub">Clear next step</span>
+              <span class="ledger">4 of 5 sourced</span>
+            </div>
+            <div class="law">When a product arrives damaged, that can count as a consumer issue.</div>
+            <div>
+              <div class="zone-h">How it applies here</div>
+              <p class="zone-p" style="margin-top:5px">Your mixer arrived damaged and the seller refused a replacement. The invoice and written refusal give you a solid next step.</p>
+            </div>
+            <div>
+              <div class="zone-h">What you can do next</div>
+              <ul class="steps" style="margin-top:5px">
+                <li>Send a written demand notice by registered post with acknowledgement due.</li>
+              </ul>
+            </div>
+            <div class="cta-row">
+              <button class="cta">Prepare demand notice <span class="orb">→</span></button>
+            </div>
+            <div class="src-row"><span class="src">S.2(10)</span><span class="src">S.35</span></div>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <div class="composer"><span class="ph">Type a question…</span><button class="send">↑</button></div>
+          <div class="disclaimer">Legal information, not legal advice · prepared demo</div>
+        </div>
+      </div></div>
+      <div class="frame-caption"><b>Vellum.</b> Mesh + grain ground, sans-tight chrome, Instrument Serif = the law speaking, glass composer, machined CTA.</div>
+    </div>
+  </div>
+
+  <div class="section-label">02 · The stop — the most designed screen (L6/L8)</div>
+  <div class="duo stopphone">
+    <div>
+      <div class="phone"><div class="screen cur" id="s-cur-stop">
+        <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+        <div class="appbar"><span class="iconbtn">←</span><span class="brand">LokAI</span><span style="width:34px"></span></div>
+        <div class="stop">
+          <div class="kicker">Stopped · your case is safe</div>
+          <div class="law">Professional guidance recommended</div>
+          <p class="why">The issue may involve criminal risk, immediate safety, or legal consequences LokAI should not handle alone.</p>
+          <div class="preserve">Your 4 confirmed facts, evidence list, and demand-notice draft are preserved. Nothing is lost.</div>
+          <button class="safe">Use procedural help or contact a lawyer / legal aid</button>
+          <div class="alt">Ask a different question</div>
+        </div>
+      </div></div>
+      <div class="frame-caption"><b>Current.</b> The stop renders on the same ground as the rest of the app — no tonal inversion (the L6 defect found in the 2026-09-27 walkthrough).</div>
+    </div>
+    <div>
+      <div class="phone"><div class="screen vel" id="s-vel-stop">
+        <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+        <div class="appbar"><span class="iconbtn">←</span><span class="brand">LokAI</span><span style="width:34px"></span></div>
+        <div class="stop">
+          <div class="kicker">Stopped · your case is safe</div>
+          <div class="law">Professional guidance recommended</div>
+          <p class="why">The issue may involve criminal risk, immediate safety, or legal consequences LokAI should not handle alone.</p>
+          <div class="preserve">Your 4 confirmed facts, evidence list, and demand-notice draft are preserved. Nothing is lost.</div>
+          <button class="safe">Use procedural help or contact a lawyer / legal aid</button>
+          <div class="alt">Ask a different question</div>
+        </div>
+      </div></div>
+      <div class="frame-caption"><b>Vellum.</b> Light theme → full-bleed dark (L6); dark theme → warm luminous (L8). The contrast relationship is the constant — toggle to see both.</div>
+    </div>
+  </div>
+
+  <div class="section-label">03 · Material lab</div>
+  <div class="lab">
+    <div class="labcard vel" id="l1"><div class="tag">Flat card vs machined card</div>
+      <div class="labrow" style="flex-direction:column; align-items:stretch; gap:14px;">
+        <div class="mini m-flat">Flat · border only</div>
+        <div class="mini m-mach">Machined · layered shadow + inner highlight</div>
+        <div class="m-bezel"><div class="core">Double-bezel · shell + concentric core</div></div>
+      </div>
+    </div>
+    <div class="labcard vel" id="l2"><div class="tag">Ground: mesh + grain</div>
+      <div style="position:relative; font-size:12.5px; color:var(--ink2); line-height:1.6;">
+        The card you are reading sits on the vellum ground — two radial breathes (saffron / navy) under 2.5% film grain. No animation, one token, GPU-safe. The cream is still here; it just has light inside it now.
+      </div>
+      <div class="labrow" style="margin-top:16px;">
+        <div class="mini m-glass" style="flex:1">Glass island · floating chrome only</div>
+      </div>
+    </div>
+    <div class="labcard vel" id="l3"><div class="tag">Type registers</div>
+      <div class="typeblock">
+        <div class="sample"><div class="tname">Display · sans tight</div><div class="t-display">Refund for a damaged mixer</div></div>
+        <div class="sample"><div class="tname">The law speaking · Instrument Serif</div><div class="t-law">When a product arrives damaged, that can count as a consumer issue.</div></div>
+        <div class="sample"><div class="tname">Old voice · Fraunces (retired from chrome)</div><div class="t-editorial">Refund for a damaged mixer</div></div>
+        <div class="sample"><div class="tname">Evidence · mono tabular</div><div class="t-mono">4 of 5 sourced · policy dl-1.0.0 · <b>₹8,999</b></div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Specimen fonts load from CDN for evaluation only — adoption vendors Instrument Serif via @fontsource
+    (self-hosted, deterministic, per the no-network gate). Hanken Grotesk stays; the current frames above
+    reproduce the live build’s palette for honest comparison. Spec: <b>docs/VISUAL-DIRECTION-2026-09.md</b>.
+  </p>
+</div>
+
+<script>
+  function setTheme(dark) {
+    document.querySelectorAll('.cur').forEach(el => el.classList.toggle('dark', dark));
+    document.querySelectorAll('.vel').forEach(el => el.classList.toggle('dark', dark));
+    document.getElementById('btn-light').classList.toggle('on', !dark);
+    document.getElementById('btn-dark').classList.toggle('on', dark);
+  }
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "note": "Budgets may only decrease. See scripts/ui-debt.mjs. Migrate a file to src/app/ui and re-run with --update.",
-  "measuredAt": "2026-09-06",
-  "totalDebt": 471,
+  "measuredAt": "2026-10-15",
+  "totalDebt": 386,
   "files": {
     "src/app/App.tsx": {
       "rawFamily": 1
@@ -12,11 +12,10 @@
       "rawLeading": 1
     },
     "src/app/components/ai/Turn.tsx": {
-      "rawFamily": 23,
+      "rawFamily": 18,
       "rawLeading": 7
     },
     "src/app/components/CommandPalette.tsx": {
-      "rawColor": 3,
       "rawFamily": 1
     },
     "src/app/components/demo/GuardrailGallery.tsx": {
@@ -29,11 +28,11 @@
       "rawLeading": 5
     },
     "src/app/components/LokAIWorkflow.tsx": {
-      "rawFamily": 59,
-      "rawLeading": 31
+      "rawFamily": 14,
+      "rawLeading": 29
     },
     "src/app/components/SettingsPanel.tsx": {
-      "rawColor": 12,
+      "rawColor": 9,
       "rawFamily": 12,
       "rawLeading": 3
     },
@@ -41,7 +40,7 @@
       "rawColor": 1
     },
     "src/app/components/Sidebar.tsx": {
-      "rawColor": 21,
+      "rawColor": 20,
       "rawFamily": 1,
       "rawLeading": 1
     },
@@ -49,7 +48,6 @@
       "rawFamily": 1
     },
     "src/app/pages/Chat.tsx": {
-      "rawColor": 3,
       "rawFamily": 25,
       "rawLeading": 10
     },
@@ -58,8 +56,8 @@
       "rawLeading": 3
     },
     "src/app/pages/Documents.tsx": {
-      "rawColor": 5,
-      "rawFamily": 12,
+      "rawColor": 4,
+      "rawFamily": 9,
       "rawLeading": 2
     },
     "src/app/pages/Draft.tsx": {
@@ -67,16 +65,16 @@
       "rawLeading": 10
     },
     "src/app/pages/Home.tsx": {
-      "rawColor": 24,
+      "rawColor": 13,
       "rawFamily": 12,
       "rawLeading": 3
     },
     "src/app/pages/mobile/MobileConsumerCase.tsx": {
-      "rawFamily": 37,
-      "rawLeading": 19
+      "rawFamily": 31,
+      "rawLeading": 18
     },
     "src/app/pages/mobile/MobileHome.tsx": {
-      "rawFamily": 7
+      "rawFamily": 6
     },
     "src/app/pages/Notice.tsx": {
       "rawColor": 4,

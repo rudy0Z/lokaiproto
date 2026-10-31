@@ -1,0 +1,15 @@
+﻿ M .gitignore
+ M package.json
+ M src/app/components/Sidebar.tsx
+ M src/app/components/ai/Turn.tsx
+ M src/app/components/mobile/MatterDrawer.tsx
+ M src/app/context/DemoContext.tsx
+ M src/app/pages/Chat.tsx
+ M src/app/pages/mobile/MobileHome.tsx
+ M src/app/pages/mobile/MobileProfile.tsx
+ M src/app/routes.tsx
+ M vite.config.ts
+?? scripts/verify-decision.mjs
+?? src/app/data/profile.ts
+?? src/app/decision/
+?? src/app/pages/NotFound.tsx

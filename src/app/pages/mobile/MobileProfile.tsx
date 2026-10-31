@@ -8,6 +8,10 @@ import {
 import { MobileRouteCanvas } from './MobileHome';
 import { AppScreen } from '../../components/mobile/AppScreen';
 import { useConversations } from '../../context/ConversationContext';
+import { useDemo } from '../../context/DemoContext';
+import { LanguageBottomSheet } from './MobileHome';
+import { isPreparedLanguage } from '../../data/languagePacks';
+import { DEMO_USER } from '../../data/profile';
 
 /**
  * Help & account.
@@ -32,7 +36,9 @@ const chevron = <CaretRight size={ICON.inline} weight={ICON_WEIGHT} color="var(-
 function ProfileArtboard() {
   useSystemStyles();
   const navigate = useNavigate();
-  const { selectedLanguage, appearance, setAppearance } = useConversations();
+  const { selectedLanguage, setSelectedLanguage, appearance, setAppearance } = useConversations();
+  const { setLanguage } = useDemo();
+  const [langOpen, setLangOpen] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(true);
 
   const langLabel = { en: 'English', hi: 'हिन्दी', mr: 'मराठी', ta: 'தமிழ்' }[selectedLanguage] ?? 'English';
@@ -50,8 +56,8 @@ function ProfileArtboard() {
             <UserCircle size={ICON.row} weight={ICON_WEIGHT} />
           </span>
           <Stack gap={0}>
-            <Text role="bodyStrong" measured={false}>Priya Sharma</Text>
-            <Text role="caption" tone="faint" measured={false}>{langLabel} · Mumbai, MH · Free plan</Text>
+            <Text role="bodyStrong" measured={false}>{DEMO_USER.name}</Text>
+            <Text role="caption" tone="faint" measured={false}>{langLabel} · {DEMO_USER.city}, {DEMO_USER.stateCode} · {DEMO_USER.plan}</Text>
           </Stack>
         </Row>
       }
@@ -75,7 +81,7 @@ function ProfileArtboard() {
           <HairlineRow
             leading={<GlobeSimple size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
             trailing={<Row gap={2} align="center"><Text role="caption" tone="quiet" measured={false}>{langLabel}</Text>{chevron}</Row>}
-            onClick={() => navigate('/mobile/home')}
+            onClick={() => setLangOpen(true)}
           >
             <Text role="bodyStrong" measured={false}>Language</Text>
           </HairlineRow>
@@ -101,13 +107,26 @@ function ProfileArtboard() {
           <HairlineRow
             leading={<ShieldCheck size={ICON.row} weight={ICON_WEIGHT} color="var(--role-ink-quiet)" />}
             trailing={chevron}
-            onClick={() => navigate('/mobile/home')}
+            onClick={() => undefined}
           >
             <Text role="bodyStrong" measured={false}>Privacy & data</Text>
-            <Text role="caption" tone="faint" measured={false}>Nothing is uploaded or sent in this demo</Text>
+            <Text role="caption" tone="faint" measured={false}>Everything stays on this device — nothing is uploaded, sent, or stored.</Text>
           </HairlineRow>
         </HairlineList>
       </Stack>
+
+      <LanguageBottomSheet
+        open={langOpen}
+        selected={selectedLanguage}
+        onClose={() => setLangOpen(false)}
+        onSelect={(code) => {
+          /* One language truth: the UI preference AND the engine move together
+             (P0-3/P1-6 — language was unreachable after onboarding). */
+          setSelectedLanguage(code);
+          if (isPreparedLanguage(code)) setLanguage(code);
+          setLangOpen(false);
+        }}
+      />
 
       <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
         LokAI provides legal information, not legal advice.

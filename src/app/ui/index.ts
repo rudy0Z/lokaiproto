@@ -63,6 +63,8 @@ export {
   Skeleton,
   StageTransition,
   NumberTicker,
+  StreamText,
+  UserBubble,
   useHaptic,
   useMotionStyles,
 } from './motion';

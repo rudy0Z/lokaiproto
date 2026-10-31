@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>LokAI — Devanagari ल monogram</title>
+  <g id="tile">
+    <rect width="512" height="512" rx="143" fill="#0B1B32"/>
+  </g>
+  <g id="glyph" fill="none" stroke="#FBF9F3" stroke-width="60" stroke-linecap="round" stroke-linejoin="round">
+    <path id="shirorekha" d="M128 154 H310"/>
+    <path id="stem" d="M128 154 V364"/>
+    <path id="bowl" d="M128 154 C222 154 276 200 280 252 C284 306 244 364 192 364 H128"/>
+  </g>
+  <g id="accent">
+    <circle cx="384" cy="154" r="32" fill="#E27A24"/>
+  </g>
+</svg>

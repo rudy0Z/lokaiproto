@@ -23,7 +23,61 @@ export interface CatalogGroup {
   entries: CatalogEntry[];
 }
 
+/**
+ * The canonical consumer opener, URL-encoded. This is the exact input the
+ * engine routes to the clarify middle, so every capture link below starts
+ * from the same conversation a real visitor has.
+ */
+const CONSUMER_ASK =
+  'I%20bought%20a%20mixer%20grinder%20for%20%E2%82%B98%2C999.%20It%20arrived%20damaged%20and%20the%20seller%20refused%20a%20refund.%20What%20can%20I%20do%3F';
+
 export const DEV_CATALOG: CatalogGroup[] = [
+  {
+    /*
+     * The four trust moments, as live states rather than mockups.
+     *
+     * These are the surfaces the case study argues about, and until this pass
+     * none of them were reachable without clicking through the conversation by
+     * hand — which is why they were never in the catalog, and why a reviewer
+     * could read the claim but not see it. `?then=<nextTurnId>` answers the
+     * clarify in the same breath as the `?ask=`, so the states behind the
+     * question are one link each.
+     */
+    title: 'Mobile · the trust moments',
+    note: 'The four surfaces no competitor ships. Each is a real in-app state.',
+    entries: [
+      {
+        label: 'Answer, being written',
+        path: `/mobile/home?ask=${CONSUMER_ASK}`,
+        note: 'Zone 1 reveals word by word with a solid caret; the composer carries the working state',
+      },
+      {
+        label: 'The full answer + fact gate',
+        path: `/mobile/home?ask=${CONSUMER_ASK}&then=consumer-explain`,
+        note: 'Ground line, "what would change this answer", and in-stream fact confirmation',
+      },
+      {
+        label: 'A refusal that quotes you',
+        path: '/mobile/home?ask=I%20think%20the%20seller%20committed%20fraud',
+        note: 'The stop names the gate and quotes the word in your message that fired it',
+      },
+      {
+        label: 'A document, read in the chat',
+        path: '/mobile/home?doc=bmc-property-tax',
+        note: 'A notice dropped into the composer is interpreted in the same conversation',
+      },
+      {
+        label: 'Disclosed gap, not a guess',
+        path: `/mobile/home?ask=${CONSUMER_ASK}&then=source-gap-disclose`,
+        note: 'No official record to check — says so instead of answering anyway',
+      },
+      {
+        label: 'Outside the window',
+        path: `/mobile/home?ask=${CONSUMER_ASK}&then=statute-expiry-stop`,
+        note: 'Refusal that preserves the work and hands over the packet',
+      },
+    ],
+  },
   {
     title: 'Mobile · core journey',
     note: 'The built consumer-refund flow, stage by stage.',

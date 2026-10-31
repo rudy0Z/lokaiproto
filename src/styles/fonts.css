@@ -5,6 +5,15 @@
    `full.css` carries the wght + opsz + SOFT + WONK axes; the softening values
    live on the editorial TYPE roles (shared.tsx) via font-variation-settings. */
 @import '@fontsource-variable/fraunces/full.css';
+/* Law register — Instrument Serif (Vellum direction, 2026-09-28).
+   The serif is demoted from the page voice to THE LAW SPEAKING only:
+   answer zone 1 and the refusal sentence. Instrument Serif is a modern
+   high-contrast documentary face — rare on purpose, so its appearance
+   carries meaning. Fraunces stays loaded for legacy call sites during
+   the migration and as the fallback. Self-hosted @fontsource, same
+   determinism contract as every other face here. */
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
 /* UI sans — Hanken Grotesk (2026-08-27), replacing Inter.
    Inter is the default AI-generated UI face — instantly legible AS the default,
    which is exactly the generic tell we're removing. Hanken Grotesk is a warm,
@@ -16,6 +25,7 @@
 @import '@fontsource/hanken-grotesk/latin-500.css';
 @import '@fontsource/hanken-grotesk/latin-600.css';
 @import '@fontsource/hanken-grotesk/latin-700.css';
+@import '@fontsource/hanken-grotesk/latin-800.css';
 @import '@fontsource/jetbrains-mono/latin-400.css';
 @import '@fontsource/jetbrains-mono/latin-500.css';
 @import '@fontsource/jetbrains-mono/latin-600.css';

@@ -43,4 +43,28 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
+
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@phosphor-icons')) {
+              return 'vendor-phosphor';
+            }
+            if (id.includes('@animateicons')) {
+              return 'vendor-animateicons';
+            }
+            if (id.includes('react-dom') || id.includes('react-router') || id.includes('/node_modules/react/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('motion')) {
+              return 'vendor-motion';
+            }
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 }))

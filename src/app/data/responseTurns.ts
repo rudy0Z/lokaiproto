@@ -37,6 +37,10 @@ export interface ExplainPayload {
   nextSteps: string[];
   cta: string;
   glossaryIds?: string[];
+  /** Zone 4 (DECISION-INTERACTION §4-S2): the structural "what this doesn't
+   *  cover" line — present whenever groundedClaims < totalClaims, naming the
+   *  exact claim that lacks a source. Never a generic disclaimer. */
+  doesntCover?: string;
 }
 
 export interface ClarifyPayload {
@@ -83,9 +87,23 @@ export type TurnPayload =
   | { mode: 'progress'; data: ProgressPayload }
   | { mode: 'recover'; data: RecoverPayload };
 
+/**
+ * Which matter an answer belongs to.
+ *
+ * Needed because `scenarioId` does NOT identify the matter: the notice
+ * interpretation is prepared inside the consumer scenario (it is the same
+ * demo journey), so `notice-explain` carries `scenarioId: 'consumer'`. Any
+ * surface that must say something true about *this* subject — the
+ * "what would change this answer" conditions, the consumer fact gate —
+ * has to ask this, not the scenario.
+ */
+export type ResponseMatter = 'consumer' | 'notice';
+
 export interface ResponseTurn {
   id: string;
   scenarioId: string;
+  /** Defaults to 'consumer' when absent (see `matterOf`). */
+  matter?: ResponseMatter;
   mode: ResponseMode;
   title: string;
   emotionalIntent: EmotionalIntent;
@@ -162,6 +180,8 @@ export const PREPARED_TURNS: ResponseTurn[] = [
         ],
         cta: 'Prepare demand notice',
         glossaryIds: ['deficiency', 'legalNotice', 'districtCommission'],
+        doesntCover:
+          'One claim above is not yet sourced: whether the invoice date or the seller-chat date is the one the law counts. That date sets your two-year window, so confirm it before filing.',
       },
     },
   },
@@ -475,8 +495,42 @@ export const PREPARED_TURNS: ResponseTurn[] = [
     },
   },
   {
+    /* A document with no claim to interpret still gets a real answer.
+     *
+     * Before this, `sendDocument` sent the same fixed sentence for every
+     * attachment, so the engine matched the notice intent and a payment
+     * receipt came back with the property-tax notice's answer — deadline,
+     * ward office and all. The paper on screen and the paper in the answer
+     * were different documents. The document now decides its own reading. */
+    id: 'receipt-filed',
+    scenarioId: 'consumer',
+    mode: 'confirm',
+    title: 'Receipt filed',
+    emotionalIntent: 'quiet_ack',
+    trigger: /receipt|payment receipt|filed as evidence/i,
+    language: 'en',
+    citations: [],
+    groundedClaims: 0,
+    totalClaims: 0,
+    /* True, and deliberately so: nothing here refuses anything. The fact
+       gate is still the authority on drafting (G8), so a receipt cannot
+       unlock a draft that the facts have not. */
+    draftAllowed: true,
+    payload: {
+      mode: 'confirm',
+      data: {
+        acknowledgement:
+          'Filed as evidence. This is a payment receipt, so there is no deadline or claim to act on. It is saved to this matter’s documents.',
+        nextHint: 'Nothing else is needed for this one.',
+      },
+    },
+  },
+  {
     id: 'notice-explain',
     scenarioId: 'consumer',
+    /* A different document, and therefore a different matter: this answer is
+       about the BMC property-tax notice, not the damaged mixer. */
+    matter: 'notice',
     mode: 'explain',
     title: 'Sample notice explained',
     emotionalIntent: 'relief_without_certainty',
@@ -511,6 +565,41 @@ export const PREPARED_TURNS: ResponseTurn[] = [
     },
   },
   {
+    /* The honesty stop (behavioral audit T18 / P0-2): an input typed in a
+       script with no prepared pack lands here — G0_SCRIPT in the engine —
+       instead of an English answer wearing a smile. The four prepared
+       languages are named in their own scripts; the stop copy itself stays
+       English because writing it in the unprepared language is exactly what
+       the prototype cannot honestly do. */
+    id: 'language-stop',
+    scenarioId: 'out_of_scope',
+    mode: 'stop',
+    title: 'This language is not prepared yet',
+    emotionalIntent: 'protective_stop',
+    trigger: /నేను|আমি|મેં|ਮੈਨੇ|ನಾನು|ഞാൻ|ମୁଁ/u,
+    language: 'en',
+    citations: [],
+    groundedClaims: 0,
+    totalClaims: 0,
+    draftAllowed: false,
+    payload: {
+      mode: 'stop',
+      data: {
+        reason:
+          'This prototype has prepared answers in English, Hindi, Marathi, and Tamil only. It will not pretend in another language — a wrong legal answer is worse than none.',
+        preservedSummary: 'Nothing you wrote was sent or stored. You can continue in any prepared language right now.',
+        stillAvailable: [
+          'Continue in English',
+          'हिन्दी में जारी रखें',
+          'मराठीत पुढे जा',
+          'தமிழில் தொடரவும்',
+          'Talk to a person — National Consumer Helpline 1915 (free)',
+        ],
+        systemsNote: 'The language picker (top bar) switches the whole conversation, including stop screens.',
+      },
+    },
+  },
+  {
     id: 'voice-confirm-transcript',
     scenarioId: 'consumer',
     mode: 'confirm',
@@ -535,6 +624,12 @@ export const PREPARED_TURNS: ResponseTurn[] = [
 
 export function getTurnById(id: string): ResponseTurn | undefined {
   return PREPARED_TURNS.find((t) => t.id === id);
+}
+
+/** The matter an answer belongs to. Defaults to the consumer journey, which
+ *  is every prepared turn except the notice interpretation. */
+export function matterOf(turn: Pick<ResponseTurn, 'matter'>): ResponseMatter {
+  return turn.matter ?? 'consumer';
 }
 
 export function getTurnsForScenario(scenarioId: string): ResponseTurn[] {

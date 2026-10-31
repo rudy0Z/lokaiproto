@@ -9,8 +9,10 @@ import {
 import { MobileRouteCanvas } from './MobileHome';
 import { AppScreen } from '../../components/mobile/AppScreen';
 import { ExhibitPaper } from '../../components/mobile/ExhibitPaper';
+import { MatterFolder } from '../../components/mobile/MatterFolder';
 import { Sheet } from '../../components/Sheet';
 import { getEvidenceLocker, type EvidenceItem } from '../../data/caseWorkflow';
+import { getPreparedDocumentForExhibit } from '../../data/noticeInterpretation';
 import { EVIDENCE_STATUS_VIEW } from '../../data/statusVocabulary';
 import { useConversations } from '../../context/ConversationContext';
 
@@ -26,10 +28,12 @@ import { useConversations } from '../../context/ConversationContext';
  *
  * Reference read (product owner's decks): date/case grouping, a left rail, and
  * documents as real paper objects rather than icon rows. Taken: the paper
- * object (`ExhibitPaper`) and case grouping. Rejected: the glossy 3D folder
- * (skeuomorphic, wrong register for legal) and folder cards (generic). There is
- * one matter today, so grouping shows as one titled section rather than a
- * folder grid — the structure is ready for more matters without a redesign.
+ * object (`ExhibitPaper`) and case grouping. The 2026-08-26 pass also rejected
+ * a "glossy 3D folder" as skeuomorphic for the flat-paper register — that
+ * rejection is superseded 2026-09-28 by the Vellum direction (owner-approved):
+ * `MatterFolder` is the restrained, paper-toned descendant of that idea, now
+ * the screen's hero object. One matter today shows as one folder; the
+ * structure holds for more matters without a redesign.
  *
  * States (L1 — only the exception gets a fill): `uploaded` plain, `missing` a
  * dashed placeholder with a quiet add, `conflicting` the one filled row. That
@@ -122,7 +126,9 @@ function ExhibitSheet({ open, item, refId, onClose }: {
   open: boolean; item: EvidenceItem | null; refId: string; onClose: () => void;
 }) {
   const [view, setView] = useState<'plain' | 'original'>('plain');
+  const navigate = useNavigate();
   if (!item) return null;
+  const prepared = getPreparedDocumentForExhibit(item.id);
 
   return (
     <Sheet open={open} onClose={onClose} label={item.label} contain maxHeight="82%">
@@ -179,13 +185,47 @@ function ExhibitSheet({ open, item, refId, onClose }: {
             </Text>
           </Stack>
         ) : (
-          <Row gap={4} align="flex-start">
-            <ExhibitPaper kind={item.kind} status={item.status} width={96} />
-            <Text tone="quiet" style={{ flex: 1 }}>
-              The full document opens in the notice reader, where each figure links
-              back to the exact line it was read from.
-            </Text>
-          </Row>
+          <Stack gap={3}>
+            <Row gap={4} align="flex-start">
+              <ExhibitPaper kind={item.kind} status={item.status} width={96} />
+              <Text tone="quiet" style={{ flex: 1 }}>
+                The original stays with the prepared notice example — LokAI never stores what you attach.
+              </Text>
+            </Row>
+            {/* The connected path: a document's interpretation belongs in the
+                conversation it is relevant to, not in a separate reader you
+                have to remember you opened. The reader stays available as the
+                quiet action for when you want the original side by side.
+
+                Both doors route by PREPARED id, not by exhibit id — the two
+                namespaces are different, and routing by exhibit id sent the
+                reader to a deep link that resolved to nothing. When there is
+                no prepared reading, neither door renders and the sheet says so,
+                because the sheet's own plain-words tab IS the reading here. */}
+            {prepared ? (
+              <>
+                <Button
+                  size="md"
+                  onClick={() => navigate(`/mobile/home?doc=${prepared.id}`)}
+                >
+                  Ask about this in chat
+                </Button>
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  align="start"
+                  onClick={() => navigate(`/mobile/notice?doc=${prepared.id}`)}
+                >
+                  Open the original reader
+                </Button>
+              </>
+            ) : (
+              <Text role="caption" tone="quiet" measured={false}>
+                This one has no separate reading to open — what LokAI can say about
+                it is above, on the plain-words side.
+              </Text>
+            )}
+          </Stack>
         )}
       </Stack>
     </Sheet>
@@ -221,32 +261,28 @@ function DocumentsArtboard() {
           is not stated twice). One quiet summary line under it — not a card,
           not a meter. */}
       <Stack gap={4}>
-        {/* The matter as a folder — documents are grouped case-wise, so the
-            header is the case and the exhibits below belong to it. One matter
-            today shows as one folder; the structure holds for more. */}
-        <Row gap={3} align="center">
-          <span style={{
-            width: 44, height: 44, borderRadius: LAYOUT.radius.panel,
-            background: T.anchorTint, color: T.anchor,
-            display: 'grid', placeItems: 'center', flexShrink: 0,
-          }}>
-            <IconFolder size={ICON.row} />
-          </span>
-          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
-            <Text role="bodyStrong" measured={false}>{active?.title ?? 'Consumer refund'}</Text>
-            <Text role="caption" tone="quiet" measured={false}>
-              <Amount>{gathered}</Amount> gathered
-              {flagged ? <> · <Amount tone="flag">{flagged}</Amount> to check</> : null}
-              {optional ? <> · <Amount tone="faint">{optional}</Amount> optional</> : null}
-            </Text>
-          </Stack>
-        </Row>
-        <Rule />
-        <HairlineList>
-          {sorted.map(({ item, ref }) => (
-            <ExhibitRow key={item.id} item={item} refId={ref} onOpen={() => setOpenId(item.id)} />
-          ))}
-        </HairlineList>
+      {/* The matter as a folder — documents are grouped case-wise, so the
+          hero IS the case folder (MatterFolder: tap swings the flap, the
+          first exhibits fan out, tap a card to open its sheet). The counts
+          stay one quiet line beneath — not a card, not a meter. */}
+      <Stack gap={3} align="center">
+        <MatterFolder
+          items={referenced.slice(0, 3).map(({ item, ref }) => ({ id: item.id, reference: ref, label: item.label }))}
+          label={`${active?.title ?? 'Consumer refund'} · ${referenced.length} documents — tap to open`}
+          onOpenExhibit={(id) => setOpenId(id)}
+        />
+        <Text role="caption" tone="quiet" measured={false}>
+          <Amount>{gathered}</Amount> gathered
+          {flagged ? <> · <Amount tone="flag">{flagged}</Amount> to check</> : null}
+          {optional ? <> · <Amount tone="faint">{optional}</Amount> optional</> : null}
+        </Text>
+      </Stack>
+      <Rule />
+      <HairlineList>
+        {sorted.map(({ item, ref }) => (
+          <ExhibitRow key={item.id} item={item} refId={ref} onOpen={() => setOpenId(item.id)} />
+        ))}
+      </HairlineList>
       </Stack>
 
       {/* Add a document — a prepared pick, never a real file input (the demo

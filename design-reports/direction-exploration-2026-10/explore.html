@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LokAI — three directions on the core screen</title>
+<link rel="stylesheet" href="file:///D:/Downloads/app-designer/App%20Designer/app-designer/assets/device.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Baloo+2:wght@400..800&family=Martian+Mono:wght@300..700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Geist+Mono:wght@300..700&display=swap">
+<style>
+  /* ============ shared shell ============ */
+  .screen { container-type: size; }
+  .screen .body {
+    position: absolute; inset: calc(var(--safe-top) + 4px) 0 calc(var(--safe-bottom) + 8px);
+    display: flex; flex-direction: column;
+  }
+  .hd { display: flex; align-items: flex-start; gap: 10px; padding: 6px 18px 0; flex: 0 0 auto; }
+  .hd .grow { flex: 1; min-width: 0; }
+  .iconbtn {
+    width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center;
+    background: none; border: none; padding: 0; cursor: pointer; color: inherit;
+  }
+  .iconbtn svg { display: block; }
+  .conv { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 18px 8px;
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
+  }
+  .pin { flex: 0 0 auto; position: relative; }
+  .door {
+    display: flex; align-items: center; gap: 6px; margin: 0 18px; padding: 10px 0 7px;
+    background: none; border: none;
+    cursor: pointer; width: calc(100% - 36px);
+  }
+  .composer { display: flex; align-items: center; gap: 4px; margin: 2px 14px 8px; padding: 6px 6px 6px 8px; }
+  .cfield { flex: 1; min-width: 0; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+  .send {
+    width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center;
+    border: none; cursor: pointer;
+  }
+  .cta { display: block; width: calc(100% - 36px); margin: 0 18px; height: 50px; border: none; cursor: pointer; }
+  button { font: inherit; }
+  p, h1, h2 { margin: 0; }
+  .door svg { flex: 0 0 auto; }
+
+  /* ============ A · REGISTERED POST, AD ============ */
+  .a {
+    --paper: #E6EAE4; --card: #F8F9F5; --ink: #20272E; --ink2: #55606B;
+    --rule: rgba(32,39,46,.18); --red: #A82C20; --red-fill: #B5301F;
+    background: var(--paper); color: var(--ink);
+    font-family: "Archivo", system-ui, sans-serif;
+  }
+  .a .hd h1 {
+    font-size: 24px; line-height: 1.04; font-weight: 800; font-stretch: 118%;
+    text-transform: uppercase; letter-spacing: -0.012em; padding-top: 7px;
+  }
+  .a .hd .jd { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink2); margin-top: 5px; }
+  .a .airmail { height: 7px; margin: 9px 18px 0; flex: 0 0 auto;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='7'><rect width='26' height='7' fill='%23E6EAE4'/><path d='M-7 7 L7 0 L13 0 L-1 7 Z' fill='%23A82C20'/><path d='M7 7 L21 0 L27 0 L13 7 Z' fill='%232C4A78'/></svg>");
+    background-repeat: repeat-x; background-size: 26px 7px;
+  }
+  .a .umsg { margin: 12px 0 0; padding-left: 12px; border-left: 3px solid var(--rule); }
+  .a .umsg p { font-style: italic; font-size: 15px; line-height: 1.42; }
+  .a .umsg .who { font-family: "IBM Plex Mono", monospace; font-style: normal; font-size: 12px; color: var(--ink2); margin-top: 5px; }
+  .a .z1 { margin-top: 14px; font-size: 15px; line-height: 1.45; }
+  .a .z1 strong { font-weight: 700; }
+  .a .z2 { margin-top: 10px; font-size: 15px; line-height: 1.45; }
+  .a .z2 .lead { font-weight: 800; font-stretch: 112%; text-transform: uppercase; font-size: 13px; letter-spacing: .04em; display: block; margin-bottom: 2px; }
+  .a .foil {
+    position: relative; margin: 16px 0 0; background: var(--card);
+    border: 1px solid var(--rule); border-top: none; border-radius: 3px;
+    padding: 16px 14px 12px; display: flex; gap: 14px; align-items: flex-start;
+  }
+  .a .foil .perf { position: absolute; top: -5px; left: 0; right: 0; height: 10px;
+    background-image: radial-gradient(circle at 5px 5px, var(--paper) 4px, transparent 4.5px);
+    background-size: 16px 10px; background-repeat: repeat-x;
+  }
+  .a .postmark { position: relative; flex: 0 0 88px; height: 88px; }
+  .a .postmark svg { position: absolute; inset: 0; }
+  .a .pm-txt {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; color: var(--red);
+  }
+  .a .pm-txt .num { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 28px; line-height: 1; }
+  .a .pm-txt .num small { font-size: 14px; font-weight: 500; }
+  .a .pm-txt .lbl { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; margin-top: 3px; }
+  .a .cites { flex: 1; min-width: 0; font-family: "IBM Plex Mono", monospace; }
+  .a .cites .act { font-size: 12px; font-weight: 600; }
+  .a .cites .ref { font-size: 12px; color: var(--ink2); margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--rule); }
+  .a .cites .verify { font-family: "Archivo", sans-serif; font-style: italic; font-size: 12px; color: var(--ink2); margin-top: 8px; }
+  .a .steps { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .a .steps li { display: flex; gap: 11px; }
+  .a .steps .n {
+    flex: 0 0 24px; height: 24px; border: 1.5px solid var(--red); border-radius: 50%;
+    display: grid; place-items: center; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; font-weight: 600; color: var(--red); margin-top: 1px;
+  }
+  .a .steps p { font-size: 14px; line-height: 1.38; }
+  .a .cta {
+    background: var(--red-fill); color: #F8F9F5; border-radius: 4px;
+    font-weight: 800; font-stretch: 118%; text-transform: uppercase;
+    font-size: 15px; letter-spacing: .04em;
+  }
+  .a .pin { background: var(--paper); }
+  .a .door { color: var(--ink2); font-size: 14px; font-weight: 500; }
+  .a .composer { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; color: var(--ink2); }
+  .a .cfield { font-size: 15px; }
+  .a .send { background: var(--red-fill); border-radius: 8px; color: #F8F9F5; }
+
+  /* ============ B · THE EVENING CLASS ============ */
+  .b {
+    --board: #233129; --tray: #1A241F; --chalk: #EDEBDD; --chalk2: rgba(237,235,221,.72);
+    --chalk3: rgba(237,235,221,.55); --yellow: #E8C55B;
+    background: var(--board); color: var(--chalk);
+    font-family: "Baloo 2", system-ui, sans-serif;
+  }
+  .b .hd h1 { font-size: 22px; line-height: 1.1; font-weight: 700; padding-top: 8px; }
+  .b .hd .jd { font-size: 13px; color: var(--chalk2); margin-top: 1px; font-weight: 500; }
+  .b .umsg { margin: 12px 0 0; padding-left: 12px; border-left: 3px solid var(--chalk3); }
+  .b .umsg .who { font-family: "Martian Mono", monospace; font-size: 11px; letter-spacing: .08em; color: var(--chalk3); margin-bottom: 3px; }
+  .b .umsg p { font-size: 15px; line-height: 1.42; color: var(--chalk); font-weight: 400; }
+  .b .z1 { margin-top: 14px; }
+  .b .z1 .aside { font-size: 15px; line-height: 1.42; color: var(--chalk2); }
+  .b .z1 .key {
+    display: block; margin: 6px 0 0; font-size: 28px; line-height: 1.14; font-weight: 700; color: var(--yellow);
+  }
+  .b .z1 .key svg { display: block; width: 100%; height: 9px; margin-top: 1px; }
+  .b .z1 .rest { font-size: 15px; line-height: 1.42; color: var(--chalk2); display: block; margin-top: 5px; }
+  .b .diagram { margin: 10px 0 0; position: relative; height: 76px; }
+  .b .diagram svg { position: absolute; inset: 0; }
+  .b .z2 { margin-top: 9px; font-size: 15px; line-height: 1.42; color: var(--chalk); }
+  .b .board-receipt { margin-top: 9px; position: relative; }
+  .b .board-receipt svg.frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .b .br-inner { position: relative; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 8px 11px; }
+  .b .br-count { font-family: "Martian Mono", monospace; font-size: 12px; font-weight: 600; color: var(--yellow); letter-spacing: .06em; }
+  .b .br-cites { font-family: "Martian Mono", monospace; font-size: 11px; color: var(--chalk2); }
+  .b .br-verify { position: relative; font-size: 12px; color: var(--chalk3); margin: 3px 11px 0; }
+  .b .steps { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .b .steps li { display: flex; gap: 11px; }
+  .b .steps .n {
+    flex: 0 0 24px; height: 24px; border: 2px solid var(--chalk3); border-radius: 50%;
+    display: grid; place-items: center; font-family: "Martian Mono", monospace;
+    font-size: 11px; color: var(--chalk); margin-top: 1px;
+  }
+  .b .steps p { font-size: 14px; line-height: 1.36; color: var(--chalk); }
+  .b .cta {
+    background: var(--yellow); color: #233129; border-radius: 12px;
+    font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 17px;
+  }
+  .b .pin { background: var(--board); }
+  .b .door { color: var(--chalk2); font-size: 14px; font-weight: 500; }
+  .b .composer { background: var(--tray); border-radius: 14px; color: var(--chalk3); }
+  .b .cfield { font-size: 15px; }
+  .b .send { background: var(--yellow); border-radius: 50%; color: #233129; }
+
+  /* ============ C · THE PAINTED PATH ============ */
+  .c {
+    --field: #EFA51E; --cardc: #FFF8EA; --inkc: #241A06; --ink2c: #4A3A14;
+    --cobalt: #2554C7;
+    background: var(--field); color: var(--inkc);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  }
+  .c .hd h1 {
+    font-family: "Geist Mono", monospace; font-size: 12px; font-weight: 600;
+    letter-spacing: .09em; text-transform: uppercase; padding-top: 11px; line-height: 1.55;
+  }
+  .c .path { margin: 6px 14px 0; position: relative; height: 100px; flex: 0 0 auto; }
+  .c .path svg { position: absolute; inset: 0; }
+  .c .umsg {
+    margin: 8px 0 0; background: var(--cardc); border-radius: 14px;
+    padding: 11px 13px; box-shadow: 0 1px 0 rgba(36,26,6,.25);
+  }
+  .c .umsg p { font-size: 15px; line-height: 1.42; }
+  .c .umsg .who { font-family: "Geist Mono", monospace; font-size: 11px; color: var(--ink2c); margin-top: 5px; }
+  .c .z1 { margin-top: 12px; }
+  .c .z1 .poster {
+    display: block; font-size: 31px; line-height: 1.04; font-weight: 800; font-stretch: 108%;
+    letter-spacing: -0.02em; text-wrap: balance;
+  }
+  .c .z1 .rest { display: block; margin-top: 7px; font-size: 15px; line-height: 1.42; }
+  .c .z2 { margin-top: 9px; font-size: 15px; line-height: 1.42; }
+  .c .receipt { margin-top: 11px; display: flex; align-items: flex-start; gap: 10px; }
+  .c .rstamp {
+    flex: 0 0 auto; background: var(--inkc); color: var(--field); border-radius: 6px;
+    font-family: "Geist Mono", monospace; font-size: 12px; font-weight: 600;
+    padding: 6px 8px; letter-spacing: .05em; white-space: nowrap;
+  }
+  .c .rcites { font-family: "Geist Mono", monospace; font-size: 11px; line-height: 1.55; }
+  .c .rcites .verify { font-family: "Bricolage Grotesque", sans-serif; font-style: italic; color: var(--ink2c); }
+  .c .steps { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .c .steps li { display: flex; gap: 11px; }
+  .c .steps .n {
+    flex: 0 0 24px; height: 24px; background: var(--inkc); color: var(--field); border-radius: 7px;
+    display: grid; place-items: center; font-family: "Geist Mono", monospace; font-size: 12px;
+    font-weight: 600; margin-top: 1px;
+  }
+  .c .steps p { font-size: 14px; line-height: 1.36; }
+  .c .cta {
+    background: var(--cobalt); color: #FFF8EA; border-radius: 25px;
+    font-weight: 700; font-size: 16px; font-stretch: 105%;
+  }
+  .c .pin { background: var(--field); }
+  .c .door { color: var(--ink2c); font-size: 14px; font-weight: 600; }
+  .c .composer { background: var(--cardc); border-radius: 24px; color: var(--ink2c); box-shadow: 0 1px 0 rgba(36,26,6,.25); }
+  .c .cfield { font-size: 15px; }
+  .c .send { background: var(--cobalt); border-radius: 50%; color: #FFF8EA; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ A · REGISTERED POST, AD ════════════════ -->
+<section class="screen a" data-name="A-registered-post" data-time="11:20">
+  <div class="body">
+    <header class="hd">
+      <button class="iconbtn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h16M3 11h16M3 16h10"/></svg>
+      </button>
+      <div class="grow">
+        <h1>Refund for a damaged mixer</h1>
+        <p class="jd">MUMBAI SUBURBAN, MH · OPENED 8 JUNE</p>
+      </div>
+      <button class="iconbtn" aria-label="More">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4.5" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="10" cy="15.5" r="1.7"/></svg>
+      </button>
+    </header>
+    <div class="airmail" aria-hidden="true"></div>
+
+    <div class="conv" data-scrolls>
+      <div class="umsg">
+        <p>“I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a refund. What can I do?”</p>
+        <p class="who">PRIYA · TODAY 11:14</p>
+      </div>
+
+      <p class="z1">When a product arrives damaged, that can count as a consumer issue. <strong>You can ask the seller for repair, replacement, or a refund.</strong> If they ignore a fair written ask, you can follow up with a legal notice.</p>
+
+      <p class="z2"><span class="lead">In your case</span>Your mixer arrived damaged and the seller refused a replacement. The invoice, damage photos, and written refusal give you a solid next step.</p>
+
+      <div class="foil">
+        <div class="perf" aria-hidden="true"></div>
+        <div class="postmark">
+          <svg viewBox="0 0 88 88" fill="none" aria-hidden="true">
+            <circle cx="44" cy="44" r="41" stroke="#A82C20" stroke-width="2.5"/>
+            <circle cx="44" cy="44" r="30" stroke="#A82C20" stroke-width="1.4"/>
+          </svg>
+          <div class="pm-txt"><span class="num">4<small>/5</small></span><span class="lbl">SOURCED</span></div>
+        </div>
+        <div class="cites">
+          <p class="act">Consumer Protection Act, 2019</p>
+          <p class="ref">S.2(10) — defect in goods</p>
+          <p class="ref">S.35 — complaint before commission</p>
+          <p class="verify">Example — verify with a lawyer</p>
+        </div>
+        <svg width="24" height="70" viewBox="0 0 24 70" aria-hidden="true" style="flex:0 0 24px;margin-top:4px">
+          <g fill="#20272E">
+            <rect x="2" width="3" height="70"/><rect x="7" width="1.5" height="70"/><rect x="11" width="4" height="70"/><rect x="17" width="1.5" height="70"/><rect x="21" width="2.5" height="70"/>
+          </g>
+        </svg>
+      </div>
+
+      <ol class="steps">
+        <li><span class="n">1</span><p>Send a written demand notice by registered post with acknowledgement due (AD), and keep the postal receipt.</p></li>
+        <li><span class="n">2</span><p>Save the invoice, WhatsApp or seller-chat screenshots, platform order or ticket ID, defect photos or videos, and warranty details together.</p></li>
+        <li><span class="n">3</span><p>If the seller ignores the notice, prepare a consumer complaint — you can use e-Daakhil, or call National Consumer Helpline (1915), or approach the District Consumer Commission.</p></li>
+      </ol>
+    </div>
+
+    <div class="pin" data-float>
+      <button class="door">Read a notice you can’t understand
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
+      <button class="cta">Prepare demand notice</button>
+    </div>
+    <div class="composer" data-float>
+      <button class="iconbtn" aria-label="Attach" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 12.2 14 6.8a3 3 0 0 1 4.2 4.2l-6.9 6.9a5 5 0 0 1-7.1-7.1L10.7 4a3.4 3.4 0 0 1 4.8 4.8"/></svg>
+      </button>
+      <button class="iconbtn" aria-label="Dictate" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="8" y="2.5" width="6" height="11" rx="3"/><path d="M4.5 10.5a6.5 6.5 0 0 0 13 0M11 17v3"/></svg>
+      </button>
+      <div class="cfield">Describe what happened…</div>
+      <button class="send" aria-label="Send">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16V4.5M5 9.5 10 4.5l5 5"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ B · THE EVENING CLASS ════════════════ -->
+<section class="screen b" data-name="B-evening-class" data-time="19:05" data-chrome="light">
+  <div class="body">
+    <header class="hd">
+      <button class="iconbtn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h16M3 11h16M3 16h10"/></svg>
+      </button>
+      <div class="grow">
+        <h1>Refund for a damaged mixer</h1>
+        <p class="jd">Mumbai Suburban, Maharashtra</p>
+      </div>
+      <button class="iconbtn" aria-label="More">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4.5" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="10" cy="15.5" r="1.7"/></svg>
+      </button>
+    </header>
+
+    <div class="conv" data-scrolls>
+      <div class="umsg">
+        <p class="who">PRIYA ASKED</p>
+        <p>“I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a refund. What can I do?”</p>
+      </div>
+
+      <p class="z1">
+        <span class="aside">When a product arrives damaged, that can count as a consumer issue.</span>
+        <span class="key">You can ask for repair, replacement, or a refund.
+          <svg viewBox="0 0 300 10" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M4 6 C60 2, 140 8, 254 4" stroke="#E8C55B" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".85"/>
+            <path d="M10 8 C80 5, 170 10, 248 7" stroke="#E8C55B" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".45"/>
+          </svg>
+        </span>
+        <span class="rest">If they ignore a fair written ask, you can follow up with a legal notice.</span>
+      </p>
+
+      <div class="diagram" aria-hidden="true">
+        <svg viewBox="0 0 366 76" fill="none">
+          <g stroke="#EDEBDD" stroke-opacity=".8" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 4">
+            <path d="M98 21 C120 13, 140 13, 160 21"/>
+            <path d="M234 38 C242 41, 248 43, 254 46"/>
+          </g>
+          <g stroke="#EDEBDD" stroke-opacity=".85" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="12" y="8" width="84" height="26" rx="6" transform="rotate(-1 54 21)"/>
+            <rect x="162" y="10" width="70" height="26" rx="6" transform="rotate(1 197 23)"/>
+            <rect x="236" y="44" width="94" height="28" rx="6" transform="rotate(-1 283 58)"/>
+          </g>
+          <g font-family="'Baloo 2', sans-serif" font-size="13" font-weight="600" fill="currentColor">
+            <text x="24" y="26" style="color:#EDEBDD">You send</text>
+            <text x="172" y="28" style="color:#EDEBDD">Seller</text>
+            <text x="246" y="63" style="color:#EDEBDD">Commission</text>
+          </g>
+          <g font-family="'Martian Mono', monospace" font-size="11" fill="currentColor">
+            <text x="24" y="56" style="color:rgba(237,235,221,.55)">AD · KEEP RECEIPT</text>
+            <text x="150" y="72" style="color:rgba(237,235,221,.55)">IGNORED?</text>
+          </g>
+          <g stroke="#E8C55B" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9">
+            <path d="M220 40 l9 5 -9 5"/>
+          </g>
+        </svg>
+      </div>
+
+      <p class="z2">Your mixer arrived damaged and the seller refused a replacement. The invoice, damage photos, and written refusal give you a solid next step.</p>
+
+      <div class="board-receipt">
+        <svg class="frame" viewBox="0 0 340 60" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="4" y="4" width="332" height="52" rx="8" fill="none" stroke="#EDEBDD" stroke-opacity=".5" stroke-width="1.6" stroke-dasharray="7 4" stroke-linecap="round"/>
+        </svg>
+        <div class="br-inner">
+          <span class="br-count">4 OF 5 SOURCED</span>
+          <span class="br-cites">CPA 2019 · S.2(10) defect · S.35 complaint</span>
+        </div>
+        <p class="br-verify">Example — verify with a lawyer</p>
+      </div>
+
+      <ol class="steps">
+        <li><span class="n">1</span><p>Send a written demand notice by registered post with acknowledgement due (AD), and keep the postal receipt.</p></li>
+        <li><span class="n">2</span><p>Save the invoice, WhatsApp or seller-chat screenshots, platform order or ticket ID, defect photos or videos, and warranty details together.</p></li>
+        <li><span class="n">3</span><p>If the seller ignores the notice, prepare a consumer complaint — you can use e-Daakhil, or call National Consumer Helpline (1915), or approach the District Consumer Commission.</p></li>
+      </ol>
+    </div>
+
+    <div class="pin" data-float>
+      <button class="door">Read a notice you can’t understand
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
+      <button class="cta">Prepare demand notice</button>
+    </div>
+    <div class="composer" data-float>
+      <button class="iconbtn" aria-label="Attach" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 12.2 14 6.8a3 3 0 0 1 4.2 4.2l-6.9 6.9a5 5 0 0 1-7.1-7.1L10.7 4a3.4 3.4 0 0 1 4.8 4.8"/></svg>
+      </button>
+      <button class="iconbtn" aria-label="Dictate" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="8" y="2.5" width="6" height="11" rx="3"/><path d="M4.5 10.5a6.5 6.5 0 0 0 13 0M11 17v3"/></svg>
+      </button>
+      <div class="cfield">Describe what happened…</div>
+      <button class="send" aria-label="Send">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16V4.5M5 9.5 10 4.5l5 5"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ C · THE PAINTED PATH ════════════════ -->
+<section class="screen c" data-name="C-painted-path" data-time="17:40">
+  <div class="body">
+    <header class="hd">
+      <button class="iconbtn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h16M3 11h16M3 16h10"/></svg>
+      </button>
+      <div class="grow">
+        <h1>Refund for a damaged mixer<br>Mumbai Suburban, MH</h1>
+      </div>
+      <button class="iconbtn" aria-label="More">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4.5" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="10" cy="15.5" r="1.7"/></svg>
+      </button>
+    </header>
+
+    <div class="path" aria-hidden="true">
+      <svg viewBox="0 0 374 100" fill="none">
+        <path d="M34 32 C90 8, 140 54, 187 32 C234 10, 284 52, 340 32" stroke="#241A06" stroke-opacity=".9" stroke-width="2.4" stroke-dasharray="1 9" stroke-linecap="round"/>
+        <g>
+          <rect x="10" y="10" width="48" height="48" rx="12" fill="#241A06"/>
+          <text x="34" y="40" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="16" font-weight="600" fill="currentColor" style="color:#EFA51E">1</text>
+          <rect x="86" y="10" width="48" height="48" rx="12" fill="#241A06"/>
+          <text x="110" y="40" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="16" font-weight="600" fill="currentColor" style="color:#EFA51E">2</text>
+          <rect x="162" y="10" width="48" height="48" rx="12" fill="#241A06"/>
+          <text x="186" y="40" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="16" font-weight="600" fill="currentColor" style="color:#EFA51E">3</text>
+          <!-- square 4 IS the token: cobalt, ringed -->
+          <rect x="238" y="10" width="48" height="48" rx="12" fill="#2554C7" stroke="#FFF8EA" stroke-width="2.6"/>
+          <text x="262" y="40" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="16" font-weight="600" fill="currentColor" style="color:#FFF8EA">4</text>
+          <rect x="314" y="10" width="48" height="48" rx="12" fill="none" stroke="#241A06" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 4"/>
+          <text x="338" y="40" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="16" font-weight="600" fill="currentColor" style="color:#4A3A14">5</text>
+        </g>
+        <g font-family="'Geist Mono', monospace" font-size="11" fill="currentColor">
+          <text x="34" y="74" text-anchor="middle" style="color:#4A3A14">FACTS</text>
+          <text x="110" y="74" text-anchor="middle" style="color:#4A3A14">THE LAW</text>
+          <text x="186" y="74" text-anchor="middle" style="color:#4A3A14">MATCH</text>
+          <text x="262" y="74" text-anchor="middle" style="color:#241A06" font-weight="600">ANSWER</text>
+          <text x="338" y="74" text-anchor="middle" style="color:#4A3A14">NOTICE</text>
+          <text x="262" y="90" text-anchor="middle" style="color:#241A06">YOU ARE HERE</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="conv" data-scrolls style="padding:0 18px 8px">
+      <div class="umsg">
+        <p>“I bought a mixer grinder for ₹8,999. It arrived damaged and the seller refused a refund. What can I do?”</p>
+        <p class="who">PRIYA · 17:32</p>
+      </div>
+
+      <p class="z1">
+        <span class="poster">You can ask for repair, replacement, or a refund.</span>
+        <span class="rest">When a product arrives damaged, that can count as a consumer issue. If they ignore a fair written ask, you can follow up with a legal notice.</span>
+      </p>
+
+      <p class="z2">Your mixer arrived damaged and the seller refused a replacement. The invoice, damage photos, and written refusal give you a solid next step.</p>
+
+      <div class="receipt">
+        <span class="rstamp">4 OF 5 SOURCED</span>
+        <p class="rcites">CPA 2019 · S.2(10) — defect in goods<br>S.35 — complaint before commission<br><span class="verify">Example — verify with a lawyer</span></p>
+      </div>
+
+      <ol class="steps">
+        <li><span class="n">1</span><p>Send a written demand notice by registered post with acknowledgement due (AD), and keep the postal receipt.</p></li>
+        <li><span class="n">2</span><p>Save the invoice, WhatsApp or seller-chat screenshots, platform order or ticket ID, defect photos or videos, and warranty details together.</p></li>
+        <li><span class="n">3</span><p>If the seller ignores the notice, prepare a consumer complaint — you can use e-Daakhil, or call National Consumer Helpline (1915), or approach the District Consumer Commission.</p></li>
+      </ol>
+    </div>
+
+    <div class="pin" data-float>
+      <button class="door">Read a notice you can’t understand
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
+      <button class="cta">Prepare demand notice</button>
+    </div>
+    <div class="composer" data-float>
+      <button class="iconbtn" aria-label="Attach" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 12.2 14 6.8a3 3 0 0 1 4.2 4.2l-6.9 6.9a5 5 0 0 1-7.1-7.1L10.7 4a3.4 3.4 0 0 1 4.8 4.8"/></svg>
+      </button>
+      <button class="iconbtn" aria-label="Dictate" style="width:40px;flex-basis:40px">
+        <svg width="21" height="21" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="8" y="2.5" width="6" height="11" rx="3"/><path d="M4.5 10.5a6.5 6.5 0 0 0 13 0M11 17v3"/></svg>
+      </button>
+      <div class="cfield">Describe what happened…</div>
+      <button class="send" aria-label="Send">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16V4.5M5 9.5 10 4.5l5 5"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<script src="file:///D:/Downloads/app-designer/App%20Designer/app-designer/assets/device.js"></script>
+</body>
+</html>

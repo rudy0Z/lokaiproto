@@ -30,14 +30,20 @@ import {
   getNoticeAssessment,
   getVerificationFacts,
   factToVerification,
+  buildAuditTrail,
+  liveAuditEvents,
   type FailureKind,
   type FilingPacket,
   type NoticeAssessmentKind,
   type WorkflowStage,
 } from '../../data/caseWorkflow';
+import { RISK_VIEW } from '../../data/statusVocabulary';
 import { ARTBOARD } from '../../embed';
 import { DemandNoticePaper } from '../../components/mobile/DemandNoticePaper';
 import { MobileStopScreen } from '../../components/mobile/MobileStopScreen';
+import { QuickRecapPanel } from '../../components/mobile/FlashcardDeck';
+import { FLASHCARD_LABELS, getConsumerFlashcards } from '../../data/flashcards';
+import { Sheet } from '../../components/Sheet';
 import { MobileTopBar } from '../../components/mobile/MobileTopBar';
 import { MatterDrawer } from '../../components/mobile/MatterDrawer';
 import { useDrawer } from '../../context/DrawerContext';
@@ -85,7 +91,10 @@ const STAGE_ALIASES: Record<string, WorkflowStage> = {
 const STAGE_NAMES = new Set<string>([
   'intake', 'clarify', 'verify', 'triage', 'retrieve',
   'assess', 'plan', 'packet', 'escalation', 'failure', 'audit',
-] satisfies WorkflowStage[]);
+  /* 'triage' has a real renderer now (TriageView) — it shows the decision the
+     engine made, so the stage that carries the product's thesis is no longer
+     blank. The old fallback-to-intake behavior is gone. */
+] as string[]);
 
 function mapStage(value: string | null): WorkflowStage {
   if (!value) return 'intake';
@@ -95,7 +104,7 @@ function mapStage(value: string | null): WorkflowStage {
 }
 
 function nextStage(stage: WorkflowStage) {
-  const flow: WorkflowStage[] = ['intake', 'clarify', 'verify', 'assess', 'plan', 'packet', 'audit'];
+  const flow: WorkflowStage[] = ['intake', 'clarify', 'verify', 'triage', 'assess', 'plan', 'packet', 'audit'];
   const index = flow.indexOf(stage);
   return flow[Math.min(index + 1, flow.length - 1)];
 }
@@ -414,11 +423,102 @@ function ClarifyView({ onNext }: { onNext: () => void }) {
   );
 }
 
+/* ── The live audit trail (behavioral audit #1) ──────────────────────────────
+ *
+ * Was `<AuditTrailList events={workflow.auditTrail} />` — five invented
+ * events with invented clock times ("9:42 AM"), rendered on a product whose
+ * entire thesis is that its history is inspectable. The audit screen is the
+ * single worst place for theater, so it now projects the real DemoContext
+ * log: confirmations, corrections, decision receipts, refusals, approvals.
+ * Deterministic by construction (ordinal, never a clock).
+ *
+ * A fresh session's log is thin, so the prepared trail is offered beneath a
+ * labelled divider as an illustration of what a fuller matter records —
+ * never mixed into the live list, always captioned. */
+function LiveAuditTrail() {
+  const { auditEvents } = useDemo();
+  const live = liveAuditEvents(auditEvents);
+  const prepared = useMemo(() => buildAuditTrail(getConsumerWorkflowState('audit')), []);
+
+  return (
+    <Stack gap={4}>
+      <AuditTrailList events={live} />
+      <Stack gap={2}>
+        <Rule />
+        <Text role="meta" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+          Illustration — what a fuller matter records
+        </Text>
+        <AuditTrailList events={prepared} showHeading={false} />
+      </Stack>
+    </Stack>
+  );
+}
+
 const DEFAULT_ASSESSMENT_ZONES: [string, string][] = [
   ['What the rule means', 'The prepared source notes support asking for repair, replacement, or refund when a product arrives damaged.'],
   ['How it applies here', 'The invoice date, amount, damage photos, and seller refusal are present in this prepared example.'],
   ['What you can do next', 'Review a written complaint first. If the seller does not resolve it, check the filing route and source notes before using the draft.'],
 ];
+
+/* ── Triage (behavioral audit P1-2) ──────────────────────────────────────────
+ *
+ * This stage used to have NO renderer: `triage` sat in the WorkflowStage
+ * union with a label in getStageLabel and nothing to draw, so
+ * `?stage=triage` silently fell back to intake. The stage it stands for is
+ * the product's core move — "read the problem, classify it, decide what
+ * may happen next" — so leaving it empty was leaving the thesis blank.
+ *
+ * It renders the decision the engine actually made: the receipt's gate and
+ * rule, the policy tier in citizen words, and the one honest sentence.
+ * Everything shown is read from DemoContext. Nothing is authored here. */
+function TriageView({ onNext }: { onNext: () => void }) {
+  const { lastReceipt, facts } = useDemo();
+  const confirmed = facts.filter((f) => f.confirmedByUser).length;
+  const gateLabel = lastReceipt
+    ? lastReceipt.rule.replace(/_/g, ' ').toLowerCase()
+    : 'no decision yet';
+
+  return (
+    <Stack gap={4}>
+      <Stack gap={2}>
+        <Label>What LokAI read this as</Label>
+        <Text role="answer">This is a consumer issue about a product that arrived defective.</Text>
+      </Stack>
+
+      <Stack gap={2}>
+        <Text role="caption" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+          Classified by the decision layer — not guessed from your wording.
+        </Text>
+        <HairlineList>
+          <HairlineRow trailing={<Text role="caption" tone="quiet">{gateLabel}</Text>}>
+            <Text role="bodyStrong" measured={false}>Decision rule</Text>
+          </HairlineRow>
+          <HairlineRow
+            trailing={<Badge tone="ok">{RISK_VIEW.self_service.label}</Badge>}
+          >
+            <Text role="bodyStrong" measured={false}>How much help this needs</Text>
+          </HairlineRow>
+          <HairlineRow trailing={<Text role="caption" tone="quiet">{confirmed} of {facts.length}</Text>}>
+            <Text role="bodyStrong" measured={false}>Facts you confirmed</Text>
+          </HairlineRow>
+        </HairlineList>
+      </Stack>
+
+      <Stack gap={2}>
+        <Text tone="quiet">
+          {lastReceipt
+            ? lastReceipt.humanLine
+            : 'LokAI matched this to the prepared consumer-refund example.'}
+        </Text>
+        <Text role="caption" tone="faint" style={{ letterSpacing: 'normal', textTransform: 'none' }}>
+          Tap any turn’s “Why this response?” to see this decision again.
+        </Text>
+      </Stack>
+
+      <PrimaryButton onClick={onNext}>See the assessment</PrimaryButton>
+    </Stack>
+  );
+}
 
 function zonesFromTurn(turn: ResponseTurn | null): [string, string][] {
   if (!turn) return DEFAULT_ASSESSMENT_ZONES;
@@ -783,17 +883,24 @@ function CaseArtboard() {
     progressIndex,
     addAuditEvent,
     selectScenario,
+    language,
   } = useDemo();
-  const isGuardrailScene = scenario.id !== 'consumer';
+  const scenesOnly = params.get('scenes') === '1';
+  const isGuardrailScene = scenesOnly || scenario.id !== 'consumer';
   const [sceneAcknowledged, setSceneAcknowledged] = useState(!isGuardrailScene);
-  const failure = params.get('failure');
+  const [recapOpen, setRecapOpen] = useState(false);  /* `?stage=failure` with no kind resolves to the high-risk stop — the most
+     designed one. Without this the deep link rendered an empty screen (the
+     stage mapped to 'failure' but no FailureState existed to render). */
+  const failure = params.get('failure') ?? (params.get('stage') === 'failure' ? 'high_risk' : null);
   const sceneParam = params.get('scene');
   const notice = params.get('notice') as NoticeAssessmentKind | null;
   const rawStage = params.get('stage');
   const stage = failure ? 'failure' : mapStage(rawStage);
   /* Chat-first: opening the matter with no stage (or the retired `intake`
-     alias) lands on the workspace hub, not the old modality picker. */
-  const isOverview = !failure && !notice && (!rawStage || rawStage === 'intake');
+     alias) lands on the workspace hub, not the old modality picker.
+     `?scenes=1` is an explicit destination — the gallery — so it must not
+     fall through to the overview. */
+  const isOverview = !scenesOnly && !failure && !notice && (!rawStage || rawStage === 'intake');
   const showDemoControls = params.get('demo') === '1' || params.get('capture') === '1';
 
   useEffect(() => {
@@ -900,7 +1007,11 @@ function CaseArtboard() {
     }}>
       <style>{CASE_CSS}</style>
       <StatusBar />
-      <MobileTopBar onBack={() => navigate('/mobile/home')} />
+      <MobileTopBar
+        onBack={() => navigate('/mobile/home')}
+        showMenu={!failure}
+        onMenu={() => setRecapOpen(true)}
+      />
       <HeaderBar
         stageLabel={!isSupportedMatter ? 'Not built in this prototype' : isOverview ? 'Consumer refund case' : workflow.stageLabel}
         matterLabel={isSupportedMatter ? (isOverview ? 'Your matter' : 'Consumer refund case') : (UNSUPPORTED_MATTERS[matterId ?? '']?.category ?? 'Matter')}
@@ -1052,9 +1163,12 @@ function CaseArtboard() {
                        pre-approved the draft before one existed and bypassed
                        ReviewGate — the component whose entire purpose is that
                        no draft leaves unread. Approval belongs to the gate. */
-                    onConfirmed={() => goStage('assessment')}
+                    onConfirmed={() => goStage('triage')}
                   />
                 </>
+              )}
+              {stage === 'triage'     && (
+                <TriageView onNext={() => goStage('assessment')} />
               )}
               {stage === 'retrieve'   && (
                 <>
@@ -1138,7 +1252,7 @@ function CaseArtboard() {
                   )}
                 </>
               )}
-              {stage === 'audit'      && <AuditTrailList events={workflow.auditTrail} />}
+              {stage === 'audit'      && <LiveAuditTrail />}
               {stage === 'escalation' && <HumanReviewCard workflow={workflow} />}
             </>
           )}
@@ -1182,7 +1296,7 @@ function CaseArtboard() {
                 key={kind}
                 onClick={() => goFailure(kind)}
                 style={{
-                  minHeight: 32,
+                  minHeight: 44,
                   borderRadius: LAYOUT.radius.pill,
                   border: 'none',
                   background: 'var(--role-sunken)',
@@ -1190,7 +1304,7 @@ function CaseArtboard() {
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,
                   fontWeight: 600,
-                  padding: '0 9px',
+                  padding: '0 14px',
                   cursor: 'pointer',
                 }}
               >
@@ -1213,7 +1327,7 @@ function CaseArtboard() {
                 key={kind}
                 onClick={() => goNotice(kind)}
                 style={{
-                  minHeight: 32,
+                  minHeight: 44,
                   borderRadius: LAYOUT.radius.pill,
                   border: 'none',
                   background: 'var(--role-anchor-tint)',
@@ -1221,7 +1335,7 @@ function CaseArtboard() {
                   fontFamily: SANS,
                   fontSize: TYPE.label.size,
                   fontWeight: 600,
-                  padding: '0 9px',
+                  padding: '0 14px',
                   cursor: 'pointer',
                 }}
               >
@@ -1247,6 +1361,21 @@ function CaseArtboard() {
         trust={workflow.trust}
         contain
       />
+
+      {/* Quick Recap — same prepared deck the chat's three-dots opens. */}
+      <Sheet
+        open={recapOpen}
+        onClose={() => setRecapOpen(false)}
+        label="Quick recap"
+        contain
+        maxHeight="84%"
+      >
+        <QuickRecapPanel
+          cards={getConsumerFlashcards(language)}
+          labels={FLASHCARD_LABELS[language] ?? FLASHCARD_LABELS.en}
+          lang={language}
+        />
+      </Sheet>
     </div>
   );
 }

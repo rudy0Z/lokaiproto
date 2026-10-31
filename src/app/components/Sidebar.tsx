@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from 'react-router';
 import { BrandLogo, C, LAYOUT, LogoMark, SANS, SHADOW, TYPE } from './shared';
 import { useSidebar } from '../context/SidebarContext';
 import { useConversations } from '../context/ConversationContext';
+import { DEMO_USER } from '../data/profile';
 
 const EXPANDED_W = parseInt(LAYOUT.sidebarOpen, 10);
 const COLLAPSED_W = parseInt(LAYOUT.sidebarShut, 10);
@@ -321,13 +322,13 @@ export function Sidebar() {
                   boxShadow: SHADOW.xs,
                 }}
               >
-                <span style={{ fontSize: TYPE.body.size, fontWeight: 600 }}>P</span>
+                <span style={{ fontSize: TYPE.body.size, fontWeight: 600 }}>{DEMO_USER.name[0]}</span>
               </button>
               {expanded && (
                 <>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: D.text, fontSize: TYPE.small.size, fontWeight: 600 }}>Priya Sharma</div>
-                    <div style={{ color: D.text3, fontSize: TYPE.micro.size, marginTop: 3 }}>Mumbai · India</div>
+                    <div style={{ color: D.text, fontSize: TYPE.small.size, fontWeight: 600 }}>{DEMO_USER.name}</div>
+                    <div style={{ color: D.text3, fontSize: TYPE.micro.size, marginTop: 3 }}>{DEMO_USER.city} · {DEMO_USER.country}</div>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); openSettings(); }}

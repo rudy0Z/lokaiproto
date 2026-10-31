@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="tile">
+    <rect width="512" height="512" rx="143" fill="#671D1D"/>
+  </g>
+  <g id="seal">
+    <path fill="#C25B12" d="M358.34 63.52 A218 218 0 1 1 153.66 63.52 L166.8 88.24 A190 190 0 1 0 345.2 88.24 Z"/>
+  </g>
+  <g id="glyph">
+    <path fill="#FBF9F3" d="M189 144 H281 V296 H365 V332 H381 V368 H173 V332 H189 Z"/>
+    <g id="flutes" fill="#671D1D">
+      <rect x="209" y="162" width="16" height="116"/>
+      <rect x="245" y="162" width="16" height="116"/>
+    </g>
+  </g>
+</svg>

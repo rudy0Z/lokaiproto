@@ -1,0 +1,109 @@
+[
+  {
+    "name": "A-registered-post",
+    "fails": [],
+    "warns": [
+      "Text inside the system's safe areas: \"If the seller ignores th\" (home indicator)",
+      "8 distinct left edges in the left third. Align to fewer verticals.",
+      "Em dash in visible copy. Usually a period or colon reads cleaner."
+    ],
+    "facts": {
+      "fonts": {
+        "Archivo": 13,
+        "IBM Plex Mono": 11
+      },
+      "sizes": [
+        28,
+        24,
+        15,
+        14,
+        13,
+        12,
+        11
+      ],
+      "weights": [
+        "400",
+        "500",
+        "600",
+        "700",
+        "800"
+      ],
+      "leftEdges": 8,
+      "accentHues": [
+        0
+      ],
+      "cards": 1
+    }
+  },
+  {
+    "name": "B-evening-class",
+    "fails": [],
+    "warns": [
+      "Text inside the system's safe areas: \"If the seller ignores th\" (home indicator)",
+      "7 distinct left edges in the left third. Align to fewer verticals.",
+      "Em dash in visible copy. Usually a period or colon reads cleaner."
+    ],
+    "facts": {
+      "fonts": {
+        "Baloo 2": 17,
+        "Martian Mono": 8
+      },
+      "sizes": [
+        28,
+        22,
+        17,
+        15,
+        14,
+        13,
+        12,
+        11
+      ],
+      "weights": [
+        "400",
+        "500",
+        "600",
+        "700"
+      ],
+      "leftEdges": 7,
+      "accentHues": [
+        48
+      ],
+      "cards": 0
+    }
+  },
+  {
+    "name": "C-painted-path",
+    "fails": [],
+    "warns": [
+      "Text inside the system's safe areas: \"If the seller ignores th\" (home indicator)",
+      "7 distinct left edges in the left third. Align to fewer verticals.",
+      "Em dash in visible copy. Usually a period or colon reads cleaner."
+    ],
+    "facts": {
+      "fonts": {
+        "Geist Mono": 18,
+        "Bricolage Grotesque": 11
+      },
+      "sizes": [
+        31,
+        16,
+        15,
+        14,
+        12,
+        11
+      ],
+      "weights": [
+        "400",
+        "600",
+        "700",
+        "800"
+      ],
+      "leftEdges": 7,
+      "accentHues": [
+        48,
+        216
+      ],
+      "cards": 1
+    }
+  }
+]

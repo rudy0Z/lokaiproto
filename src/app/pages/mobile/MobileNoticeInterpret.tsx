@@ -3,17 +3,18 @@ import { useSearchParams } from 'react-router';
 import { useReducedMotion } from 'motion/react';
 import { IconFile, IconImage, IconAttach } from '../../ui/icons';
 import {
-  Stack, Row, Text, Button, Card, Skeleton, HairlineList, HairlineRow,
-  T, S, LAYOUT, ICON, useSystemStyles,
+  Stack, Row, Text, Button, HairlineList, HairlineRow,
+  T, S, LAYOUT, ICON, typeStyle, useSystemStyles,
 } from '../../ui';
-import { LogoMark } from '../../components/shared';
-import { Composer, TurnStatus } from '../../components/ai/Turn';
+import { C, LogoMark } from '../../components/shared';
+import { Composer } from '../../components/ai/Turn';
 import { Sheet } from '../../components/Sheet';
 import { AppScreen } from '../../components/mobile/AppScreen';
 import { MobileRouteCanvas } from './MobileHome';
 import {
   DocumentBubble, NoticeInterpretTurn, DocumentReceiptTurn, NoticeReaderSheet, type ReaderView,
 } from '../../components/mobile/NoticeInterpret';
+import { ScanDocumentCard } from '../../components/mobile/ScanDocument';
 import { PREPARED_DOCUMENTS, getPreparedDocument, type PreparedDocument } from '../../data/noticeInterpretation';
 
 /**
@@ -117,9 +118,11 @@ function NoticeArtboard() {
     }
     const statusItem: StreamItem = { id: nextId(), type: 'status' };
     setItems((prev) => [...prev, docItem, statusItem]);
+    /* The scan beat (M4): 1.7s narrated read — the ScanDocumentCard's sweep
+       is timed to this same duration, so the animation IS the staging. */
     window.setTimeout(() => {
       setItems((prev) => [...prev.filter((i) => i.id !== statusItem.id), turnItem]);
-    }, 1100);
+    }, 1700);
   };
 
   /* Deep-linkable, like the rest of the app (?stage=, ?notice=): ?doc=<id>
@@ -171,25 +174,57 @@ function NoticeArtboard() {
   const [pendingDoc, setPendingDoc] = useState<PreparedDocument | null>(null);
 
   const action = (
-    <Composer
-      compact
-      showVoice={false}
-      placeholder={pendingDoc
-        ? 'Add a question, or send to read it…'
-        : noticeDoc
-          ? 'Ask about this document…'
-          : 'Attach a notice, or ask about it…'}
-      attachments={pendingDoc ? [{ id: pendingDoc.id, label: pendingDoc.fileName }] : undefined}
-      onRemoveAttachment={() => setPendingDoc(null)}
-      onAttach={() => setAttachOpen(true)}
-      onSubmit={(text) => {
-        if (pendingDoc) {
-          attach(pendingDoc);
-          setPendingDoc(null);
-        }
-        if (text) handleAsk(text);
-      }}
-    />
+    <Stack gap={2}>
+      {/* The persistent strip (§3.8a): once a notice is read, ONE quiet line
+          sits above the composer for the rest of the conversation — the whole
+          answer to "how do I see the summary while I'm chatting", at the cost
+          of one line. Always tappable, reopens the reader at any depth. */}
+      {noticeDoc && (
+        <button
+          type="button"
+          onClick={() => openReader(noticeDoc)}
+          className="lokai-pressable"
+          style={{
+            display: 'flex', alignItems: 'center', gap: S[2],
+            alignSelf: 'stretch',
+            padding: `${S[2]} ${S[3]}`,
+            borderRadius: LAYOUT.radius.pill,
+            border: `1px solid ${C.border}`,
+            background: 'var(--role-glass)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            cursor: 'pointer',
+            font: 'inherit',
+            textAlign: 'left',
+          }}
+        >
+          <IconFile size={16} style={{ flexShrink: 0, color: T.inkQuiet }} />
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...typeStyle('captionStrong'), color: C.ink }}>
+            {noticeDoc.fileName} · in plain words
+          </span>
+          <span aria-hidden style={{ color: T.inkQuiet, flexShrink: 0 }}>↗</span>
+        </button>
+      )}
+      <Composer
+        compact
+        showVoice={false}
+        placeholder={pendingDoc
+          ? 'Add a question, or send to read it…'
+          : noticeDoc
+            ? 'Ask about this document…'
+            : 'Attach a notice, or ask about it…'}
+        attachments={pendingDoc ? [{ id: pendingDoc.id, label: pendingDoc.fileName }] : undefined}
+        onRemoveAttachment={() => setPendingDoc(null)}
+        onAttach={() => setAttachOpen(true)}
+        onSubmit={(text) => {
+          if (pendingDoc) {
+            attach(pendingDoc);
+            setPendingDoc(null);
+          }
+          if (text) handleAsk(text);
+        }}
+      />
+    </Stack>
   );
 
   return (
@@ -222,28 +257,12 @@ function NoticeArtboard() {
               case 'doc':
                 return <DocumentBubble key={item.id} doc={item.doc} />;
               case 'status':
-                /* What's arriving is a DOCUMENT, so the placeholder is a page
-                   taking shape — a content-shaped skeleton (audit D3), not a
-                   spinner. */
-                return (
-                  <Stack key={item.id} gap={2}>
-                    <TurnStatus label="Reading the document…" />
-                    <Card>
-                      <Stack gap={2}>
-                        <Row gap={2} align="center">
-                          <Skeleton width={40} height={40} radius={LAYOUT.radius.panel} />
-                          <Stack gap={1} style={{ flex: 1 }}>
-                            <Skeleton width="60%" height={10} />
-                            <Skeleton width="35%" height={8} />
-                          </Stack>
-                        </Row>
-                        <Skeleton height={12} />
-                        <Skeleton height={12} width="88%" />
-                        <Skeleton height={12} width="72%" />
-                      </Stack>
-                    </Card>
-                  </Stack>
-                );
+                /* What's arriving is a DOCUMENT being READ — the scan beat
+                   (M4): a paper page with a saffron scan bar, the animation
+                   timed to the prepared read. A content-shaped wait, not a
+                   spinner (audit D3), now with the material of the thing
+                   itself. */
+                return <ScanDocumentCard key={item.id} label="Reading the document…" />;
               case 'notice':
                 return (
                   <NoticeInterpretTurn

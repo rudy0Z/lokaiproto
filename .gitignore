@@ -6,3 +6,13 @@ dist
 
 # Dev logs parked in attic
 attic/logs/
+
+# graphify generated artifacts
+graphify-out/
+
+# Local scratches and IDE metadata
+temp_ocr_*.png
+ocr_worker.ps1
+.perch/
+.zcode/
+.zcodeignore

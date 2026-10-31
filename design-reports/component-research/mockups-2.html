@@ -1,0 +1,69 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{margin:0;padding:36px;background:#EDEAE2;font-family:'Segoe UI',system-ui,sans-serif}
+h1{font-size:14px;margin:0 0 14px;color:#44413A;letter-spacing:0.08em;text-transform:uppercase;font-weight:600}
+.row{display:flex;gap:26px;margin-bottom:30px;align-items:flex-start}
+.phone{width:300px;border-radius:26px;padding:16px 14px;box-shadow:0 2px 6px rgba(26,25,22,0.06),0 10px 28px rgba(26,25,22,0.10)}
+.phone.cream{background:#FAF8F5}.phone.white{background:#FFFFFF}
+.plabel{font-size:10.5px;font-weight:700;letter-spacing:0.06em;padding:3px 9px;border-radius:999px;display:inline-block;margin-bottom:10px}
+.cream .plabel{background:#F0EDE4;color:#68645D}.white .plabel{background:#EEF1F4;color:#2C4A6E}
+.cardm{border-radius:14px;padding:14px;margin-bottom:10px}
+.cream .cardm{background:#FFFFFF;border:1px solid rgba(22,21,19,0.08);box-shadow:0 1px 1px rgba(26,25,22,0.05)}
+.white .cardm{background:#FAFBFC;border:1px solid rgba(20,22,26,0.11);box-shadow:0 1px 2px rgba(20,22,26,0.05)}
+.cardm b{font-size:13px;display:block}
+.cardm p{font-size:11.5px;margin:3px 0 0;line-height:1.45}
+.stat{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;margin-top:7px}
+.mtitle{font-size:19px;font-weight:300;letter-spacing:-0.015em;margin:2px 0 12px}
+.cta{display:block;text-align:center;padding:13px;border-radius:12px;font-size:13px;font-weight:600;margin-top:6px}
+.cream .cta{background:#0B1B32;color:#fff}.white .cta{background:#0B1B32;color:#fff}
+/* desktop chat */
+.chat{flex:1;border-radius:16px;padding:22px}
+.chat.cream{background:#FAF8F5}.chat.white{background:#FFFFFF}
+.turn{border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.cream .turn{background:#FFFFFF;border:1px solid rgba(22,21,19,0.08)}
+.white .turn{background:#FAFBFC;border:1px solid rgba(20,22,26,0.11)}
+.who{font-size:10.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px}
+.cream .who{color:#68645D}.white .who{color:#5A5E66}
+.answer{font-size:13.5px;line-height:1.55;margin:0}
+.cite{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;margin:8px 6px 0 0}
+.g chip{}
+.cream .cite{background:#EEF4FF;color:#2C4A6E}.white .cite{background:#F2F5FA;color:#2C4A6E}
+.stop{border-radius:14px;padding:14px 16px}
+.cream .stop{background:#161513;color:#FAF8F5}
+.white .stop{background:#161513;color:#FFFFFF}
+.stop b{font-size:12.5px}.stop p{font-size:11.5px;margin:4px 0 0;opacity:0.75;line-height:1.45}
+</style></head><body>
+<h1>Mobile home — card list reconstruction</h1>
+<div class="row">
+  <div class="phone cream"><span class="plabel">CREAM</span>
+    <div class="mtitle" style="color:#161513">Good evening, Priya</div>
+    <div class="cardm"><b style="color:#161513">Refund case · in progress</b><p style="color:#68645D">Notice interpreted · 3 facts confirmed · draft waiting for your review</p><span class="stat" style="background:#EEF4FF;color:#2C4A6E">STEP 4 OF 6</span></div>
+    <div class="cardm"><b style="color:#161513">Attach a document</b><p style="color:#68645D">A photo of the notice or receipt is enough to begin.</p><span class="stat" style="background:#FFF2DC;color:#7A5210">CAMERA READY</span></div>
+    <div class="cardm"><b style="color:#161513">Your evidence locker</b><p style="color:#68645D">4 items · every exhibit linked to a claim.</p><span class="stat" style="background:#FAECE9;color:#8A4038">4 EXHIBITS</span></div>
+    <span class="cta">Continue the case</span>
+  </div>
+  <div class="phone white"><span class="plabel" style="background:#EEF1F4;color:#2C4A6E">PREMIUM WHITE</span>
+    <div class="mtitle" style="color:#161513">Good evening, Priya</div>
+    <div class="cardm"><b style="color:#161513">Refund case · in progress</b><p style="color:#68645D">Notice interpreted · 3 facts confirmed · draft waiting for your review</p><span class="stat" style="background:#F2F5FA;color:#2C4A6E">STEP 4 OF 6</span></div>
+    <div class="cardm"><b style="color:#161513">Attach a document</b><p style="color:#68645D">A photo of the notice or receipt is enough to begin.</p><span class="stat" style="background:#FAF6EC;color:#7A5210">CAMERA READY</span></div>
+    <div class="cardm"><b style="color:#161513">Your evidence locker</b><p style="color:#68645D">4 items · every exhibit linked to a claim.</p><span class="stat" style="background:#F9F1EF;color:#8A4038">4 EXHIBITS</span></div>
+    <span class="cta">Continue the case</span>
+  </div>
+</div>
+<h1>Desktop chat — grounded answer + stop state</h1>
+<div class="row">
+  <div class="chat cream"><span class="plabel">CREAM</span>
+    <div class="turn"><div class="who">LokAI · grounded answer</div>
+      <p class="answer" style="color:#161513">Under the Consumer Protection Act 2019, a seller must offer replacement or refund for a defective product delivered within the promised condition. Your mixer grinder arrived damaged on 12 Aug — the order record and your photos establish the defect.</p>
+      <span class="cite">✓ Consumer Protection Act 2019, §2(6)</span><span class="cite">✓ Order record #48213</span><span class="cite">✓ Exhibit A — photo</span>
+    </div>
+    <div class="stop"><b>LokAI pauses here.</b><p>Drafting a complaint needs your confirmed address. LokAI will not assume it — confirm the fact to continue.</p></div>
+  </div>
+  <div class="chat white"><span class="plabel" style="background:#EEF1F4;color:#2C4A6E">PREMIUM WHITE</span>
+    <div class="turn"><div class="who">LokAI · grounded answer</div>
+      <p class="answer" style="color:#161513">Under the Consumer Protection Act 2019, a seller must offer replacement or refund for a defective product delivered within the promised condition. Your mixer grinder arrived damaged on 12 Aug — the order record and your photos establish the defect.</p>
+      <span class="cite">✓ Consumer Protection Act 2019, §2(6)</span><span class="cite">✓ Order record #48213</span><span class="cite">✓ Exhibit A — photo</span>
+    </div>
+    <div class="stop"><b>LokAI pauses here.</b><p>Drafting a complaint needs your confirmed address. LokAI will not assume it — confirm the fact to continue.</p></div>
+  </div>
+</div>
+</body></html>

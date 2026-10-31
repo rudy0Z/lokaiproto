@@ -81,7 +81,10 @@ export interface AuditEvent {
   id: string;
   label: string;
   detail: string;
-  time: string;
+  /** Wall-clock label for the PREPARED illustration. Live events carry a
+   *  logical turn ordinal instead — a legal product's audit trail must never
+   *  show a clock time a deterministic demo cannot have actually kept. */
+  time?: string;
 }
 
 export interface TrustSignals {
@@ -122,6 +125,13 @@ export interface FailureState {
   nextAction: string;
   riskLevel: RiskLevel;
   safeFallback: string;
+  /**
+   * The named human channel for this stop (behavioral audit P1-4: stops never
+   * left the user with a person to call — the single highest-leverage copy
+   * change in the product). Every stop names at least one real, free channel;
+   * human-required stops name two.
+   */
+  channels: Array<{ label: string; detail: string }>;
 }
 
 type FailureTrustPatch = Pick<
@@ -443,6 +453,103 @@ export function buildAuditTrail(workflowState: CaseWorkflowState): AuditEvent[] 
   ];
 }
 
+/* ── The LIVE audit trail (behavioral audit #1) ─────────────────────────────
+ *
+ * `buildAuditTrail` above is the prepared illustration — fixed events with
+ * fixed clock times, which is exactly the "trust theater" the design exists
+ * to avoid: a legal product's audit screen must show what THIS session did,
+ * not what the demo's nice version would have done.
+ *
+ * `liveAuditEvents` projects the real DemoContext log (`auditEvents: string[]`
+ * — confirmations, corrections, decision receipts, draft approvals, refusals)
+ * into the same render shape. Determinism is preserved: the ordinal is the
+ * event's position in the log, never `Date.now()`. When the live log is thin
+ * (a fresh session) callers fall back to the prepared trail so the screen is
+ * never empty — the fallback is a labelled illustration, not a claim. */
+
+const LIVE_EVENT_PATTERNS: Array<{ test: RegExp; label: string; detail: (raw: string) => string }> = [
+  {
+    test: /^Prepared consumer-refund example loaded/,
+    label: 'Matter opened',
+    detail: () => 'Prepared consumer-refund example loaded. Nothing sent, nothing stored.',
+  },
+  {
+    test: /^No network or device permission/,
+    label: 'No network or device permission requested',
+    detail: () => 'Zero fetch, microphone, recorder, and file-input paths — enforced at build time.',
+  },
+  {
+    test: /^Clarify asked/,
+    label: 'One question asked before advising',
+    detail: () => 'The purchase date was asked because it routes the next step.',
+  },
+  {
+    test: /^Fact confirmed:/,
+    label: 'Fact confirmed by you',
+    detail: (raw) => raw.replace(/^Fact confirmed:\s*/, ''),
+  },
+  {
+    test: /^Fact corrected:/,
+    label: 'Fact corrected by you',
+    detail: (raw) => raw.replace(/^Fact corrected:\s*/, '') + ' — draft approval cleared, re-review required.',
+  },
+  {
+    test: /^Decision /,
+    label: 'Decision receipt written',
+    detail: (raw) => raw,
+  },
+  {
+    test: /^Response mode:/,
+    label: 'Response mode set',
+    detail: (raw) => raw.replace(/^Response mode:\s*/, ''),
+  },
+  {
+    test: /^Draft approved by user/,
+    label: 'You approved the draft for copy/print',
+    detail: () => 'The filing action stays yours: LokAI never sends on your behalf.',
+  },
+  {
+    test: /^Draft approval cleared/,
+    label: 'Draft approval cleared',
+    detail: () => 'A fact changed after approval, so the review gate re-armed.',
+  },
+  {
+    test: /^Opened guardrail scene:/,
+    label: 'Guardrail scene opened',
+    detail: (raw) => raw.replace(/^Opened guardrail scene:\s*/, ''),
+  },
+  {
+    test: /^New conversation started/,
+    label: 'New conversation started',
+    detail: (raw) => raw.replace(/^New conversation started\s*—\s*/, ''),
+  },
+  {
+    test: /^Answer flagged/,
+    label: 'Answer flagged by you',
+    detail: (raw) => raw.replace(/^Answer flagged by user\s*(—\s*)?/, ''),
+  },
+  {
+    /* Generic fallback — a live log line the map doesn't name still renders,
+     * because an audit trail that silently drops entries is worse than one
+     * with a plain line. */
+    test: /.*/,
+    label: 'Activity',
+    detail: (raw) => raw,
+  },
+];
+
+export function liveAuditEvents(log: readonly string[]): AuditEvent[] {
+  return log.map((raw, i) => {
+    const entry = LIVE_EVENT_PATTERNS.find((p) => p.test.test(raw)) ?? LIVE_EVENT_PATTERNS[LIVE_EVENT_PATTERNS.length - 1];
+    return {
+      id: `live-${i}`,
+      label: entry.label,
+      detail: entry.detail(raw),
+      time: `#${i + 1}`,
+    };
+  });
+}
+
 export function getConsumerWorkflowState(
   stage: WorkflowStage | string | null = 'assess',
   overrides: Partial<CaseWorkflowState> = {},
@@ -535,6 +642,28 @@ export function markActionStepBlocked(stepId: string, state = getConsumerWorkflo
   };
 }
 
+/** Chat stop turns map onto the failure taxonomy so the refusal the user
+ *  meets IN CONVERSATION carries the same named human channels as the
+ *  full-bleed stop screens (behavioral audit P1-4 — one source of channels,
+ *  never two vocabularies). */
+const TURN_FAILURE_KIND: Record<string, FailureKind> = {
+  'boundary-stop': 'out_of_scope',
+  'out-of-scope-stop': 'out_of_scope',
+  'high-risk-stop': 'high_risk',
+  'statute-expiry-stop': 'high_risk',
+  'conflicting-rules-stop': 'conflicting_jurisdiction',
+  'conflict-disclose': 'conflicting_jurisdiction',
+  'source-gap-disclose': 'source_gap',
+  'temporary-recover': 'model_timeout',
+  'missing-fact-clarify': 'missing_facts',
+  'language-stop': 'language_uncertain',
+};
+
+export function channelsForTurn(turnId: string): Array<{ label: string; detail: string }> {
+  const kind = TURN_FAILURE_KIND[turnId];
+  return kind ? getFailureState(kind).channels : [];
+}
+
 export function getFailureState(kind: FailureKind | string | null): FailureState {
   const failureKind = isFailureKind(kind) ? kind : 'missing_facts';
   const failures: Record<FailureKind, FailureState> = {
@@ -545,6 +674,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Answer one question',
       riskLevel: 'self_service',
       safeFallback: 'You can still collect invoice, warranty, and defect proof while confirming this.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. Government of India. A person answers, in your language.' }],
     },
     source_gap: {
       kind: 'source_gap',
@@ -553,6 +683,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Use a general safe step or request human review',
       riskLevel: 'review_recommended',
       safeFallback: 'Keep records and avoid sending a legal claim until a reliable source is checked.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. They can tell you what the marketplace policy generally requires.' }],
     },
     conflicting_jurisdiction: {
       kind: 'conflicting_jurisdiction',
@@ -561,6 +692,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Confirm location and document date',
       riskLevel: 'review_recommended',
       safeFallback: 'Use only a neutral evidence-preservation step until the location is clear.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. They route you to the right commission for your district.' }],
     },
     ocr_unreadable: {
       kind: 'ocr_unreadable',
@@ -569,6 +701,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Enter ₹8,999 and the purchase date manually, or retake a clearer photo',
       riskLevel: 'self_service',
       safeFallback: 'Capture the date, seller name, amount, and deadline yourself before LokAI builds an assessment.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. If the paper is urgent and unreadable, a person can read it with you.' }],
     },
     language_uncertain: {
       kind: 'language_uncertain',
@@ -577,6 +710,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Choose English, Hindi, Marathi, or Tamil',
       riskLevel: 'self_service',
       safeFallback: 'Continue in English until you confirm.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. Answers in Indian languages.' }],
     },
     model_timeout: {
       kind: 'model_timeout',
@@ -585,6 +719,7 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Retry the prepared answer, or review the evidence checklist offline',
       riskLevel: 'self_service',
       safeFallback: 'Save invoice, defect photos, warranty, and seller messages while you wait.',
+      channels: [{ label: 'National Consumer Helpline — 1915', detail: 'Free. Available while LokAI is paused.' }],
     },
     out_of_scope: {
       kind: 'out_of_scope',
@@ -593,14 +728,22 @@ export function getFailureState(kind: FailureKind | string | null): FailureState
       nextAction: 'Open the prepared consumer-refund example',
       riskLevel: 'review_recommended',
       safeFallback: 'If this is urgent or unsafe, contact the appropriate official or professional help.',
+      channels: [
+        { label: 'National Consumer Helpline — 1915', detail: 'Free. They point you to the right authority for matters LokAI does not cover.' },
+        { label: 'District Legal Services Authority', detail: 'Free legal aid. Every district has one.' },
+      ],
     },
     high_risk: {
       kind: 'high_risk',
-      title: 'Professional guidance recommended',
-      body: 'The issue may involve criminal risk, immediate safety, or legal consequences LokAI should not handle alone.',
-      nextAction: 'Use procedural help or contact a lawyer/legal aid',
+      title: 'This needs a person, not this app',
+      body: 'The amount, the business use, or the deadline creates consequences this prototype should not assess alone. LokAI preserved your summary — a person should take it from here.',
+      nextAction: 'Talk to a person who can take this on',
       riskLevel: 'human_required',
       safeFallback: 'Do not rely on AI-generated strategy for this matter.',
+      channels: [
+        { label: 'National Consumer Helpline — 1915', detail: 'Free. Government of India. Explains your route in your language.' },
+        { label: 'District Legal Services Authority', detail: 'Free legal aid. Every district has one — ask at the court complex.' },
+      ],
     },
   };
   return failures[failureKind];

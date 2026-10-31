@@ -11,6 +11,7 @@ import { Wordmark } from '../shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
 import { getEvidenceLocker, getVerificationFacts } from '../../data/caseWorkflow';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
+import { DEMO_USER } from '../../data/profile';
 
 /**
  * The navigation drawer.
@@ -418,11 +419,11 @@ export function MatterDrawer({ open, onClose }: { open: boolean; onClose: () => 
                       flexShrink: 0,
                     }}
                   >
-                    <Text role="captionStrong" tone="anchor" measured={false}>PS</Text>
+                    <Text role="captionStrong" tone="anchor" measured={false}>{DEMO_USER.initials}</Text>
                   </span>
                   <Stack gap={0} style={{ minWidth: 0 }}>
-                    <Text role="bodyStrong" measured={false}>Priya S.</Text>
-                    <Text role="caption" tone="faint" measured={false}>Karnataka</Text>
+                    <Text role="bodyStrong" measured={false}>{DEMO_USER.shortName}</Text>
+                    <Text role="caption" tone="faint" measured={false}>{DEMO_USER.city}</Text>
                   </Stack>
                 </button>
                 <IconButton label="Settings" onClick={() => go('/mobile/profile')}>

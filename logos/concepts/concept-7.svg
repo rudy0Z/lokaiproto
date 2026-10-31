@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="tile">
+    <rect width="512" height="512" rx="143" fill="#0B1B32"/>
+  </g>
+  <g id="spark">
+    <path d="M256 100 Q276 168 320 186 Q276 204 256 272 Q236 204 192 186 Q236 168 256 100 Z" fill="#E27A24"/>
+  </g>
+  <g id="bowl">
+    <path d="M124 344 H388 C388 404 334 442 256 442 C178 442 124 404 124 344 Z" fill="#FBF9F3"/>
+  </g>
+</svg>

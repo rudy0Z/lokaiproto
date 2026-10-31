@@ -75,7 +75,7 @@ export interface TextProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const SERIF_ROLES = new Set<TextRole>(['pronounce', 'answer']);
-const MEASURED_BY_DEFAULT = new Set<TextRole>(['pronounce', 'answer', 'body', 'bodyStrong', 'lead']);
+const MEASURED_BY_DEFAULT = new Set<TextRole>(['pronounce', 'answer', 'body', 'bodyStrong', 'lead', 'reading']);
 
 function toneColor(tone: TextTone, ink: ReturnType<typeof useInk>): string {
   switch (tone) {

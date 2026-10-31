@@ -1,0 +1,491 @@
+--- PAGE 1/9 ---
+Artificial Intelligence (AI)
+AI is the broad field of building systems that perform tasks
+associated with human intelligence, such as recognizing
+patterns, reasoning, understanding language, and making
+decisions.
+KEY IDEA
+AI is not a single technology. It’s
+an umbrella of approaches and
+capabilities.
+AI
+THE UMBRELLA
+Machine
+Learning
+Learn patterns
+from data to
+improve over time.
+Deep
+Learning
+Use multi-layered
+neural networks to
+learn complex
+representations.
+Predictive
+AI
+Analyze historical
+data to forecast
+outcomes or
+categories.
+Generative
+AI
+Create new content
+like text, images,
+code, and more
+from patterns.
+Agentic
+AI
+Plan, reason, and
+take actions to
+achieve goals
+autonomously.
+AI
+Agents
+Systems that
+interact with tools
+and environments
+to get work done.
+AI is the umbrella; the concepts that follow are
+specialized ways to build intelligent systems.
+THE UMBRELLA
+TAKEAWAY
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+BUILDING INTELLIGENT SYSTEMS
+Written by
+@Sudhir Mishra
+--- PAGE 2/9 ---
+Navigating
+the AI Landscape
+A visual guide to the layers, capabilities,
+and applications of modern AI
+ARTIFICIAL
+INTELLIGENCE (AI)
+The broad concept of machines
+designed to act smartly and
+perform tasks that typically
+require human intelligence.
+MACHINE LEARNING (ML)
+Algorithms that learn patterns from
+data without explicit programming.
+Uses historical data to analyze,
+forecast future outcomes, or
+categorize information.
+A subset of AI, inspired by the
+structure of the human brain,
+powering advanced pattern
+recognition.
+Creates new content (text, images,
+code, etc.) that resembles the
+training data.
+AI that understands goals,
+plans, and makes decisions
+to achieve them.
+Autonomous systems that
+connect to tools, take actions,
+and complete tasks in the real
+world.
+1
+1
+2
+2
+3
+3
+4
+4
+5
+5
+6
+6
+7
+7
+PREDICTIVE AI
+DEEP LEARNING
+GENERATIVE AI (GENAI)
+AGENTIC AI
+AI AGENTS
+PAGE 1 OF 8
+From concepts to capabilities.
+From understanding to action.
+This is the AI Landscape.
+Understand each layer.
+Explore real-world applications.
+Build the future with AI.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 3/9 ---
+1. ARTIFICIAL INTELLIGENCE: THE BIG UMBRELLA
+Artificial Intelligence:
+The Big Umbrella
+Artificial Intelligence (AI) is the broad field of
+building systems that perform tasks
+associated with human intelligence.
+AI is not a single technology.
+It is an umbrella that includes many
+approaches, techniques, and systems
+that solve problems, learn from data,
+and make intelligent decisions.
+WHAT AI SEEKS TO ACHIEVE
+AI systems aim to replicate or augment human cognitive abilities across multiple dimensions:
+Perception
+Understanding
+the world
+through sensors
+and data.
+Reasoning
+Drawing
+conclusions and
+solving problems.
+Learning
+Improving
+performance
+from
+experience.
+Language
+Understanding
+and generating
+human language.
+Planning
+Setting goals and
+deciding steps to
+achieve them.
+Decision-Making
+Choosing the best
+action among
+possible options.
+AI AS A BIG UMBRELLA
+AI contains multiple
+subfields and approaches,
+each building on the
+capabilities of the ones
+inside it.
+Algorithms that learn patterns from data.
+2
+AI
+The broad field of building intelligent systems.
+Artificial Intelligence (AI)
+Machine Learning (ML)
+Subset of ML using multi-layer
+neural networks.
+Deep Learning (DL)
+Creates new content
+
+--- PAGE 4/9 ---
+3. Deep Learning
+Deep Learning is a subset of Machine Learning that uses multi-layer
+neural networks to learn increasingly complex representations from
+large datasets.
+Learns hierarchical
+features automatically
+Excels with large
+amounts of data
+High accuracy for
+complex tasks
+Scalable across
+domains
+Multi-Layer Neural Network Architecture
+Hidden Layers
+Input Layer
+Output Layer
+Real-World Applications of Deep Learning
+Image
+Recognition
+Speech
+Recognition
+Natural Language
+Processing
+Recommendation
+Systems
+Autonomous
+Systems
+Identify and classify
+objects, people, and
+scenes in images.
+Convert spoken
+language into text
+and understand
+commands.
+Understand, interpret,
+and generate human
+language at scale.
+Personalize content,
+products, and
+experiences for
+users.
+Enable self-driving
+cars, drones, and
+intelligent robotics.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Page 4 of 8
+--- PAGE 5/9 ---
+2. MACHINE LEARNING AND PREDICTIVE AI
+Machine Learning and
+Predictive AI
+From learning patterns to predicting what's next.
+Machine Learning (ML)
+ML enables systems to learn patterns from data
+rather than relying only on explicit rules.
+Leaves from historical data.
+Finds patterns and relationships.
+Improves with more data and experience.
+Predictive AI
+Predictive AI uses historical data and learned patterns to
+forecast and support better decisions.
+Forecast outcomes (e.g., demand, sales, risk).
+Classify situations (e.g., customer segments).
+Detect anomalies (e.g., fraud, system issues).
+Support decisions with data-driven insights.
+MACHINE LEARNING
+Leads patterns.
+Leaves from data to discover
+patterns and relationships
+without being explicitly
+programmed.
+VS
+PREDICTIVE AI
+Uses patterns to estimate
+what may happen next.
+Applies learned patterns to
+forecast, classify, detect, and
+support better decisions.
+Page 3 of 8
+2.
+FROM DATA TO FORECAST
+Data Points
+Raw data from various
+sources.
+Data Collected
+Organized and stored
+for analysis.
+ML Model
+Leaves patterns and
+relationships.
+Insights & Predictions
+Patterns are used to
+predict outcomes.
+Forecast / Decision
+Better decisions and
+actions.
+
+--- PAGE 6/9 ---
+Navigating the AI Landscape
+4.
+Generative AI
+(GenAI)
+T H E  C R E A T O R
+Generative AI (GenAI) moves beyond analysis to create
+new, original content by learning the patterns in
+existing data.
+WHAT GENAI CREATES
+Video
+3D Assets
+HOW GENAI WORKS: INPUT TO OUTPUT
+Prompt /
+Instructions
+Generate AI Model
+(Leams patterns
+from existing data)
+OUTPUTS
+Audio
+Page 5 of 8
+GenAI can generate a wide range of new content types:
+Text
+Images
+Audio
+Code
+INPUT
+MODEL
+Text
+Image
+Video
+Code
+3D Assets
+RESPONSIBLE USE MATTERS
+Always use Generative AI responsibly. Check for:
+Accuracy
+Verify facts and data.
+Originality
+Avoid plagiarism.
+Bias
+Be fair and inclusive.
+Privacy
+Protect personal
+information.
+Permissions
+Respect copyrights
+and licenses.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 7/9 ---
+5.
+Agentic AI
+Page 6 of 8
+It understands the task, plans steps, uses tools to act, observes
+results, and adapts to stay on track until the goal is achieved.
+Learn and adapt
+to refine the plan
+and actions.
+4
+OBSERVE
+Monitor outcomes
+and gather results.
+OBSERVATION
+Measure results and
+understand outcomes.
+Use tools and take
+actions to execute
+the plan.
+PLAN
+Break the task into
+steps and decide
+the approach.
+Agentic AI can pursue a goal through a continuous cycle.
+GOAL
+A clear objective
+to achieve.
+UNDERSTAND
+Interpret the task
+and goal.
+CHECKLIST
+A plan broken into
+actionable steps.
+IMPROVE
+AGENTIC
+AI
+ACT
+TOOLS
+Use the right tools
+to get work done.
+Generative AI
+Mainly produces content
+based on your prompts.
+Agentic AI
+Can coordinate actions, use tools,
+and pursue a goal end-to-end.
+VS
+Text
+Images
+Code
+Audio
+Plan
+Act
+Adapt
+Achieve
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+1
+5
+2
+3
+--- PAGE 8/9 ---
+6.
+AI Agents
+AI Agents interpret instructions, make decisions, use tools or APIs,
+remember relevant context, and complete multi-step tasks with
+appropriate oversight.
+AI AGENT ARCHITECTURE
+Define the
+objective.
+REASONING
+REASONING
+Interpret, break
+down, and plan
+the approach.
+MEMORY
+MEMORY
+Store and
+recall relevant
+context.
+TOOLS
+TOOLS
+Use tools, APIs,
+or external
+systems.
+Execute steps
+and perform
+tasks.
+FEEDBACK
+FEEDBACK
+Observe results
+and learn from
+feedback.
+HUMAN
+APPROVAL
+Human oversight
+for important
+decisions.
+Continuous learning and improvement
+PRACTICAL AGENT FLOW (ABSTRACT)
+1
+2
+3
+4
+5
+RECEIVE REQUEST
+Accept the user
+instruction or task.
+SEARCH INFORMATION
+Find relevant data
+using memory,
+tools, or APIs.
+ORGANIZE RESULT
+Structure and
+summarize the
+findings.
+VERIFY
+Check accuracy,
+consistency, and
+requirements.
+DELIVER OUTPUT
+Provide the final
+response or
+complete the task.
+SAFETY FIRST
+AI Agents work best within clear safety boundaries.
+Always keep a human in the loop for important or high-impact actions.
+Grant only necessary tool/API permissions and access.
+Respect privacy, security, and organizational policies.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights r
+--- PAGE 9/9 ---
+8.
+AI Landscape:
+Complete Map and Quick Recap
+COMPLETE LANDSCAPE MAP
+Algorithms that learn patterns
+from data without explicit programming.
+A subset of ML using layered neural
+networks to learn complex patterns.
+PREDICTIVE AI
+Analyzes historical data to
+forecast outcomes or
+categorize information.
+Creates new content
+(text, images, code, etc.)
+that resembles the
+training data.
+Plans, reasons, and
+adapts using tools
+to achieve goals
+autonomously.
+Execute plans using APIs
+and external tools with
+oversight and feedback.
+ARTIFICIAL INTELLIGENCE (AI)
+The broad field of machines
+designed to act smartly.
+MACHINE LEARNING (ML)
+DEEP LEARNING
+GENERATIVE AI
+AGENTIC AI
+AI AGENTS
+Page 8 of 8
+QUICK RECAP
+REMEMBER
+AI is the broad field; ML learns from data; Deep Learning uses layered networks;
+Generative AI creates; Agentic AI plans and acts; AI Agents execute tasks with
+tools and oversight.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. Al rights reserved.

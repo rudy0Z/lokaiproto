@@ -25,6 +25,8 @@ export function AppScreen({
   tone = 'paper',
   onBack,
   onNewChat,
+  onMenu,
+  showMenu = false,
   scrollClearance,
   scrollViewportRef,
   showWordmark = true,
@@ -37,6 +39,10 @@ export function AppScreen({
   tone?: ScreenTone;
   onBack?: () => void;
   onNewChat?: () => void;
+  /** Three-dots trailing control (Quick Recap deck) — takes precedence over
+   *  new-chat in the top bar. */
+  onMenu?: () => void;
+  showMenu?: boolean;
   scrollClearance?: string;
   /** Passthrough to <Screen>'s scroll viewport — chat auto-scroll reads it. */
   scrollViewportRef?: React.RefObject<HTMLDivElement | null>;
@@ -52,7 +58,7 @@ export function AppScreen({
   return (
     <Screen
       tone={tone}
-      chrome={<><StatusBar light={stop} /><MobileTopBar onBack={onBack} onNewChat={onNewChat} tone={tone} showWordmark={showWordmark} showNewChat={showNewChat} /></>}
+      chrome={<><StatusBar light={stop} /><MobileTopBar onBack={onBack} onNewChat={onNewChat} onMenu={onMenu} showMenu={showMenu} tone={tone} showWordmark={showWordmark} showNewChat={showNewChat} /></>}
       context={context}
       action={action}
       floatingAction={floatingAction}

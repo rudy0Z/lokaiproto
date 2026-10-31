@@ -354,6 +354,96 @@ function runContrastGate(cssContent, failures) {
 const indexCss = await readFile(join(sourceRoot, 'styles', 'index.css'), 'utf8');
 runContrastGate(indexCss, failures);
 
+// P2/P3 decision-interaction assertions: receipts computed, never authored.
+const decisionFiles = ['app/decision/types.ts', 'app/decision/engine.ts', 'app/decision/receipts.ts', 'app/decision/fixtures.ts'];
+for (const rel of decisionFiles) {
+  try {
+    await readFile(join(sourceRoot, rel), 'utf8');
+  } catch {
+    failures.push(`Missing decision layer file: src/${rel} (P2 engine wiring)`);
+  }
+}
+if (!demoCtx.includes('lastReceipt') || !demoCtx.includes('receipts')) {
+  failures.push('DemoContext missing decision receipt trail (lastReceipt/receipts)');
+}
+if (!demoCtx.includes('decide(')) {
+  failures.push('DemoContext must route typed input through decide() (text-first, no scenario short-circuit)');
+}
+const turnSrc = await readFile(join(sourceRoot, 'app', 'components', 'ai', 'Turn.tsx'), 'utf8');
+for (const needle of ['chrome.why', 'DecisionSpine', 'GateTrail', 'DecisionReceiptView']) {
+  if (!turnSrc.includes(needle)) failures.push(`Turn.tsx missing receipt surface: ${needle}`);
+}
+if (!packs.includes('localizeStopTurn') || !packs.includes('localizeNoticeExplain')) {
+  failures.push('languagePacks missing localized stop family / notice explain (P0-2 / language hole)');
+}
+// P0-2 full rule: a localized question must NEVER route to an unlocalized
+// answer — the whole stop family carries hi/mr/ta packs, and the trust
+// chrome (gate trail, receipt labels, working beat) is pack-carried too.
+for (const needle of ['localizeStopTurn', 'TURN_CHROME_I18N', 'STOP_FAMILY_I18N']) {
+  if (!packs.includes(needle)) failures.push(`languagePacks missing localized trust layer: ${needle}`);
+}
+if (!turnSrc.includes('channelsForTurn')) {
+  failures.push('Turn.tsx missing stop channels (P1-4: stops must name a person)');
+}
+// The handover packet is the exit artifact (P1/§45): stops hand over
+// paperwork, not just words.
+const stopScreenSrc = await readFile(join(sourceRoot, 'app', 'components', 'mobile', 'MobileStopScreen.tsx'), 'utf8');
+if (!stopScreenSrc.includes('HandoverScreen')) {
+  failures.push('MobileStopScreen missing handover packet door (exit artifact)');
+}
+// P4: ask-first echo + hold-to-confirm copy must exist; percentages stay banned.
+if (!turnSrc.includes('Understood as:')) {
+  failures.push('Composer missing ask-first echo strip (P4)');
+}
+const workflowSrc = await readFile(join(sourceRoot, 'app', 'components', 'LokAIWorkflow.tsx'), 'utf8');
+if (!workflowSrc.includes('Press and hold to approve')) {
+  failures.push('ReviewGate missing hold-to-confirm approval (P4)');
+}
+/* The correction channel + live audit trail + triage renderer: the three
+   honesty fixes that make the app's own thesis inspectable. Without these the
+   audit screen is fiction, the "you can push back" claim is unbacked, and the
+   stage that names the decision is blank. */
+if (!turnSrc.includes('onFlagAnswer') || !turnSrc.includes('This answer missed my situation')) {
+  failures.push('Turn missing the answer-flag correction channel');
+}
+const caseWfSrc = await readFile(join(sourceRoot, 'app', 'data', 'caseWorkflow.ts'), 'utf8');
+if (!caseWfSrc.includes('export function liveAuditEvents')) {
+  failures.push('caseWorkflow missing liveAuditEvents (audit trail must project the real log)');
+}
+const mobileCaseSrc = await readFile(join(sourceRoot, 'app', 'pages', 'mobile', 'MobileConsumerCase.tsx'), 'utf8');
+if (!mobileCaseSrc.includes('TriageView') || !mobileCaseSrc.includes("<AuditTrailList events={live}")) {
+  failures.push('MobileConsumerCase missing the triage renderer / live audit trail');
+}
+if (!mobileCaseSrc.includes("'triage'") || !mobileCaseSrc.includes('scenesOnly')) {
+  failures.push('MobileConsumerCase: triage must be a real stage and ?scenes=1 must open the gallery');
+}
+const filesSrc = await readFile(join(sourceRoot, 'app', 'pages', 'mobile', 'MobileFiles.tsx'), 'utf8');
+if (filesSrc.includes('The full document opens in the notice reader')) {
+  failures.push('MobileFiles still carries the dead "Original" promise');
+}
+const homeSrc = await readFile(join(sourceRoot, 'app', 'pages', 'mobile', 'MobileHome.tsx'), 'utf8');
+if (!homeSrc.includes('scenes=1') || !homeSrc.includes('onFlagAnswer={flagAnswer}')) {
+  failures.push('MobileHome missing the guardrail-scenes door and/or the answer-flag wiring');
+}
+// Stop-channel gate (P1-4): every failure kind names at least one real
+// channel, and the human path is never an unnamed "seek help".
+{
+  const wfSrc = await readFile(join(sourceRoot, 'app', 'data', 'caseWorkflow.ts'), 'utf8');
+  const kinds = ['missing_facts', 'source_gap', 'conflicting_jurisdiction', 'ocr_unreadable',
+    'language_uncertain', 'model_timeout', 'out_of_scope', 'high_risk'];
+  for (const kind of kinds) {
+    const at = wfSrc.indexOf(`kind: '${kind}'`);
+    if (at === -1) { failures.push(`stop-channel: kind ${kind} not found`); continue; }
+    const next = wfSrc.indexOf("kind: '", at + 10);
+    const block = wfSrc.slice(at, next === -1 ? wfSrc.length : next);
+    if (!block.includes('channels:')) failures.push(`stop-channel: ${kind} carries no named channels`);
+    if (!block.includes('1915')) failures.push(`stop-channel: ${kind} does not name 1915`);
+  }
+  if (!wfSrc.includes('This needs a person, not this app')) {
+    failures.push('stop-channel: high_risk copy not humanized (audit P2)');
+  }
+}
+
 // UI debt ratchet — raw colour / family / leading may only decrease per file.
 const { checkDebt } = await import('./ui-debt.mjs');
 failures.push(...(await checkDebt()));
@@ -371,5 +461,7 @@ console.log('PASS no groundingScore or fabricated confidence percentages remain.
 console.log('PASS Indian channels (1915, e-Daakhil, registered post) and consumer-only scope honesty hold.');
 console.log('PASS dead theme.css / components/ui stay deleted; drifted palette hexes absent from live pages.');
 console.log('PASS layout/hierarchy/typography tokens enforced (no bare radius, fontSize, or boxShadow).');
+console.log('PASS decision layer: engine files, receipt trail, gate-trail/receipt surfaces, localized boundary, ask-first echo, hold-to-confirm.');
+console.log('PASS trust wiring: typed input gated, all stop-family turns localized, stops name 1915/legal aid, receipt is an instrument, handover packet present.');
 console.log('PASS WCAG contrast gate: every role pair holds at AA (4.5:1 text / 3:1 UI) in the defined themes.');
 console.log('PASS UI debt ratchet: raw colour / font-family / line-height counts at or below budget.');

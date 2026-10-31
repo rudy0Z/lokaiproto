@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="tile">
+    <rect x="0" y="0" width="512" height="512" rx="143" fill="#F6F4EF"/>
+    <rect x="1.5" y="1.5" width="509" height="509" rx="141.5" fill="none" stroke="rgba(22,21,19,0.10)" stroke-width="1.5"/>
+  </g>
+  <g id="gate">
+    <path d="M140 380 V244 A116 116 0 0 1 372 244 V380" fill="none" stroke="#0B1B32" stroke-width="56" stroke-linecap="round"/>
+  </g>
+  <g id="path">
+    <path d="M84 444 H232 V368 H296 V296" fill="none" stroke="#161513" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g id="dot">
+    <circle cx="296" cy="234" r="26" fill="#E27A24"/>
+  </g>
+</svg>

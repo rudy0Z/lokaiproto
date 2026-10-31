@@ -1,8 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
-// ─── Font constants ───────────────────────────────────────────────────────────
-export const EDITORIAL = '"Fraunces Variable", "Fraunces", Georgia, serif';
+/**
+ * LAW — the register serif (Vellum direction, 2026-09-28).
+ *
+ * Instrument Serif: modern, high-contrast, documentary. The serif is
+ * demoted from the page voice to THE LAW SPEAKING only — answer zone 1
+ * ("what the rule means") and the refusal sentence. Fraunces remains
+ * loaded as fallback during the migration. Rare on purpose: when this
+ * face appears, the law is talking.
+ */
+export const LAW = '"Instrument Serif", "Fraunces Variable", Georgia, serif';
+
+/**
+ * The serif, single-sourced (2026-10-15 audit fix).
+ *
+ * These were still pointing at Fraunces while the TYPE roles
+ * (`editorial`/`editorialSm`) and the CSS `--font-law` had already moved to
+ * Instrument Serif — so the documented Vellum direction held everywhere the
+ * system was used *properly* and silently failed everywhere a call site
+ * reached for the raw constant. `Turn.tsx`'s zone 1 and `ui/script.ts`'s
+ * serif resolution were both rendering Fraunces, which is precisely the
+ * softer 2023-variable-serif look the Vellum pass was replacing.
+ *
+ * One token, one family. Fraunces stays in the stack as the fallback, so
+ * nothing that relied on the constant changes shape — it changes face to the
+ * one the design law already specifies.
+ */
+export const EDITORIAL = LAW;
+export const SERIF = LAW;
+
 export const SANS = '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 export const MONO = '"JetBrains Mono", ui-monospace, "SF Mono", monospace';
 export const DEVANAGARI = '"Noto Sans Devanagari", "Hanken Grotesk", sans-serif';
@@ -11,9 +38,6 @@ export const TAMIL = '"Noto Sans Tamil", "Hanken Grotesk", sans-serif';
    would promise a script the app cannot actually render. Bengali is listed
    in LANGUAGE_REGISTRY as `prepared: false` instead. Add the const and the
    fonts.css import together, or not at all. */
-
-// Backwards compatibility for now (Step 1)
-export const SERIF = EDITORIAL;
 
 /**
  * Type scale — rem, not px.
@@ -31,27 +55,36 @@ export const SERIF = EDITORIAL;
  * differentiate by weight, tracking, and transform rather than by size.
  */
 export const TYPE = {
-  // Display — editorial (Fraunces) only. Latin-only by design; Indic scripts
-  // lead with SANS at raised size/weight (Fraunces has no Devanagari/Tamil).
-  // Fraunces Variable, softened: SOFT rounds the terminals and a moderate opsz
-  // drops the stroke contrast so the display serif reads warm, not brittle, on a
-  // calm page. wght is carried here too so font-variation-settings doesn't reset it.
-  display1:    { family: EDITORIAL, size: '3.5rem',    weight: 300, lineHeight: 1.05, letterSpacing: '-0.02em',  fontVariationSettings: "'wght' 300, 'opsz' 40, 'SOFT' 55, 'WONK' 0" },
-  display2:    { family: EDITORIAL, size: '2.25rem',   weight: 300, lineHeight: 1.1,  letterSpacing: '-0.015em', fontVariationSettings: "'wght' 300, 'opsz' 36, 'SOFT' 55, 'WONK' 0" },
-  editorial:   { family: EDITORIAL, size: '1.5rem',    weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 30, 'SOFT' 60, 'WONK' 0" },
-  editorialSm: { family: EDITORIAL, size: '1.5rem',    weight: 400, lineHeight: 1.25, letterSpacing: '-0.01em',  fontVariationSettings: "'wght' 400, 'opsz' 28, 'SOFT' 60, 'WONK' 0" },
+  // Display — sans-tight (Vellum 2026-09-28). Page and matter titles speak
+  // in the UI voice: confident grotesk, tight tracking. The editorial serif
+  // no longer titles screens — that was the 2023 look.
+  display1:    { family: SANS, size: '3.25rem', weight: 800, lineHeight: 1.04, letterSpacing: '-0.035em' },
+  display2:    { family: SANS, size: '2rem',    weight: 700, lineHeight: 1.08, letterSpacing: '-0.03em'  },
+  // The law register — LAW (Instrument Serif). Only "the law speaking" and
+  // the refusal sentence use it; rare on purpose (see LAW docstring).
+  editorial:   { family: LAW, size: '1.625rem', weight: 400, lineHeight: 1.18 },
+  editorialSm: { family: LAW, size: '1.375rem', weight: 400, lineHeight: 1.22 },
   // UI hierarchy — Hanken Grotesk. Consolidated 4-step scale.
   h3:          { family: SANS, size: '1.125rem',  weight: 600, lineHeight: 1.3,  letterSpacing: '-0.01em' },
   lead:        { family: SANS, size: '1rem',      weight: 500, lineHeight: 1.35 },
   h4:          { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
   title:       { family: SANS, size: '1rem',      weight: 600, lineHeight: 1.4  },
-  body:        { family: SANS, size: '0.875rem',  weight: 400, lineHeight: 1.55 },
-  bodyStrong:  { family: SANS, size: '0.875rem',  weight: 600, lineHeight: 1.55 },
+  body:        { family: SANS, size: '0.9375rem', weight: 400, lineHeight: 1.55 },
+  bodyStrong:  { family: SANS, size: '0.9375rem', weight: 600, lineHeight: 1.55 },
+  /* Reading — the answer's supporting prose (zones 2 and 3, and the user's own
+     words inside a bubble). body sits at 15px because it also carries dense
+     UI chrome; reading is prose-only and takes the 16px step the premium
+     checklist names as the reading floor, with looser leading so a legal
+     sentence does not close up. Do not use it for chrome. */
+  reading:     { family: SANS, size: '1rem',     weight: 400, lineHeight: 1.7 },
   small:       { family: SANS, size: '0.875rem',  weight: 400, lineHeight: 1.5  },
   caption:     { family: SANS, size: '0.75rem',   weight: 400, lineHeight: 1.45 },
   captionStrong:{ family: SANS, size: '0.75rem',  weight: 600, lineHeight: 1.45 },
   micro:       { family: SANS, size: '0.75rem',   weight: 500, lineHeight: 1.3, letterSpacing: '0.08em', textTransform: 'uppercase' as const },
   label:       { family: SANS, size: '0.75rem',   weight: 600, lineHeight: 1.3, letterSpacing: '0.09em', textTransform: 'uppercase' as const },
+  // Inputs sit at 1rem — the iOS anti-zoom floor. body is prose; an INPUT
+  // at 15px still triggers Safari focus-zoom, so inputs get their own role.
+  input:       { family: SANS, size: '1rem',      weight: 400, lineHeight: 1.45 },
 } as const;
 
 export type TypeRole = keyof typeof TYPE;
@@ -69,7 +102,6 @@ export function typeStyle(
     lineHeight: t.lineHeight,
     ...('letterSpacing' in t && t.letterSpacing ? { letterSpacing: t.letterSpacing } : {}),
     ...('textTransform' in t && t.textTransform ? { textTransform: t.textTransform } : {}),
-    ...('fontVariationSettings' in t && t.fontVariationSettings ? { fontVariationSettings: t.fontVariationSettings } : {}),
     ...overrides,
   };
 }
@@ -151,6 +183,10 @@ export const MOTION = {
   state: '220ms',
   dialog: '280ms',
   ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  /** Vellum motion (2026-09-28): enter curves start fast and settle long;
+   *  sheets use the iOS drawer curve. Exits run ~60% of enter duration. */
+  easeEnter: 'cubic-bezier(0.23, 1, 0.32, 1)',
+  easeDrawer: 'cubic-bezier(0.32, 0.72, 0, 1)',
   /** Named recipes — same ladder, clearer call-site intent */
   press: '120ms',
   expand: '220ms',
@@ -238,8 +274,8 @@ export const GRAD = {
    * the page is paper, not a lit stage. Kept as a token (not deleted) so
    * every call site changes at once and nothing needs touching.
    */
-  readingCanvas: 'linear-gradient(180deg, #FFFDFC 0%, #F8F5EE 100%)',
-  cardLift: 'linear-gradient(174deg, #FFFFFF 0%, #FBF8F1 100%)',
+  readingCanvas: 'linear-gradient(180deg, #FEFDFB 0%, #F6F4EF 100%)',
+  cardLift: 'linear-gradient(174deg, #FFFFFF 0%, #FBF9F3 100%)',
   oxbloodStamp: 'linear-gradient(135deg, #7A2020 0%, #6B1F1F 100%)',
 
   /* `language` (saffron→navy, 90deg) removed — it was the tricolour drawn
@@ -285,14 +321,16 @@ export const WASH = {
  * one soft ambient layer kept deliberately tight (≤12px) so nothing floats.
  */
 export const SHADOW = {
-  xs:    '0 1px 1px rgba(26,25,22,0.05)',
+  xs:    '0 1px 1px rgba(20,18,12,0.05)',
   /** Contact — a card or exhibit resting on the page. */
-  sm:    '0 1px 1px rgba(26,25,22,0.05), 0 2px 4px rgba(26,25,22,0.05)',
-  /** Lifted — a document raised a little off the page. */
-  md:    '0 1px 2px rgba(26,25,22,0.06), 0 4px 10px rgba(26,25,22,0.06)',
+  sm:    '0 1px 2px rgba(20,18,12,0.05), 0 2px 6px rgba(20,18,12,0.04)',
+  /** Lifted — machined: tight contact + one diffused ambient + one far wash.
+   *  The inner highlight (SHADOW.inset) does the premium work; shadows only
+   *  anchor the object to the page. */
+  md:    '0 1px 2px rgba(20,18,12,0.05), 0 4px 12px rgba(20,18,12,0.04), 0 12px 32px rgba(20,18,12,0.05)',
   /** A drawer or sheet over the page. */
-  lg:    '0 2px 6px rgba(26,25,22,0.06), 0 10px 28px rgba(26,25,22,0.10)',
-  float: '0 4px 10px rgba(26,25,22,0.07), 0 16px 36px rgba(26,25,22,0.12)',
+  lg:    '0 2px 6px rgba(20,18,12,0.05), 0 10px 28px rgba(20,18,12,0.08), 0 24px 56px rgba(20,18,12,0.06)',
+  float: '0 4px 12px rgba(20,18,12,0.06), 0 16px 40px rgba(20,18,12,0.08), 0 32px 72px rgba(20,18,12,0.06)',
   /** Specialty elevations — still tokens, never raw strings at call sites */
   inset: 'inset 0 1px 0 rgba(255,255,255,0.8)',
   insetSoft: 'inset 0 1px 0 rgba(255,255,255,0.7)',

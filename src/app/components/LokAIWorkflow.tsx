@@ -844,11 +844,31 @@ export function ReviewGate({
         helper can confirm the wording before you use it.
       </Text>
 
-      {/* Deliberate consent step — unlocks the export actions */}
+      {/* Deliberate consent step — press-and-hold to approve (P4).
+          900ms hold with consequence copy; keyboard: Enter/Space toggles.
+          Tapping again clears approval (undo is easy, approval is weighty). */}
+      <Text role="caption" tone="quiet" style={{ marginBottom: 8 }}>
+        Copying means you own what you send — check the amount, dates, and names first. LokAI never files anything for you.
+      </Text>
       <button
         type="button"
         className="lokai-pressable"
-        onClick={toggleReviewed}
+        onPointerDown={(e) => {
+          if (reviewed) return;
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          const t = window.setTimeout(() => toggleReviewed(), 900);
+          (e.currentTarget as HTMLButtonElement).dataset.holdTimer = String(t);
+        }}
+        onPointerUp={(e) => {
+          const t = (e.currentTarget as HTMLButtonElement).dataset.holdTimer;
+          if (t) window.clearTimeout(Number(t));
+        }}
+        onPointerLeave={(e) => {
+          const t = (e.currentTarget as HTMLButtonElement).dataset.holdTimer;
+          if (t) window.clearTimeout(Number(t));
+        }}
+        onClick={() => { if (reviewed) toggleReviewed(); }}
+        onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !reviewed) { e.preventDefault(); toggleReviewed(); } }}
         aria-pressed={reviewed}
         style={{
           width: '100%',
@@ -879,7 +899,7 @@ export function ReviewGate({
           {reviewed && <IconCheck size={13} color="var(--role-on-anchor)" />}
         </span>
         <span style={{ fontFamily: SANS, fontSize: TYPE.small.size, fontWeight: 600, color: C.ink }}>
-          I've read the details and I'm ready to send it myself.
+          {reviewed ? "I've read the details and I'm ready to send it myself." : 'Press and hold to approve — you send it yourself.'}
         </span>
       </button>
 
@@ -1131,14 +1151,18 @@ export function HumanReviewCard({ workflow }: { workflow: CaseWorkflowState }) {
   );
 }
 
-export function AuditTrailList({ events }: { events: AuditEvent[] }) {
+export function AuditTrailList({ events, showHeading = true }: { events: AuditEvent[]; showHeading?: boolean }) {
   // §3.6: ground-level timeline — the serif header is the divider, the events are
-  // a plain vertical list, no outer card.
+  // a plain vertical list, no outer card. `showHeading={false}` is for stacked
+  // uses (the live trail + the labelled illustration beneath it) where two
+  // identical headings on one screen would violate L7 — say it once.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: S[3] }}>
-      <Text role="answer" as="h3" measured={false} style={{ lineHeight: 1.2 }}>
-        Case history
-      </Text>
+      {showHeading && (
+        <Text role="answer" as="h3" measured={false} style={{ lineHeight: 1.2 }}>
+          Case history
+        </Text>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {events.map(event => (
           <div key={event.id} style={{ display: 'grid', gridTemplateColumns: '22px 1fr', gap: 9 }}>
@@ -1160,7 +1184,7 @@ export function AuditTrailList({ events }: { events: AuditEvent[] }) {
                 <Text role="captionStrong" tone="default" measured={false} style={{ marginBottom: 2 }}>
                   {event.label}
                 </Text>
-                <Amount tone="faint">{event.time}</Amount>
+                {event.time && <Amount tone="faint">{event.time}</Amount>}
               </div>
               <Text role="caption" tone="quiet" measured={false} style={{ lineHeight: 1.45 }}>
                 {event.detail}

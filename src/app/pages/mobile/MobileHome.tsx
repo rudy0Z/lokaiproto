@@ -1,15 +1,19 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { IconArrowRight, IconCheck, IconChevronDown, IconChevronRight, IconFile } from '../../ui/icons';
-import { BrandLogo, LogoMark, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SERIF, SHADOW, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
+import { IconArrowRight, IconCheck, IconChevronDown, IconFile } from '../../ui/icons';
+import { BrandLogo, LogoMark, C, DEVANAGARI, GRAD, LAYOUT, PLANE, SANS, SHADOW, SHADOW_SCALE, TAMIL, TYPE, useLokaiSharedStyles } from '../../components/shared';
 import { useConversations, type Conversation } from '../../context/ConversationContext';
-import { LANGUAGE_REGISTRY, type LanguageEntry, clarifyOptionsFor, type ClarifyOption } from '../../data/languagePacks';
+import { LANGUAGE_REGISTRY, type LanguageEntry, clarifyOptionsFor, turnChrome, type ClarifyOption } from '../../data/languagePacks';
+import { HandoverPacket } from '../../components/mobile/HandoverPacket';
 import { DEMO_JURISDICTION } from '../../data/demoScenarios';
-import { Composer, Turn, TurnStatus } from '../../components/ai/Turn';
-import { DEMO_PROGRESS_STAGES, type ResponseTurn, type TurnCitation } from '../../data/responseTurns';
+import { Composer, Turn, TurnStatus, DecisionSpine } from '../../components/ai/Turn';
+import { InlineFactCheck } from '../../components/ai/FactCheck';
+import { DEMO_PROGRESS_STAGES, matterOf, type ResponseTurn, type TurnCitation } from '../../data/responseTurns';
+import type { BecauseRef } from '../../decision/types';
 import {
   Screen, Stack, Row, Rule, Card, HairlineList, HairlineRow, FadeRise, Stagger, WorkingDots,
+  UserBubble, Skeleton,
   Text, Label, Amount, Badge, Button, T, M, S, ICON, typeStyle, useHaptic, useSystemStyles,
 } from '../../ui';
 import { Sheet } from '../../components/Sheet';
@@ -35,6 +39,10 @@ import {
   type AutonomyLevel,
 } from './MobileConsumerCase';
 import { AttachSheet } from './MobileNoticeInterpret';
+import type { PreparedDocument } from '../../data/noticeInterpretation';
+import { getPreparedDocument } from '../../data/noticeInterpretation';
+import { QuickRecapPanel } from '../../components/mobile/FlashcardDeck';
+import { FLASHCARD_LABELS, getConsumerFlashcards } from '../../data/flashcards';
 import { factToVerification, getConsumerWorkflowState, getEvidenceLocker } from '../../data/caseWorkflow';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -253,7 +261,7 @@ export function LanguageBottomSheet({ open, selected, onSelect, onClose }: {
           <div style={{ width: '36px', height: '4px', borderRadius: LAYOUT.radius.xs, background: C.border }} />
         </div>
         <div style={{ padding: '20px 20px 14px' }}>
-          <h2 style={{ fontFamily: SERIF, fontSize: TYPE.editorialSm.size, fontWeight: 400, color: C.ink, margin: '0 0 6px' }}>
+          <h2 style={{ ...typeStyle('h3'), color: C.ink, margin: '0 0 6px' }}>
             Choose language
           </h2>
           <p style={{ fontFamily: SANS, fontSize: TYPE.small.size, color: C.muted, margin: 0 }}>
@@ -365,7 +373,10 @@ function SuggestionChips({ lang, onSelect }: { lang: string; onSelect: (q: strin
                 background: T.anchorTint, /* 2026-09-14 audit P0: sunken-on-ground measured 1.06:1 — the chips read as plain text. The anchor tint is the paired fill for anchor-inked chips and clears 3:1 in both themes. */
                 border: 'none',
                 borderRadius: LAYOUT.radius.pill,
-                padding: '9px 16px',
+                padding: '0 16px',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
                 cursor: 'pointer',
               }}
             >
@@ -420,17 +431,9 @@ function ConsumerCaseStart() {
 /* The tools a response's chips can open. Chat-first (2026-08-28): the guided
    stages are bottom sheets opened FROM the conversation — never routes the
    user is marched through before an answer exists. */
-type Tool = 'verify' | 'plan' | 'packet' | 'audit' | 'escalation';
+type Tool = 'verify' | 'plan' | 'packet' | 'audit' | 'escalation' | 'handover';
 
-const TOOL_LABELS: Record<Tool, string> = {
-  verify: 'Verify the facts',
-  plan: 'Action plan',
-  packet: 'Demand notice',
-  audit: 'What LokAI did',
-  escalation: 'Talk to a person',
-};
-
-function nextStepChips(turn: ResponseTurn): { label: string; tool: Tool }[] {
+function nextStepChips(turn: ResponseTurn, chrome: ReturnType<typeof turnChrome>): { label: string; tool: Tool }[] {
   switch (turn.mode) {
     case 'explain':
       return [
@@ -446,15 +449,15 @@ function nextStepChips(turn: ResponseTurn): { label: string; tool: Tool }[] {
         { label: 'What LokAI checked', tool: 'audit' },
       ];
     case 'stop': {
-      /* Human-required stops (high_risk) have a single safe action: the
-         user must talk to a person. Review-recommended stops (statute
-         expiry, conflicting rules) still get a "what was checked" door so
-         the user can inspect the decision without leaving the chat. */
+      /* Stops carry the exit artifact first: the handover packet IS the
+         human path's paperwork. Human-required stops (high_risk) keep a
+         single safe action besides it; review-recommended stops also get
+         the "what was checked" door — localized, like every other door. */
       const tools: { label: string; tool: Tool }[] = [
-        { label: 'Talk to a person', tool: 'escalation' },
+        { label: chrome.handover, tool: 'handover' },
       ];
       if (turn.id !== 'high-risk-stop') {
-        tools.push({ label: 'What LokAI did', tool: 'audit' });
+        tools.push({ label: chrome.whatLokAIDid, tool: 'audit' });
       }
       return tools;
     }
@@ -463,8 +466,8 @@ function nextStepChips(turn: ResponseTurn): { label: string; tool: Tool }[] {
   }
 }
 
-function NextSteps({ turn, onOpenTool }: { turn: ResponseTurn; onOpenTool: (tool: Tool) => void }) {
-  const chips = nextStepChips(turn);
+function NextSteps({ turn, onOpenTool, language }: { turn: ResponseTurn; onOpenTool: (tool: Tool) => void; language: string }) {
+  const chips = nextStepChips(turn, turnChrome(language as 'en' | 'hi' | 'mr' | 'ta'));
   if (chips.length === 0) return null;
   return (
     <Row gap={2} wrap>
@@ -481,7 +484,10 @@ function NextSteps({ turn, onOpenTool }: { turn: ResponseTurn; onOpenTool: (tool
             background: T.anchorTint,
             border: 'none',
             borderRadius: LAYOUT.radius.pill,
-            padding: '9px 16px',
+            padding: '0 16px',
+            minHeight: 44,
+            display: 'inline-flex',
+            alignItems: 'center',
             cursor: 'pointer',
           }}
         >
@@ -498,45 +504,16 @@ function NextSteps({ turn, onOpenTool }: { turn: ResponseTurn; onOpenTool: (tool
 type ChatItem =
   | { id: number; role: 'user'; text: string }
   | { id: number; role: 'working' }
-  | { id: number; role: 'done'; claims: { grounded: number; total: number } }
+  /* A document dropped into the composer (§3.8a). It is a discrete object, so
+     it earns a surface — but it is the USER's attachment, so it sits on the
+     user side of the stream, not in a left-aligned card. */
+  | { id: number; role: 'document'; doc: PreparedDocument }
   | { id: number; role: 'note'; text: string }
   | { id: number; role: 'turn'; turn: ResponseTurn }
   | { id: number; role: 'clarify'; turn: ResponseTurn; options: ClarifyOption[] };
 
-/**
- * The audit line — the working card's residue.
- *
- * While LokAI works, the card names its stages ("Checking the Consumer
- * Protection Act, 2019…"). When the answer lands, the card does not
- * disappear; it collapses to this one quiet line that stays above the
- * answer as its provenance marker, and opens the full audit trail on tap.
- * Answer modes with grounding get it; a clarify (LokAI asking, not
- * answering) does not. No duration badges — the demo's timing is staging,
- * not latency, and fake precision would say otherwise.
- */
-function AuditLine({ claims, onOpen }: { claims: { grounded: number; total: number }; onOpen: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="lokai-pressable"
-      style={{
-        display: 'flex', alignItems: 'center', gap: S[2],
-        background: 'none', border: 'none', padding: 0,
-        cursor: 'pointer', textAlign: 'left', width: '100%',
-      }}
-    >
-      <IconCheck size={14} color="var(--role-ok)" style={{ flexShrink: 0 }} />
-      <Text role="caption" tone="quiet" measured={false} style={{ flex: 1 }}>
-        Checked the Consumer Protection Act, 2019 · {claims.grounded} of {claims.total} claims trace to a source
-      </Text>
-      <IconChevronRight size={13} color="var(--role-ink-faint)" style={{ flexShrink: 0 }} />
-    </button>
-  );
-}
-
 /** The tappable answers under a clarify turn — tap one, or type instead. */
-function ClarifyOptions({ options, onAnswer, disabled = false }: { options: ClarifyOption[]; onAnswer: (option: ClarifyOption) => void; disabled?: boolean }) {
+function ClarifyOptions({ options, onAnswer, disabled = false, lang = 'en' }: { options: ClarifyOption[]; onAnswer: (option: ClarifyOption) => void; disabled?: boolean; lang?: string }) {
   return (
     <Stack gap={2}>
       <Row gap={2} wrap>
@@ -551,10 +528,13 @@ function ClarifyOptions({ options, onAnswer, disabled = false }: { options: Clar
                 ...typeStyle('small'),
                 fontWeight: 500,
                 color: disabled ? T.inkFaint : T.anchor,
-                background: T.sunken,
+                background: disabled ? T.sunken : T.anchorTint,
                 border: 'none',
                 borderRadius: LAYOUT.radius.pill,
-                padding: '9px 16px',
+                padding: '0 16px',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.6 : 1,
               }}
@@ -564,7 +544,12 @@ function ClarifyOptions({ options, onAnswer, disabled = false }: { options: Clar
           </FadeRise>
         ))}
       </Row>
-      <Text role="meta" tone="faint" measured={false}>…or type your answer below.</Text>
+      {/* Was <Text role="meta"> — a caps line shouting "…OR TYPE YOUR ANSWER
+          BELOW." directly above a composer whose placeholder already says
+          "Describe what happened…". The redundant instruction was the last
+          all-caps label in the conversation; a quiet sentence-case caption
+          says the same thing without competing with LokAI's question. */}
+      <Text role="caption" tone="faint" measured={false}>{turnChrome(typeof lang === 'string' ? (lang as 'en' | 'hi' | 'mr' | 'ta') : 'en').orType}</Text>
     </Stack>
   );
 }
@@ -590,9 +575,10 @@ export function HomeArtboard() {
     runPreparedInput, resolveClarify, resetConversation,
     progressLabel, progressIndex, skipProgress, isProgressing,
     facts, confirmFact, correctFact, addAuditEvent,
-    draftApproved, setDraftApproved, draftAllowed,
-    language,
+    draftApproved, setDraftApproved, draftAllowed, draftLockReason,
+    language, lastReceipt, receipts, scenarioId, scenario,
   } = useDemo();
+  const chrome = turnChrome(language);
   const navigate = useNavigate();
   const [items, setItems] = useState<ChatItem[]>([]);
   const idRef = useRef(0);
@@ -628,23 +614,25 @@ export function HomeArtboard() {
     if (atBottom.current) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [items]);
 
-  /* A working item becomes the audit line for answer modes with grounding;
-     for a clarify (LokAI asking, not answering) it simply leaves as the
-     question enters. Morphing in place — same id — avoids any scroll jump. */
+  /* The working row MORPHS in place — it keeps its id and becomes the answer.
+     That is deliberate, and it is the fix for a real leak: removing the row
+     instead left the dead `TurnStatus` mounted at full opacity forever, because
+     `AnimatePresence` never completed the exit for it (the ghost sat above the
+     answer saying "Preparing your answer" next to a finished answer). Reusing
+     the key means nothing is removed, so there is nothing to exit — React just
+     swaps the content. It also removes any scroll jump, and the answer's own
+     arrival is already animated by the Turn's zone reveal, so no entrance is
+     lost by not remounting the wrapper. */
   const resolveWorking = (workingId: number, turn: ResponseTurn) => {
     setItems((prev) => {
-      const resolved: (ChatItem | null)[] = prev.map((i) => {
-        if (i.id !== workingId) return i;
-        if (turn.mode === 'explain' || turn.mode === 'disclose' || turn.mode === 'stop') {
-          return { id: workingId, role: 'done', claims: { grounded: turn.groundedClaims, total: turn.totalClaims } };
-        }
-        return null;
-      });
-      const kept = resolved.filter((i): i is ChatItem => i !== null);
       const tail: ChatItem = turn.mode === 'clarify'
-        ? { id: nextId(), role: 'clarify', turn, options: clarifyOptionsFor(language) }
-        : { id: nextId(), role: 'turn', turn };
-      return [...kept, tail];
+        ? { id: workingId, role: 'clarify', turn, options: clarifyOptionsFor(language) }
+        : { id: workingId, role: 'turn', turn };
+      const at = prev.findIndex((i) => i.id === workingId);
+      if (at === -1) return [...prev, tail];
+      const next = prev.slice();
+      next[at] = tail;
+      return next;
     });
   };
 
@@ -655,13 +643,44 @@ export function HomeArtboard() {
     resolveWorking(workingId, turn);
   };
 
+  /* A document enters through the composer and is read IN this conversation.
+     This used to `navigate('/mobile/notice?doc=…')`, which broke the app's own
+     architecture — MOBILE_AI_SYSTEM §3.8a states plainly that "every document
+     enters through the composer; there is no separate upload route" — and it
+     meant the interpretation of your notice lived in a different stream from
+     the matter it belongs to.
+
+     The response is the SAME deterministic `notice-explain` turn the standalone
+     reader produces: one interpretation, two entry points, never two answers
+     (and `verify-decision.mjs` still asserts it resolves identically). */
+  const sendDocument = async (doc: PreparedDocument) => {
+    setAttachOpen(false);
+    const docId = nextId();
+    const workingId = nextId();
+    setItems((prev) => [...prev, { id: docId, role: 'document', doc }, { id: workingId, role: 'working' }]);
+    /* The DOCUMENT decides the input, and therefore the reading.
+     *
+     * This used to be the fixed string `'interpret this legal notice'` for
+     * every attachment, which meant the engine matched the notice intent and
+     * a payment receipt came back with the property-tax notice's answer —
+     * its ₹32,480, its deadline, its ward office. The paper on screen and the
+     * paper being answered were different documents, which is the one thing
+     * a document interpreter must never do.
+     *
+     * Sending the document's own file name keeps the whole pipeline intact
+     * (engine routing, receipt, audit, staged progress), so one document
+     * still has one reading however it arrived, and the routing is pinned by
+     * fixtures in `decision/fixtures.ts` rather than by a call-site branch. */
+    const turn = await runPreparedInput(doc.fileName);
+    resolveWorking(workingId, turn);
+  };
+
   const answerClarify = async (option: ClarifyOption) => {
     const workingId = nextId();
     const confirmId = nextId();
     setItems((prev) => [
       ...prev,
-      { id: nextId(), role: 'user', text: option.label },
-      { id: confirmId, role: 'note', text: `You said: ${option.label}` },
+      { id: nextId(), role: 'user', text: option.said ?? option.label },
       { id: workingId, role: 'working' },
     ]);
     const turn = await resolveClarify(option.nextTurnId);
@@ -670,9 +689,17 @@ export function HomeArtboard() {
 
   /* Tool sheets — the guided stages, opened from the chat. */
   const [tool, setTool] = useState<Tool | null>(null);
+  const [recapOpen, setRecapOpen] = useState(false);
   const [autonomy, setAutonomy] = useState<AutonomyLevel>('prepare');
   const [previewApproved, setPreviewApproved] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
+  /* The correction channel: "this answer missed my situation". Recorded in the
+     case history (the live audit trail) — the one thing the product's own
+     thesis requires that was missing: a way to push back that leaves a trace. */
+  const flagAnswer = (flagged: ResponseTurn) => {
+    addAuditEvent(`Answer flagged by user — ${flagged.id} (${flagged.mode})`);
+    haptic();
+  };
   /* Citation detail — opened by tapping a citation chip in the answer.
      Distinct from `tool` because the sheet body is a single citation,
      not a multi-tool stage. */
@@ -690,6 +717,14 @@ export function HomeArtboard() {
     }]);
   };
 
+  /* A guardrail scene swap is a new matter: the log clears with the engine
+     state (P2 — stale messages survived the switch before). */
+  useEffect(() => {
+    setItems([]);
+    resetConversation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenarioId]);
+
   /* Deep-linkable, like ?doc= on the notice reader: ?ask=<text> opens straight
      into the conversation with that message answered — for case-study captures
      and the dev catalog. */
@@ -698,32 +733,116 @@ export function HomeArtboard() {
   useEffect(() => {
     if (started.current) return;
     const ask = params.get('ask');
-    if (!ask) return;
-    started.current = true;
-    void send(ask);
+    if (ask) {
+      started.current = true;
+      /* ?then=<nextTurnId> answers the clarify in the same breath, so the
+         flagship states behind the question — the explained answer with its
+         ground line, its "what would change this answer" block, and the
+         in-stream fact check — are directly linkable. Without it every
+         capture of those states meant clicking through the conversation by
+         hand, which is why none of them were in the catalog. */
+      const then = params.get('then');
+      void (async () => {
+        await send(ask);
+        if (!then) return;
+        const option = clarifyOptionsFor(language).find((o) => o.nextTurnId === then);
+        if (option) await answerClarify(option);
+      })();
+      return;
+    }
+    /* ?doc=<id> — a document picked in the Documents folder opens the chat
+       already holding it, so the interpretation lands in the same conversation
+       as the matter it belongs to. The composer is the only door a document
+       enters through (§3.8a); this is that door, reached from the folder. */
+    const docId = params.get('doc');
+    if (docId) {
+      const doc = getPreparedDocument(docId);
+      if (doc) {
+        started.current = true;
+        void sendDocument(doc);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
   const empty = items.length === 0;
 
+  /* The user's words as a matter-log entry, not a chat bubble: one left
+     alignment, the log reads like a case file the conversation is building
+     (open decision O1 resolved; de-chatbots the skeleton). */
+  const [latestTurnId, setLatestTurnId] = useState<number | null>(null);
+  useEffect(() => {
+    const last = [...items].reverse().find((i) => i.role === 'turn' || i.role === 'clarify');
+    setLatestTurnId(last ? last.id : null);
+  }, [items]);
+
   const renderItem = (item: ChatItem) => {
     switch (item.role) {
       case 'user':
+        /* The chat medium's other half. This was a caps-labelled sunken box
+           with a 3px left border — the "file tab" pattern LLM_DESIGN_SYSTEM.md
+           bans as the single most generic pattern in the app, and the exact
+           inverse of what the best kit in the component vault (ai-elements)
+           ships: the assistant is bare prose on the ground, and the USER turn
+           is the filled, right-aligned object. (It also silently rendered
+           with square corners, because `var(--radius-control)` was never
+           defined.) */
         return (
-          <Row justify="end">
-            <div className="lokai-chat-bubble-user">
-              <Text role="body" tone="onAnchor" measured={false}>{item.text}</Text>
+          <UserBubble>
+            <Text role="reading" tone="onAnchor" measured={false}>{item.text}</Text>
+          </UserBubble>
+        );
+      case 'document':
+        /* The user's attachment, on the user side. A document is a discrete
+           object (L1) so it gets a raised paper surface — but it is what SHE
+           handed over, so it aligns with her words rather than sitting in a
+           left-aligned card that reads as the app's own output. */
+        return (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: S[3],
+              background: T.raised,
+              borderRadius: LAYOUT.radius.panel,
+              boxShadow: SHADOW_SCALE.card,
+              padding: `${S[3]} ${S[4]}`,
+              maxWidth: '84%',
+            }}>
+              <span style={{
+                width: 36, height: 36, borderRadius: LAYOUT.radius.sm,
+                background: T.sunken, color: T.inkQuiet,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <IconFile size={ICON.ui} />
+              </span>
+              <Stack gap={0} style={{ minWidth: 0 }}>
+                <Text role="bodyStrong" measured={false}>{item.doc.fileName}</Text>
+                <Text role="caption" tone="faint" measured={false}>
+                  {item.doc.pages} {item.doc.pages === 1 ? 'page' : 'pages'} · {item.doc.sourceLangLabel}
+                </Text>
+              </Stack>
             </div>
-          </Row>
+          </div>
         );
       case 'working':
         return progressLabel ? (
-          <TurnStatus
-            label={progressLabel}
-            stages={DEMO_PROGRESS_STAGES}
-            activeIndex={Math.max(0, progressIndex)}
-            onSkip={skipProgress}
-          />
+          <Stack gap={2}>
+            <TurnStatus
+              label={progressLabel}
+              stages={DEMO_PROGRESS_STAGES}
+              activeIndex={Math.max(0, progressIndex)}
+              onSkip={skipProgress}
+            />
+            {/* Phase 1.4 — a content-shaped placeholder while LokAI works.
+               `Skeleton` has existed in ui/motion.tsx since the first pass and
+               was never rendered on the flagship screen, so the 4.2s beat was
+               a static capsule over empty paper. Shaped like the answer it
+               stands in for, so nothing jumps when the real text lands. */}
+            <Skeleton width="92%" height={14} />
+            <Skeleton width="78%" height={14} />
+          </Stack>
         ) : (
           /* The first beat of the await — no progress label yet, just three
              breathing dots. The user's eyes get something alive on screen
@@ -735,8 +854,6 @@ export function HomeArtboard() {
             </Text>
           </Row>
         );
-      case 'done':
-        return <AuditLine claims={item.claims} onOpen={() => setTool('audit')} />;
       case 'note':
         return (
           <Row gap={2} align="flex-start">
@@ -747,15 +864,60 @@ export function HomeArtboard() {
       case 'clarify':
         return (
           <Stack gap={2}>
-            <Turn turn={item.turn} onOpenSource={setOpenCitation} />
-            <ClarifyOptions options={item.options} onAnswer={answerClarify} disabled={isProgressing} />
+            <Turn
+              turn={item.turn}
+              receipt={lastReceipt && lastReceipt.turnId === item.turn.id ? lastReceipt : null}
+              onOpenSource={setOpenCitation}
+              onFlagAnswer={flagAnswer}
+              announce={item.id === latestTurnId}
+            />
+            <ClarifyOptions options={item.options} onAnswer={answerClarify} disabled={isProgressing} lang={language} />
           </Stack>
         );
       default:
         return (
           <Stack gap={3}>
-            <Turn turn={item.turn} onOpenSource={setOpenCitation} />
-            <NextSteps turn={item.turn} onOpenTool={setTool} />
+            <Turn
+              turn={item.turn}
+              announce={item.id === latestTurnId}
+              receipt={lastReceipt && lastReceipt.turnId === item.turn.id ? lastReceipt : null}
+              onOpenSource={setOpenCitation}
+              onFlagAnswer={flagAnswer}
+              onOpenRef={(ref: BecauseRef) => {
+                if (ref.kind === 'source') {
+                  const citation = item.turn.citations.find((c) => c.id === ref.ref) ?? item.turn.citations[0];
+                  if (citation) setOpenCitation(citation);
+                  else setTool('verify');
+                } else {
+                  setTool('verify');
+                }
+              }}
+            />
+            {/* Phase 3.2 — the verification gate, in the stream. It sits
+                directly under the answer that depends on it, so "what do you
+                need from me" is part of the conversation rather than a form
+                behind a chip. The gate itself is unchanged: the draft CTA
+                stays locked until every fact is confirmed.
+
+                Only under the LATEST answer (L7): the fact set is the
+                matter's, not the turn's, so repeating the same count down the
+                whole log would be the duplication this pass exists to remove. */}
+            {item.id === latestTurnId
+              && (item.turn.mode === 'explain' || item.turn.mode === 'disclose')
+              /* And only for the matter these facts belong to. The gate is the
+                 consumer refund's — the mixer facts and the demand-notice
+                 draft. Rendering it under the property-tax answer implied the
+                 notice draft was waiting on the purchase date, which is not a
+                 dependency that exists. */
+              && matterOf(item.turn) === 'consumer' && (
+              <InlineFactCheck
+                facts={facts}
+                onConfirm={confirmFact}
+                onCorrect={() => setTool('verify')}
+                language={language}
+              />
+            )}
+            <NextSteps turn={item.turn} onOpenTool={setTool} language={language} />
           </Stack>
         );
     }
@@ -795,6 +957,7 @@ export function HomeArtboard() {
             placeholder="Describe what happened…"
             onSubmit={send}
             disabled={isProgressing}
+            onStop={skipProgress}
             onAttach={() => setAttachOpen(true)}
           />
         </Stack>
@@ -803,6 +966,10 @@ export function HomeArtboard() {
       scrollViewportRef={viewportRef}
       showWordmark={false}
       showNewChat={!empty}
+      /* Quick Recap — the three-dots door. Only once the conversation has
+         something worth recalling; the empty state has no facts yet. */
+      showMenu={!empty}
+      onMenu={() => setRecapOpen(true)}
       onNewChat={() => {
         setItems([]);
         resetConversation();
@@ -812,10 +979,21 @@ export function HomeArtboard() {
         <>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: S[2], textAlign: 'center', minHeight: 0 }}>
             <LogoMark size={52} />
-            <Text role="answer" style={{ textAlign: 'center', marginTop: S[2] }}>What can I help you sort out?</Text>
+            {/* Vellum: the greeting is LokAI speaking, not the law — sans-tight
+               display voice. The serif is reserved for the law register. */}
+            <h1 style={{ ...typeStyle('display2'), textAlign: 'center', margin: `${S[2]} 0 0`, color: C.ink }}>
+              What can I help you sort out?
+            </h1>
             <Text tone="quiet" style={{ textAlign: 'center', maxWidth: 300 }}>
               Plain-language Indian consumer law with citations.
             </Text>
+            {/* Script honesty: the greeting stays the product voice, but the
+               reader's language shows beside it so the choice is visible. */}
+            {language !== 'en' && (
+              <Text role="meta" tone="faint" measured={false}>
+                {getLangLabel(language)} · {getLangLabel('en')}
+              </Text>
+            )}
           </div>
 
           <SuggestionChips lang={selectedLanguage} onSelect={send} />
@@ -834,6 +1012,24 @@ export function HomeArtboard() {
         </>
       ) : (
         <Stack gap={4}>
+          {/* The matter file frame (de-chatbot move): the state of her case is
+             the first strong element above the log — stage, facts, one tap to
+             the full guided file. The conversation updates this; it does not
+             replace it. */}
+          <Card onClick={() => navigate('/mobile/case/consumer')}>
+            <Row gap={3} align="center">
+              <Stack gap={1} style={{ flex: 1, minWidth: 0 }}>
+                <Label>{scenario.matterTitle}</Label>
+                <Row gap={2} align="center">
+                  <Text role="caption" tone="quiet" measured={false}>
+                    {chrome.factsConfirmedOf(facts.filter((f) => f.confirmedByUser).length, facts.length)}
+                  </Text>
+                  <Text role="caption" tone="faint" measured={false}>{scenario.label}</Text>
+                </Row>
+              </Stack>
+              <IconArrowRight size={ICON.ui} color="var(--role-anchor)" />
+            </Row>
+          </Card>
           <AnimatePresence initial={false}>
             {items.map((item) => (
               <FadeRise key={item.id} exit>
@@ -841,6 +1037,12 @@ export function HomeArtboard() {
               </FadeRise>
             ))}
           </AnimatePresence>
+          {receipts.length > 0 && (
+            <DecisionSpine
+              receipts={receipts}
+              factsSummary={chrome.factsConfirmedOf(facts.filter((f) => f.confirmedByUser).length, facts.length)}
+            />
+          )}
           <div ref={bottomRef} />
         </Stack>
       )}
@@ -848,7 +1050,7 @@ export function HomeArtboard() {
       <Sheet
         open={tool !== null}
         onClose={() => setTool(null)}
-        label={tool ? TOOL_LABELS[tool] : 'Tool'}
+        label={tool ? ({ verify: 'Verify the facts', plan: 'Action plan', packet: 'Demand notice', audit: 'What LokAI did', escalation: 'Talk to a person', handover: 'Handover notes' } as Record<Tool, string>)[tool] : 'Tool'}
         contain
         maxHeight="88%"
       >
@@ -880,10 +1082,22 @@ export function HomeArtboard() {
                  the dial says — the refusal outranks the preference. */}
               {autonomy === 'guide' || !draftAllowed ? (
                 <>
-                  {!draftAllowed && autonomy !== 'guide' && (
+                  {draftLockReason === 'stop' && autonomy !== 'guide' && (
                     <Text role="caption" tone="quiet" measured={false}>
                       Drafting is locked for this matter right now — LokAI's last answer
                       stopped here. Escalate or ask a question it can answer first.
+                    </Text>
+                  )}
+                  {/* The other lock, and the one this prototype is actually
+                     about: an answer exists, but a fact in it is not yet
+                     confirmed, so the engine will not draft from it. Saying
+                     "the last answer stopped here" would have been false —
+                     nothing stopped; it is waiting on you. */}
+                  {draftLockReason === 'facts' && autonomy !== 'guide' && (
+                    <Text role="caption" tone="quiet" measured={false}>
+                      Drafting is waiting on you — at least one fact behind this answer is
+                      not confirmed yet. LokAI will not draft from a fact you have not
+                      checked. Confirm it in the conversation and the draft opens here.
                     </Text>
                   )}
                   <GuideOnlyCard packet={workflow.filingPacket} />
@@ -936,6 +1150,20 @@ export function HomeArtboard() {
           )}
           {tool === 'audit' && <AuditTrailList events={workflow.auditTrail} />}
           {tool === 'escalation' && <HumanReviewCard workflow={workflow} />}
+          {tool === 'handover' && (
+            <Stack gap={3}>
+              <HandoverPacket facts={facts} receipts={receipts} language={language} />
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  addAuditEvent('Handover notes printed from the chat');
+                  window.print();
+                }}
+              >
+                Print these notes
+              </Button>
+            </Stack>
+          )}
           </Stack>
         </FadeRise>
       </Sheet>
@@ -978,13 +1206,43 @@ export function HomeArtboard() {
         )}
       </Sheet>
 
+      {/* Quick Recap — the prepared deck for this matter. Stateless between
+          opens: a recap is a pass, not a progress bar. */}
+      <Sheet
+        open={recapOpen}
+        onClose={() => setRecapOpen(false)}
+        label="Quick recap"
+        contain
+        maxHeight="84%"
+      >
+        <QuickRecapPanel
+          cards={getConsumerFlashcards(language)}
+          labels={FLASHCARD_LABELS[language] ?? FLASHCARD_LABELS.en}
+          lang={language}
+        />
+      </Sheet>
+
+      {/* Prepared guardrail scenes — the eight decisions the prototype can
+          prove. Until now they were reachable only by deep link or by
+          already being inside a non-consumer scene, which meant the single
+          most persuasive artifact in the product (the refusal taxonomy) had
+          no door from the chat. `?scenes=1` renders the full gallery on the
+          case screen without preselecting one. */}
+      <Stack gap={2} style={{ padding: `0 ${S[5]} ${S[2]}` }}>
+        <Button
+          variant="quiet"
+          size="sm"
+          align="start"
+          onClick={() => navigate('/mobile/case/consumer?scenes=1')}
+        >
+          See why LokAI stops — 8 prepared scenes
+        </Button>
+      </Stack>
+
       <AttachSheet
         open={attachOpen}
         onClose={() => setAttachOpen(false)}
-        onPick={(doc) => {
-          setAttachOpen(false);
-          navigate(`/mobile/notice?doc=${doc.id}`);
-        }}
+        onPick={sendDocument}
       />
     </AppScreen>
   );

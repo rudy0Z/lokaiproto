@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Lifebuoy } from '@phosphor-icons/react';
 import {
@@ -8,6 +8,9 @@ import {
 import { Wordmark } from '../shared';
 import { StatusBar } from '../../pages/mobile/MobileHome';
 import type { FailureState } from '../../data/caseWorkflow';
+import { useDemo } from '../../context/DemoContext';
+import { turnChrome } from '../../data/languagePacks';
+import { HandoverScreen } from './HandoverPacket';
 
 /**
  * A stop state, full-bleed dark (L6/L8).
@@ -45,6 +48,33 @@ export function MobileStopScreen({
   const absolute = failure.riskLevel === 'human_required';
   const haptic = useHaptic();
   const navigate = useNavigate();
+  const { facts, receipts, lastReceipt, language } = useDemo();
+  const [showPacket, setShowPacket] = useState(false);
+  const chrome = turnChrome(language);
+
+  /* Phase 2.3 — the trigger. Only when the last computed receipt actually
+     stopped: the matter journey can open this screen without a fresh decision
+     (a deep link, a scene swap), and inventing a trigger there would be a
+     fabricated provenance claim — the exact thing the gates ban. */
+  const stopTrigger = React.useMemo(() => {
+    const r = lastReceipt;
+    if (!r || r.outcomeKind !== 'stop') return null;
+    const markers = r.because ?? [];
+    if (markers.length === 0) return null;
+    const gateName = chrome.gates[r.gate] ?? r.gate;
+    return chrome.stopTrigger(gateName, markers[0].replace(/^(?:fact|source|scene|rule):/, ''));
+  }, [lastReceipt, chrome]);
+
+  if (showPacket) {
+    return (
+      <HandoverScreen
+        facts={facts}
+        receipts={receipts}
+        language={language}
+        onBack={() => setShowPacket(false)}
+      />
+    );
+  }
 
   return (
     <Screen
@@ -70,6 +100,16 @@ export function MobileStopScreen({
           {!absolute && onContinue && (
             <Button variant="quiet" onClick={() => { haptic(); onContinue(); }}>Continue anyway</Button>
           )}
+          {/* The exit artifact (PRODUCT-JOURNEY §4.3): the receipt trail +
+              confirmed facts + evidence checklist as one carried page. A stop
+              is a change of venue with the paperwork intact — this is the
+              paperwork. */}
+          <Button
+            variant="quiet"
+            onClick={() => { haptic(); setShowPacket(true); }}
+          >
+            {chrome.handover}
+          </Button>
           {/* The third exit: ask a different question. The user landed here
               from the matter journey; the chat home is the place to start a
               new conversation without abandoning the prepared matter. */}
@@ -83,9 +123,37 @@ export function MobileStopScreen({
       <Text role="pronounce">{failure.title}</Text>
       <Text tone="quiet" style={{ maxWidth: M.measure }}>{failure.body}</Text>
 
+      {/* Phase 2.3 — the trigger sentence, same as the in-chat stop. A refusal
+          that names the gate and quotes the user's own word is inspectable;
+          one that doesn't is a wall. */}
+      {stopTrigger && (
+        <Text role="captionStrong" tone="quiet" measured={false} style={{ paddingTop: S[2] }}>
+          {stopTrigger}
+        </Text>
+      )}
+
+      {/* P1-4: every stop names the person. These are real, free channels —
+          the refusal is never a dead end.
+
+          L7: the stop screen gets ONE caps label, and the context strip ("Stopped
+          · your case is safe") already spends it. These two section heads were
+          a second and third <Label>, which is the redundancy that makes a refusal
+          read as a form. The hairline does the separating; the type does the
+          ranking. */}
+      <Stack gap={2}>
+        <Rule />
+        <Text role="captionStrong" tone="quiet" measured={false}>{chrome.channelLabel}</Text>
+        {failure.channels.map((ch) => (
+          <Stack gap={1} key={ch.label}>
+            <Text role="quiet" measured={false}>{ch.label}</Text>
+            <Text role="caption" tone="quiet" measured={false}>{ch.detail}</Text>
+          </Stack>
+        ))}
+      </Stack>
+
       <Stack gap={3}>
         <Rule />
-        <Label>What to do instead</Label>
+        <Text role="captionStrong" tone="quiet" measured={false}>What to do instead</Text>
         <Text tone="quiet" style={{ maxWidth: M.measure }}>{failure.safeFallback}</Text>
       </Stack>
     </Screen>

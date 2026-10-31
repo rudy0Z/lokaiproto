@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="tile">
+    <rect width="512" height="512" rx="143" fill="#0B1B32"/>
+  </g>
+  <g id="glyph">
+    <path fill="#FBF9F3" d="M134 104 H238 V260 L284 306 H394 V400 H134 Z"/>
+  </g>
+  <g id="accent">
+    <rect x="346" y="104" width="48" height="48" fill="#E27A24"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g id="tile">
+    <rect x="0" y="0" width="512" height="512" rx="143" fill="#F6F4EF"/>
+    <rect x="0.75" y="0.75" width="510.5" height="510.5" rx="142.25" fill="none" stroke="#161513" stroke-opacity="0.10" stroke-width="1.5"/>
+  </g>
+  <g id="glyph" stroke="#161513" stroke-width="26" stroke-linecap="round">
+    <line x1="256" y1="146" x2="256" y2="366" fill="none"/>
+    <line x1="152" y1="190" x2="360" y2="190" fill="none"/>
+    <circle cx="152" cy="263" r="34" fill="#161513" stroke="none"/>
+  </g>
+  <g id="accent">
+    <circle cx="360" cy="247" r="34" fill="#E27A24"/>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 import { createHashRouter, Navigate } from 'react-router';
 import type { ComponentType } from 'react';
 import CaptureLayout             from './CaptureLayout';
+import { RouteErrorScreen }      from './components/RouteErrorScreen';
 
 // Shells
 import DesktopShell              from './shells/DesktopShell';
@@ -22,6 +23,7 @@ const lazyPage = (importer: () => Promise<{ default: ComponentType }>) => async 
 export const router = createHashRouter([
   {
     Component: CaptureLayout,
+    errorElement: <RouteErrorScreen />,
     children: [
       // ── Desktop shell (sidebar + content) ───────────────────────────────
       {
@@ -49,6 +51,7 @@ export const router = createHashRouter([
       {
         path: '/mobile',
         Component: MobileShell,
+        errorElement: <RouteErrorScreen />,
         children: [
           { index: true, element: <Navigate to="/mobile/onboarding" replace /> },
 
@@ -78,7 +81,8 @@ export const router = createHashRouter([
       { path: 'specimen/:specimenId', lazy: lazyPage(() => import('./pages/Specimen')) },
 
       // Fallback
-      { path: '/', element: <Navigate to="/desktop/dashboard" replace /> }
+      { path: '/', element: <Navigate to="/desktop/dashboard" replace /> },
+      { path: '*', lazy: lazyPage(() => import('./pages/NotFound')) },
     ],
   },
 ]);

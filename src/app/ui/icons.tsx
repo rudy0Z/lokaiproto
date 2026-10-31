@@ -55,4 +55,5 @@ export {
   FileSearchIcon as IconScanSearch,
   FilePenIcon as IconFilePen,
   BookOpenIcon as IconBookOpen,
+  EllipsisVerticalIcon as IconDots,
 } from '@animateicons/react/lucide';

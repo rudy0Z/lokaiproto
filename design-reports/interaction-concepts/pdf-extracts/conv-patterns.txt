@@ -1,0 +1,315 @@
+--- PAGE 1 ---
+A Guide for 
+UX & Product Designers
+Conversational AI
+Design Patterns:
+What is a Conversational AI Design Pattern?
+A Conversational AI Design Pattern is a reusable
+interaction or architectural solution that addresses a
+recurring challenge in conversational experiences across
+voice assistants, chatbots, copilots, and agentic
+workflows.
+Conversational patterns govern how information is exchanged,
+ambiguity is managed, context is maintained, and tasks are
+completed through natural language and hybrid interfaces.
+The Paradigm Shift: Rule-Based vs. Generative & Agentic Patterns
+Deterministic, intent-slot
+based flows with fixed rules.
+Rigid menus, limited branches,
+linear flows.
+Frequent dead-ends,
+fallbacks, “I didn’t get that.”
+Text/voice command
+line or structured menus.
+Modern Generative &
+Agentic AI (LLMs)
+Probabilistic, context-aware
+reasoning with learned patterns.
+Dynamic, multi-turn, flexible
+dialogues.
+Natural language, rich responses,
+and proactive suggestions.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Aspect
+Logic
+Navigation
+Failures
+Interface
+Classic Rule-Based CUI (Pre-LLM)
+Graceful recovery, clarification, self-correction.
+--- PAGE 2 ---
+What to Learn: Core Competencies for Designers
+LEARNING PLAYBOOK
+AI UX Core Competencies
+Probabilistic
+Mental Models
+Understand LLMs as
+probabilistic systems.
+Learn how varying
+response quality and
+edge cases influence
+outcomes.
+Conversation
+Analysis & Repair
+Strategies
+Apply Grice’s Maxims
+to evaluate responses
+and design graceful
+recovery strategies for
+when things
+go wrong.
+Prompt
+Architecture
+as UX
+Design effective prompts using
+system prompts, few-shot
+examples, temperature, and
+context windows.
+Agentic
+Interaction
+Design
+Design for multi-step
+autonomous actions,
+planning, tools, tries,
+and execution.
+Ethics,
+Explainability, and
+Data Privacy
+Design with data retention in
+many, respect forget the requests,
+and provide transparent
+automated decision disclosure.
+1
+2
+4
+5
+A five-pillar learning map for designing trustworthy, effective, and human-centered AI experiences.
+Concept
+Examples
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+
+--- PAGE 3 ---
+Modern AI design focuses on orchestrating trust,
+steering, and multimodality rather than just a chat
+window.
+Great experiences set expectations early, make system behavior
+visible, and give users control throughout the conversation.
+A. Onboarding & Expectation Setting
+1. Capability Boundary
+Disclosure
+Clearly state what the AI can and
+cannot do, data limitations,
+knowledge cut-offs, and when it
+may be uncertain.
+2. Suggested Starters &
+Prompt Chips
+Offer example prompts and
+chips to reduce blank-page
+anxiety and guide first-time
+users to quick wins.
+3. System Persona &
+Tone Calibration
+Define the assistant’s persona,
+vocabulary, and tone. Let users
+tweak formality, detail level,
+and verbosity.
+B. Turn-Taking & System Transparency
+1. Streaming & Perceived
+Latency Reduction
+Stream tokens or partial
+responses to provide instant
+feedback and keep users
+engaged.
+2. Inspectable Reasoning /
+“Thinking” Accordions
+Show optional reasoning steps
+or citations inaccordions so
+users can inspect without
+cluttering the flow.
+3. Cancellable
+Generation
+Allow users to stop, regenerate,
+or refine outputs mid-stream
+to retain control and save time.
+Essential Conversational AI Design Patterns
+Playbook
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+
+--- PAGE 4 ---
+STEERING, CONTROL & VERIFICATION PLAYBOOK
+C.
+Steering, Control, and Verification
+Steering keeps the output aligned, controlled, and trustworthy. These patterns
+help users course ‑ correct, refine, and verify effectively.
+In-line Prompt
+Editing & Branching
+Edit parts of your earlier
+prompt in-line to refine
+direction, or branch
+alternative versions to
+explore different angles.
+Granular Feedback
+& Critique Tags
+Provide specific feedback
+using critique tags so the
+model knows exactly how
+to improve.
+Regenerate
+with Constraints
+Regenerate outputs while
+applying clear constraints
+on length, tone, format,
+audience, or structure.
+4/6
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+1
+Examples:
+Make shorter
+Format as a table
+Explore another angle
+2
+Examples:
+Too verbose
+Factually incorrect
+Wrong tone
+Add citations
+3
+Examples:
+Make shorter
+Format as a table
+Add citations
+Use bullet points
+Confidence &
+Source Attribution
+Check the model's confidence
+and ask for sources. Cross-verify
+critical claims before acting on
+them.
+Examples:
+What are the sources?
+How confident are you?
+Add citations
+Cross-verify
+Practical Checklist
+Edit past prompts:
+Refine in-line to improve clarity and direction.
+Fork alternatives:
+Branch to explore different angles or approaches.
+Provide structured critique:
+Use specific tags like “Too verbose”,
+“Actually incorrect”, “Wrong tone”.
+Constrain regeneration:
+Specify length, tone, format, audience, or structure.
+Cross-verify sources:
+Check confidence, ask for citations, and verify facts.
+
+--- PAGE 5 ---
+UX SUTRA
+Hybrid & Multimodal Workflows
+Playbook
+D.
+Hybrid & Multimodal Workflows
+(Copilot / Canvas Patterns)
+Blend conversation, generation, structured input, and
+confirmations around a single artifact.
+Chat-as-Sidekick
+(Co-pilot Pattern)
+AI references and
+manipulates the main
+artifact, not just the
+conversation.
+2
+Generative
+Artifacts / Split View
+Conversation generates
+structured, editable
+assets (outlines, drafts,
+tables, visuals).
+Form-Chat
+Bi-directionality
+Forms and chat update
+min anohid, keeping a
+context in sync.
+Human-in-the-Loop
+Confirmation
+(Guardrails)
+High-stakes actions
+require explicit, deliberate
+confirmation.
+1
+3
+4
+Chat Panel
+1
+Canvas /Artifact
+2
+Form
+3
+Confirmation Step
+4
+Create a project
+plan with milestones
+and owners.
+Milestones
+Owner Out
+Day
+Research
+Asha
+May 10
+Design
+Ravi
+May 19
+Development
+Neha Neha May 24
+Jun 20
+Launch
+Arun
+May 30
+Project Plan
+Budget (USD)
+25,000
+Start Date
+May 08, 2025
+Priority
+High
+Include stakeholders
+Team
+Team
+30
+Project Name
+Website Redesign
+
+--- PAGE 6 ---
+Playbook
+Where to Learn & Practice
+Foundational Design Guidelines & Frameworks
+Google PAIR Guidebook
+Microsoft HAX Toolkit
+Apple Human Interface Guidelines for
+Shape of AI
+Conversational Design by Erika Hall
+Designing Voice User Interfaces by Cathy
+Pearl
+Designing Bots by Amir Shevat
+Industry Blogs & Research Hubs
+Nielsen Norman Group
+Where to Learn & Practice
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+1
+Machine Learning & Siri
+Essential Books
+2
+3
+AI x UX newsletters and case studies
+research from Anthropic, OpenAI, and
+DeepMind on UI evaluations and steerability
+Practical Portfolio Projects to Practice
+4
+Redesign a complex form into a hybrid agent
+Design an agentic scheduling workflow with fallbacks
+Draft a copilot canvas interface

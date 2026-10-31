@@ -6,6 +6,7 @@ import {
 } from '../../ui';
 import { GoogleG } from '../../components/shared';
 import { useConversations } from '../../context/ConversationContext';
+import { useDemo } from '../../context/DemoContext';
 import { StatusBar, HomeIndicator, MobileRouteCanvas } from './MobileHome';
 import { ARTBOARD } from '../../embed';
 
@@ -63,6 +64,14 @@ function OnboardingArtboard() {
   useSystemStyles();
   const navigate = useNavigate();
   const { selectedLanguage, setSelectedLanguage } = useConversations();
+  const { setLanguage } = useDemo();
+
+  const pickLanguage = (code: string) => {
+    setSelectedLanguage(code);
+    /* P0-3: the onboarding choice is the engine language. Two states,
+       one truth — DemoContext drives turns, ConversationContext drives chrome. */
+    if (code === 'hi' || code === 'mr' || code === 'ta' || code === 'en') setLanguage(code);
+  };
 
   const enter = () => navigate('/mobile/home');
 
@@ -103,7 +112,7 @@ function OnboardingArtboard() {
                     type="button"
                     className="lokai-pressable"
                     aria-pressed={active}
-                    onClick={() => setSelectedLanguage(l.code)}
+                    onClick={() => pickLanguage(l.code)}
                     style={{
                       ...typeStyle('body'),
                       fontWeight: active ? 700 : 500,

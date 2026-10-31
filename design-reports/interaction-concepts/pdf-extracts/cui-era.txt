@@ -1,0 +1,1040 @@
+--- PAGE 1/23 ---
+Conversational
+UI Design
+for the AI Era
+From human intent to AI action
+A practical learning material
+for UX/Product Designers
+USER INTENT
+CONTEXT
+GOALS
+AI UNDERSTANDING
+DECISION & REASONING
+AI ACTION
+CONVERSATION
+TOOLS & APIS
+DATA SOURCES
+Ask anything...
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 2/23 ---
+02  /  22
+1.
+What is
+Conversational UI Design?
+Conversational UI Design is the practice of designing interactions where users communicate with a product through natural language—using
+text, voice, or multimodal input.
+The product understands the user, responds, asks questions, takes
+actions, guides tasks, and provides feedback.
+Conversational UI is not simply a chat box with AI.
+It is about creating meaningful, task-oriented conversations
+that help users achieve their goals efficiently.
+Traditional UI: Step-by-step navigation
+Conversational UI: Intent-driven interaction
+Conversation
+AI reasoning
+Conversational UI Design: From Principles to Practice
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+User
+Screen
+Button
+Form
+Confirmation
+User
+Intent
+Action
+Feedback
+Example
+User (Chat)
+I spent ₹ 2,400 on a client dinner
+yesterday. Can you add it to my
+expenses?
+1. Intent recognized
+Add expense
+2. Action taken
+₹ 2,40 added to Expenses
+3. Feedback
+Expense added successfully.
+--- PAGE 3/23 ---
+2. Conversational UI vs Conversational AI
+They work together, but they solve different problems. Conversational AI provides the intelligence
+behind the system. Conversational UI shapes how users interact with it.
+Conversational AI
+Generates natural, context-aware
+responses and understanding.
+Understands language structure,
+entities, and user meaning.
+Detects the user’s goal or
+intent behind the message.
+Plans and reasons to decide the best
+next step or response.
+Fetches relevant information from
+external knowledge sources.
+Remembers conversation history and
+user preferences.
+Executes functions or APIs to
+perform real-world actions.
+Autonomous workflows that plan, act,
+and adapt across steps.
+Speech Recognition (ASR)
+= intelligence
+LLM (Large Language Model)
+NLP – NLU
+Intent Recognition
+Reasoning
+Retrieval / RAG
+Memory
+Tool Calling
+Agents
+Converts spoken audio into text the
+system can understand.
+Text-to-Speech (TTS)
+Converts text responses into natural-sounding
+speech.
+Conversational UI
+= interaction
+Chat
+Text-based conversation interface for
+messaging.
+Voice
+Voice input / output interface for hands-free
+interaction.
+Prompts
+Guided starter prompts to help
+users begin the conversati
+--- PAGE 4/23 ---
+2.
+Conversational UI vs Conversational AI
+Conversational AI provides the intelligence behind the
+system. Conversational AI shapes how users interact. with it.
+Conversational AI = intelligence
+Conversational UI = interaction
+Intent Recognition
+Retrieval / RAG
+AI
+They work
+together, but solve
+different problems.
+LLM (Large Language Model)
+NLP – NLU
+Reasoning
+Memory
+Tool Calling
+Agents
+Speech Recognition (ASR)
+Text-to-Speech (TTS)
+Chat
+Voice
+Prompts
+Suggested Actions
+Cards
+Buttons
+Confirmation
+Clarification
+Error Recovery
+Citations
+Progress
+Forms Inside Conversation
+Previews
+Human Handoff
+03 / 22
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Conversation Design
+= designing the interaction flow
+UX Design
+= designing the complete user experience around it
+--- PAGE 5/23 ---
+Conversational UI Design
+A practical guide to crafting AI-native experiences
+4.
+Why is Conversational UI
+important for the 2027 AI era?
+The way we interact with technology is evolving. Conversation is becoming
+the primary interface.
+AI generates content
+Models produce text, images,
+summaries, and answers.
+2025-26:
+AI understands and assists
+Models understand context,
+remember more, and help you
+make better decisions.
+AI increasingly takes action
+Models act on your behalf,
+coordinate systems, and
+deliver outcomes.
+Across all stages, conversation becomes the interaction layer for
+intent, context, negotiation, and control.
+“Click here.”
+VS
+“Tell me what you
+want to accomplish.”
+“I need to be in Mumbai Monday morning and back Wednesday evening. Keep it reasonable—I
+don’t want a 6 AM flight.”
+5  /  22
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+For the system to respond well, it needs:
+2024-25:
+2026-27+:
+Example (Travel)
+Goal
+Constraints
+Preferences
+Context
+Ambiguity
+What the user
+wants to achieve.
+Limitations or
+boundaries.
+Personal tastes
+and priorities.
+Time, location,
+situation, history.
+Gaps or unclear
+information.
+--- PAGE 6/23 ---
+3. How does this connect
+with UX and Product Design?
+The shift from screen-first design to intent-first design changes
+how we think about experiences.
+From:
+What screen should
+we design?
+To:
+What should happen
+when the user
+expresses an intent?
+1
+Intent: Cancel flight
+Entity: Delhi flight
+3
+Date: Tomorrow
+4
+Booking identification
+2
+5
+6
+7
+8
+9
+Page 4 of 22
+04
+Policy
+Consequence: Refund/fee
+Confirmation
+Action: Cancel
+Feedback: Refund initiated
+This is
+UX +
+conversation
+design +
+product logic +
+AI behavior.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 7/23 ---
+5.
+The new UX Designer skill stack
+UX Research
+understand user goals, language, mental models
+Product Thinking
+identify where conversation creates real value
+Conversation Design
+design dialogue, intends, turns and flows
+Interaction Design
+design chat, cards, buttons, forms, previews
+AI UX
+design uncertainty, hallucination, confidence, citations
+Agentic UX
+design planning, delegation, approvals and actions
+Systems Thinking
+connect AI + data + APIs + humans + workflows
+Conversational design is becoming more
+important for senior UX/Product Designers.
+AI UX DESIGN PLAYBOOK
+6 / 22
+6
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 8/23 ---
+The core Conversational
+UI design patterns
+Use these proven patterns to make conversations clear,
+efficient and user-friendly.
+Open-ended input
+When it is useful
+Start of the conversation.
+Great for exploratory
+or unknown intent.
+Narrow-focus question
+“Which account do you
+want to update?”
+Why it helps
+Reduces cognitive load
+and guides users step
+by step, especially in
+complex domains.
+Clarification
+“I found two flights to
+Mumbai. Do you mean the
+8:30 AM or 10:15 AM
+flight?”
+Why it helps
+Resolves ambiguity and
+ensures the AI
+understands the user’s
+real intent.
+Confirmation
+This will cancel your
+booking and you’ll receive a
+₹ 4,200 refund. Cancel?”
+7 / 22
+AI UX DESIGN PLAYBOOK
+7
+6.
+1
+“How can I help?”
+2
+3
+4
+Why it helps
+Prevents errors, builds
+trust and sets clear
+expectations before
+taking action.
+Good conversations feel natural, stay
+focused and reduce user effort at every step.
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 9/23 ---
+6. The core Conversational
+UI design patterns
+Suggested actions
+Offer smart, relevant actions the
+user can tap to continue.
+Progressive disclosure
+€189
+€199
+€229
+Show the 3 best from 12 options,
+then let users reveal more.
+Context carryover
+AI UX DESIGN PLAYBOOK
+8 / 22
+8
+Error recovery
+Human handoff
+Multimodal response
+5
+6
+7
+8
+9
+10
+“Only ones under €250”
+refers to hotels.
+Replace generic errors with
+helpful, actionable recovery.
+Route exceptions or complex
+requests to a human specialist.
+Respond using conversation
+plus cards, tables, or plans.
+Book it
+Compare
+Change dates
+Hotel A
+Hotel B
+Hotel C
+Only ones
+under €250
+I couldn't access your travel booking.
+I can retry, or you can give me the
+booking number.
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Show more
+--- PAGE 10/23 ---
+7. Enterprise Conversational UI examples
+Microsoft Copilot: Meeting follow-ups to email, end-to-end
+Summarize my meetings from this week
+and tell me what I need to follow up on.
+I'll look at your meetings, timeframe,
+calendar and identify action items.
+You had 7 meetings.
+I found 5 follow-ups.
+AI RESPONSE
+Draft the pricing email.
+Here's a draft email for
+your pricing proposal.
+Make it more concise
+and send it to John.
+Here's the updated
+email ready to send.
+Looks good. Send it.
+9  /  22
+AI UX DESIGN PLAYBOOK
+9
+USER INTENT
+AI UNDERSTANDS
+Meetings
+Timeframe
+Calendar
+Action Items
+Send pricing proposal
+Due: May 16
+High
+Review architecture
+Due: May 17
+Medium
+USER REQUEST
+AI DRAFTS
+USER REFINEMENT
+To: John
+Subject: Pricing Proposal
+AI PREVIEW
+Email sent to John.
+USER APPROVAL
+You'll find it in Sent Items.
+AI ACTION
+Conversation becomes the orchestration
+layer across multiple enterprise systems.
+DESIGN LESSON
+@Sudhir Mishra
+Written by
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 11/23 ---
+7. Enterprise Conversational UI examples
+ServiceNow AI Agent
+Troubleshooting conversation & workflow execution
+Conversation
+Workflow / System Actions
+My laptop VPN
+isn't working.
+AI Agent
+Are you connected
+to Wi-Fi?
+AI Agent
+Let me check your device,
+network, VPN status, and
+known incidents.
+Your VPN certificate
+expired. I can renew it.
+Approval
+10 / 22
+AI UX DESIGN PLAYBOOK
+10
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+User
+User
+Yes.
+AI Agent
+Renew certificate
+AI Agent
+Done. Try connecting
+again.
+Check Wi-Fi Connection
+Status: Connected
+Check Device Health
+Status: Healthy
+Check VPN Status
+Status: Disconnected
+Reason: Certificate expired
+Check Known Incidents
+No active incidents found
+Renew VPN Certificate
+Workflow executed
+Result
+Certificate renewed
+successfully
+Design lesson
+The UI becomes a troubleshooting conversation
++ workflow execution system.
+--- PAGE 12/23 ---
+7. Enterprise Conversational
+UI examples
+Salesforce Agentforce — CRM Intelligence Flow
+CRM Data
+Opportunity
+Messages
+What happened with the Acme opportunity?
+Acme is currently $480K, stage: Negotiation.
+The opportunity hasn’t changed for 12 days.
+SUMMARY
+Would you like me to summarize the
+latest customer interactions?
+The customer raised concerns about
+implementation time.
+SUMMARY
+11 / 22
+AI UX DESIGN PLAYBOOK
+11
+Documents
+EVIDENCE
+Draft a response.
+Here’s a draft email to address the concern
+and propose next steps.
+Make it more executive-friendly.
+Updated. The message is now more concise,
+strategic, and outcome-focused.
+EVIDENCE
+DRAFT
+DRAFT
+REVISE
+REVISE
+DESIGN LESSON
+The conversation becomes a natural-language
+interface to enterprise data + workflows.
+@Sudhir Mishra
+Written by
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 13/23 ---
+7. Enterprise Conversational UI examples
+Slack AI
+Searches relevant
+conversions
+Summarizes decision
+and key details
+Identifies discussion
+and context
+Creates concise summary
+with links and context
+12 / 22
+AI UX DESIGN PLAYBOOK
+12
+Written by
+@Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+How leading tools use conversational UX to deliver real work outcomes.
+Connects to conversations, decisions and context.
+“Fix it.”
+Slack AI connects to organizational knowledge.
+It finds decisions, context and people across conversations.
+GitHub Copilot moves from search → inspect → edit to
+intent → reasoning → proposal → review → action.
+1
+2
+--- PAGE 14/23 ---
+8. Consumer Conversational
+UI examples
+ChatGPT as an interaction pattern
+A real-world example of how Conversational UI guides users from
+intent to a personalized outcome through natural dialogue.
+Context
+Generate
+Refine
+Personalize
+Intent
+Context
+Generate
+Refine
+Personalize
+THE PATTERN
+Intent
+Plan a 5-day trip to Paris.
+AI
+Dates
+When are you
+planning to go?
+Budget
+What's your
+budget range?
+Interests
+What are you
+most
+interested in?
+Pace
+Do you prefer a
+relaxed or packed
+schedule?
+To plan the perfect trip, could you help me with a few details?
+AI
+Here's your 5-day Paris itinerary
+Day 1: Arrive & Settle In
+Day 2: Iconic Paris
+Day 3: Art & Culture
+Day 4: Day Trip / Neighborhoods
+Day 5: Local Markets & Leisure
+Make it less touristy.
+AI
+Got it! Here's a less touristy version
+Hidden neighborhoods & local spots
+Fewer crowds, more authentic experiences
+Local cafés, markets & community spaces
+Give me a version focused on food.
+AI
+Here's your food-focused Paris itinerary
+Curated food walks & local eateries
+Markets, boulangeries & cheese shops
+Cooking class + chef-recommended spots
+PAGE 13 OF
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 15/23 ---
+8. CONSUMER CONVERSATIONAL UI EXAMPLES
+A real-world example of how a conversational UI moves from understanding intent to
+taking action.
+14 / 22
+PATTERN:
+1
+2
+3
+4
+5
+6
+7
+Find the email from Sarah
+about the conference and
+summarize what I need to do.
+Conference: UX Next 2026
+Date: May 20–22, 2026
+Location: Austin, TX
+You're invited to speak on May 21
+RSVP by April 30
+Submit slides by May 10
+Hi Sarah,
+Thank you so much for the invitation!
+I'm excited to confirm that I'll be attending and
+would be happy to speak on May 21.
+I'll share my slide deck by May 10.
+Looking forward to it!
+Best,
+Sudhir
+Conversation →  Retriever →  Reasoning →  Generation →  Action
+USER REQUEST
+AI RETREIVES
+RELEVANT CONTEXT
+AI SUMMARIZES
+WHAT MATTERS
+USER FOLLOWS UP
+AI DRAFTS
+A REPLY
+USER REVIEWS
+AI SENDS
+THE EMAIL
+Email
+Document
+Web Search
+Draft a reply saying I'll attend.
+To: Sarah -sarah@uxnext.com
+Subject: Re- Invitation to Speak at UX Next 2026
+Looks good! Please send it.
+Email sent to Sarah.
+       Delivered
+Google Gemini
+Retriever-to-Action Flow
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 16/23 ---
+8. CONSUMER CONVERSATIONAL UI EXAMPLES
+Amazon
+Alexa
+Natural intent →  Smart home routine
+Alexa understands natural expressions of intent and
+triggers multiple actions through a routine.
+USER EXPRESSES
+NATURAL INTENT
+“I’m leaving
+home.”
+INSTEAD OF SEPARATE COMMANDS
+Set thermostat
+ALEXA INTERPRETS BROADER
+INTENT & TRIGGERS ROUTINE
+Leaving
+Home Routine
+Multiple actions
+executed automatically.
+Natural language
+User speaks
+naturally
+System detects
+user intent
+System uses context
+(time, place, devices)
+Routine runs
+automatically
+Natural language →  Intent →  Context →  Multiple actions
+Turn off lights
+Lock door
+15 / 22
+THE PATTERN
+Intent
+Context
+Multiple actions
+Key takeaway
+Support natural expressions of intent.
+Don't force users to memorize exact commands—understand what they want
+to achieve.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+HOME
+LIGHT
+LOCK
+THERMOSTAT
+ROUTINE
+AUTOMATION
+--- PAGE 17/23 ---
+16 / 22
+9. A simple Conversational
+UI flow framework
+A clear, repeatable flow to design purposeful AI conversations.
+What the user wants
+to achieve
+Interpret intent and
+extract meaning
+Is anything missing
+or ambiguous?
+PREVIEW
+USER INTENT
+UNDERSTAND
+CONTEXT
+CLARIFY?
+ACT
+PLAN
+CONFIRM?
+EXECUTE
+FEEDBACK
+RECOVERY /
+NEXT ACTION
+Gather relevant context
+and constraints
+Proceed with available
+information
+Outline approach and
+steps
+Show summary
+or draft for review
+Does this look
+right?
+Carry out the
+agreed plan
+Share results and
+outcome
+Handle issues or
+suggest next steps
+YES
+ASK
+Ask targeted
+clarifying questions
+NO
+YES
+NO
+MODIFY
+Refine plan or
+adjust details
+AGENTIC UX: The continuous reasoning loop
+Intent
+Understand
+Plan
+Act
+Observe
+Adapt
+Ask for approval
+when needed
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 18/23 ---
+Conversational UI Design for the
+Ime AI
+17 / 22
+10. What should a
+UX/Product Designer
+actually design?
+Design the artifacts that shape a clear, helpful, and trustworthy AI experience.
+Intent map
+Map what users want to do.
+Find my
+last invoice
+Create
+Change the
+deadline
+Compare
+Which plan
+is better?
+Execute
+Explain
+Why was this
+rejected?
+Conversation flow
+Design the turn-taking pattern.
+1
+Find
+Modify
+Create
+a report
+Send it
+2
+User
+AI
+User
+AI
+User asks or
+shares context
+AI understands
+and responds
+User clarifies,
+confirms, or edits
+AI updates, acts,
+or explains
+State model
+Design the states your conversation can be in.
+3
+Initial
+Clarifying
+Processing
+Success
+Failure
+Recovery
+Conversation
+starts
+Gathering
+details
+AI is thinking
+or working
+Task completed
+successfully
+Couldn't
+complete the task
+Help user fix or
+try again
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+--- PAGE 19/23 ---
+18 / 22
+Conversational UI Design for the AI Era
+10. What should a UX/Product
+Designer actually design?
+4. AI decision points —
+where does AI answer,
+ask, infer, recommend,
+execute, or escalate?
+AI replies directly
+with information.
+AI asks for missing
+or clarifying input.
+AI infers intent or data
+from context.
+AI suggests the
+best next actions.
+AI performs the task
+origgers action.
+AI escalates to a human
+or another system.
+show source,
+confidence where
+appropriate, reasoning
+or relevant evidence,
+preview, approval, undo,
+and audit trail.
+Source
+Confidence
+Display AI
+confidence
+when relevant.
+Reasoning
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Answer
+Ask
+Inter
+Recommended
+Execute
+E escalate
+5. Trust model —
+Show where the
+information comes
+from.
+Explain how
+explain how the AI
+arrived at the
+answer.
+Preview
+Let users
+review
+before
+finalizing.
+Approval
+Require user
+acceptance or
+important
+actions.
+Undo
+Allow easy
+reversal of
+actions.
+Audit trail
+Log decisions
+and actions for
+review.
+6. Multimodal UI —
+conversation plus
+cards, tables, charts,
+forms, buttons,
+previews, citations,
+and visual progress.
+Conversation
+Natural, threaded
+conversation.
+Cards
+Scannabl
+--- PAGE 20/23 ---
+11. Where should you
+learn Conversational UI?
+Start with official, trusted design resources.
+Google Conversation
+Design
+Error handling
+Visual components
+Microsoft
+HAX Toolkit
+Human + AI interaction
+when AI is uncertain or
+wrong
+Microsoft
+Conversational
+UX Principles
+Accessibility
+Intuitiveness
+Empathy
+Components
+Style
+Efficiency
+Trust
+Amazon Alexa
+Conversation
+Design Patterns
+Lists
+Feedback
+Error handling
+Start with official design resources
+rather than random AI UX posts.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+19
+/22
+--- PAGE 21/23 ---
+11. Where should you
+learn Conversational UI?
+Alexa Voice Design Guide
+Voice-first design is not simply adding
+voice to an existing GUI.
+Natural expression: Design for how people
+naturally speak and ask.
+Turn-taking: Manage turns, barge-in, and
+interruptions gracefully.
+Feedback: Provide clear, helpful audio
+feedback at every step.
+Voice-specific interaction: Leverage capabilities
+unique to voice—don’t mimic screens.
+Learning path
+Study
+conversation
+components
+Practice error
+and recovery
+patterns
+Design
+multimodal
+responses
+Test uncertainty,
+trust, and
+handoff
+Quick checklist
+1
+2
+3
+4
+Voice UI
+Principles
+Interaction
+Design
+Visual
+Design
+Motion
+Design
+Audio
+Design
+UX
+Writing
+User
+Experience
+Conversation design is a synthesis of voice UI, interaction
+design, visual design, motion, audio, and UX writing.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+20 / 22
+--- PAGE 22/23 ---
+12. The biggest mindset shift for 2027
+Think bigger. Think in this end-to-end frame:
+THE CAPABILITY LADDER
+Conversational UI
+Craft natural conversations that
+understand and respond.
+Generative AI
+Use AI to generate content,
+insights, and options.
+Design across text, voice, image,
+and gesture.
+Don’t learn
+Conversational UI
+as how to design a chatbot.
+1
+2
+Multimodal UI
+3
+Agentic AI
+4
+Enable AI to plan, reason,
+and act with autonomy.
+Agentic UX
+5
+Design experiences where AI agents
+collaborate with users.
+Human-Agent
+Collaboration
+6
+Build trust, transparency, and shared
+context between humans and AI.
+AI Product Strategy
+7
+Align AI capabilities with user needs,
+business goals, and ethical impact.
+The future designer designs
+the relationship between the
+human, AI, data, tools, and actions.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Human Intent
+AI Understanding
+Interaction
+Decision
+Action
+--- PAGE 23/23 ---
+Design for intent,
+not just screens.
+Make uncertainty, approval,
+and recovery visible.
+Connect conversation
+with data, tools, and action.
+Design the relationship between
+people, AI, data, tools, and actions.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+Key
+takeaway
+Conversational UI + Agentic UX + Systems Thinking
+is a valuable skill combination for the AI era.
+Intent
+Understand
+Decide
+Act
+Learn
+Improve

@@ -1,0 +1,241 @@
+--- PAGE 1/6 ---
+Conversational AI
+UX &Product Design
+Conversational AI shifts how people interact with products—from rigid visual controls like
+buttons, forms, and nested menus to intent-driven natural language, context-aware
+dialogue, and dynamic multimodal interfaces.
+In this shift, designers architect natural interaction logic, context retention, failure recovery, and human-in-the-loop
+safeguards. Our craft moves beyond drawing static, deterministic wireframes to designing adaptive experiences that
+understand people, meet them in context, and gracefully handle the unexpected.
+PLAYBOOK AT A GLANCE
+Understand intent
+Manage dialogue
+and state
+Orchestrate
+multimodal UI
+Design trust
+and recovery
+Measure resolution
+and calibration
+PLAYBOOK   •   PAGE 1 OF 6
+1
+2
+3
+4
+5
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+1 / 6
+Most Demanding Design Skill in 2027
+--- PAGE 2/6 ---
+PLAYBOOK
+PAGE 2 OF 6
+The Core
+Framework
+Unlike traditional UI where Button A
+strictly triggers Screen B, Conversational
+AI manages flexible, open-ended user
+inputs within probabilistic systems.
+1. Intent & Entity
+Processing
+Decodes the user's
+primary goal (Intent)
+and extracts necessary
+parameters (Entities),
+such as dates, names,
+or values.
+2. State & Dialogue
+Management
+Maintains context across
+multi-turn exchanges,
+manages conversational
+branch points, and asks
+clarifying questions.
+3. Generative &
+Multimodal UI
+Pairs conversational text
+or voice with real-time
+generated visual
+components such as
+online date pickers,
+editable cards, or
+interactive charts to
+streamline complex
+tasks.
+User input
+User types or
+speaks a request in
+natural language.
+Intent and entities
+System decodes the
+intent and extracts
+key entities.
+Dialogue state
+System maintains
+context, manages
+flow, and may ask
+follow-up questions.
+Generated
+multimodal UI
+System delivers dynamic
+visual components to
+help the user complete
+the task efficiently.
+Written by @Sudhir Mishra
+2
+© 2026 Sudhir Mishra. All rights reserved.
+
+--- PAGE 3/6 ---
+UX SUTRA PLAYBOOK
+PAGE 3 OF 6
+Why This Is the
+Most Demanding
+Design Skill in 2027
+01
+Shift to Intent-Based
+& Agentic Software
+Software is transitioning from static
+clickpaths to autonomous agents executing
+multi-step workflows. Designers must map
+system behavior, logic, and operational
+boundaries rather than fixed screens.
+Bridging the AI Trust Gap
+Product drop-off in AI tools rarely stems
+from underlying model capability. It stems
+from UX failures such as ambiguous
+system feedback, lost context, or lack of
+control. Transparent feedback loops are
+critical to building user trust.
+Multimodal Orchestration
+Products increasingly combine voice, text,
+computer vision, and real-time generated
+visual widgets. Seamless transitions between
+speaking, typing, reading, and tapping
+require specialized conversational expertries.
+DESIGN
+IMPLICATION
+Map behavior, not just screens.
+Make system feedback legible and timely.
+Preserve user control at every step.
+Design seamless transitions between modalities.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+6-PAGE LEARNING MATERIAL
+02
+03
+
+--- PAGE 4/6 ---
+The Evolution of Design Practices & Metrics
+New Deliverables
+Figma screen-mapping is
+giving way to
+Boundary & Fallback Maps
+for handling model errors
+Confidence Threshold Maps
+for determining when an AI acts
+autonomously versus requesting
+human authorization
+Variable Friction
+Routine tasks execute silently in
+the background.
+New UX Metrics
+Legacy metrics like Click-Through Rate (CTR)
+are replaced by Intent Resolution Velocity,
+meaning turns required to complete a goal.
+04
+1
+2
+3
+Dialogue State Trees
+As software performs actions on behalf
+of users, high-risk tasks require
+deliberate friction, clear authorization
+triggers, and instant undo affordances.
+Clarification Efficiency
+measures how effectively the system
+reduces user confusion.
+Trust Calibration
+prevents user over-reliance or skepticism.
+Intent Resolution
+Velocity
+Clarification
+Efficiency
+Trust
+Calibration
+Written by @Sudhir Mishra
+2026 Sudhir Mishra. All rights reserved.
+
+--- PAGE 5/6 ---
+APPLIED PRODUCT EXAMPLES PLAYBOOK
+Applied Product
+Examples
+Real-world scenarios showing how conversational UX delivers
+measurable value across different domains.
+Domain
+Scenario &
+User Intent
+Conversational
+UX Mechanism
+Consumer
+Find a child-friendly 4-day
+trip to Tokyo under $3,000
+with minimal walking.
+Clarifies ambiguous
+needs, such as children’s
+ages, dynamically renders
+an editable itinerary
+widget directly inside the
+thread, and adapts the
+plan in real time as the
+user provides feedback.
+Enterprise
+Why is the Q3
+European supply
+shirment delayed, and
+how do we fix it
+without overspending?
+Coordinates background
+agents across legacy ERP
+systems, presents a root-cause
+analysis with risk-rated
+reouting options, and provides
+clear authorization gates for
+final approval.
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+5 / 6
+
+--- PAGE 6/6 ---
+CONVERSATIONAL UX FIELD PLAYBOOK
+Practical Recap
+Six steps to design conversations that work in the real world.
+Start with intent and entities.
+Preserve context across multi-turn dialogue.
+Define branch points, clarifying questions,
+boundaries, and fallback behavior.
+Pair conversation with useful generated UI
+such as editable cards, date pickers, or
+interactive charts.
+Add transparent feedback, authorization
+gates, and instant undo for risky actions.
+Measure Intent Resolution Velocity,
+Clarification Efficiency, and
+Trust Calibration.
+Intent
+1
+2
+3
+4
+5
+6
+PAGE 6 OF 6
+Written by @Sudhir Mishra
+© 2026 Sudhir Mishra. All rights reserved.
+C
+Context
+Action
+Feedback
+Trust
+Core principle
+Design the system’s behavior, boundaries, recovery, and user control—not
+just its screens.

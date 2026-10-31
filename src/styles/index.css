@@ -4,7 +4,7 @@
 /* ── LokAI design tokens (authoritative CSS source) ───────────────────────── */
 :root {
   /* Canvas */
-  --surface-bg:      #FAF8F5;
+  --surface-bg:      #F6F4EF;
   --surface-card:    #FFFFFF;
   --surface-raised:  #FFFFFF;
   --wash-blue:       #EEF4FF;
@@ -52,6 +52,9 @@
      sites). Only the two values CSS itself consumes live here. */
   --radius-xs: 4px;
   --radius-pill: 999px;
+  /* The bubble's rounded corners sit on the ladder (LAYOUT.radius.panel).
+     CSS consumes it directly so a chat bubble never re-derives the ladder. */
+  --radius-panel: 16px;
 
   /* Type sizes — see shared.tsx `TYPE` (the consumed scale, 237 call sites).
      The CSS copy here had zero consumers and disagreed with it (display
@@ -80,8 +83,139 @@
 
   /* Font roles */
   --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-law: "Instrument Serif", "Fraunces Variable", Georgia, serif;
   --font-deva: "Noto Sans Devanagari", "Hanken Grotesk", sans-serif;
   --font-tamil: "Noto Sans Tamil", "Hanken Grotesk", sans-serif;
+
+  /* ── Vellum material layer (2026-09-28) ─────────────────────────────────
+     The ground stops being a flat fill: two radial "breathes" (saffron /
+     anchor hues, both under 8% alpha) under a film of desaturated grain.
+     Static, GPU-paintable, one token stack consumed by <Screen> — no
+     screen ever composes these itself. Dark re-points the hue pair; the
+     grain tile stays identical (alpha is baked into the SVG). */
+  --vellum-mesh:
+    radial-gradient(120% 90% at 85% -10%, rgba(226, 122, 36, 0.08), transparent 55%),
+    radial-gradient(100% 80% at -10% 110%, rgba(11, 27, 50, 0.06), transparent 60%);
+  --vellum-mesh-dark:
+    radial-gradient(120% 90% at 85% -10%, rgba(226, 122, 36, 0.10), transparent 55%),
+    radial-gradient(110% 90% at -10% 110%, rgba(64, 98, 160, 0.16), transparent 60%);
+  --vellum-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+  --role-ground-image: var(--vellum-grain), var(--vellum-mesh);
+  --role-ground-repeat: repeat, no-repeat, no-repeat;
+  --role-ground-size: 160px 160px, auto, auto;
+
+  /* Machined-object material — glass chrome + double-bezel nesting */
+  --role-glass: rgba(255, 255, 255, 0.78);
+  --role-inner-highlight: rgba(255, 255, 255, 0.65);
+  --role-bezel-fill: rgba(22, 21, 19, 0.04);
+}
+
+/* Vellum utility classes — consumed via className, never restyled at call
+   sites. Glass is for FLOATING chrome only (composer, sheets, drawers):
+   backdrop-filter on scrolling content forces continuous GPU repaints. */
+.lokai-glass {
+  background: var(--role-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--role-hairline);
+  box-shadow: var(--elevation-md), inset 0 1px 0 var(--role-inner-highlight);
+}
+
+/* Double-bezel: the shell (this class) + a .lokai-bezel-core child. Outer
+   radius 28 / inner 22 keep the curves concentric. */
+.lokai-bezel {
+  background: var(--role-bezel-fill);
+  border: 1px solid var(--role-hairline);
+  border-radius: 28px;
+  padding: 6px;
+}
+.lokai-bezel-core {
+  background: var(--role-raised);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 var(--role-inner-highlight);
+}
+
+/* The scan bar — saffron sweep line for ScanDocumentCard (M4). Raw values
+   belong here (system file), never at the call site. */
+.lokai-scan-bar {
+  background: linear-gradient(90deg, transparent 0%, rgba(226, 122, 36, 1) 18%, rgba(226, 122, 36, 0.4) 50%, rgba(226, 122, 36, 1) 82%, transparent 100%);
+  box-shadow: 0 0 12px rgba(226, 122, 36, 0.53), 0 0 3px rgba(226, 122, 36, 0.4);
+}
+
+/* ── Streaming caret (2026-10-15) ────────────────────────────────────────────
+   The one motion that makes an answer read as being WRITTEN rather than as
+   having arrived. Solid while the reveal runs (the aicss/streaming-text
+   pattern from the component vault); blinks only once the text is complete,
+   so the caret never competes with the words it is following. Never blinks
+   under reduced motion — the reveal itself is skipped there. */
+@keyframes lokaiCaretBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.lokai-stream-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  opacity: 0.85;
+  border-radius: 1px;
+}
+.lokai-stream-caret[data-active="true"] {
+  animation: none;
+}
+.lokai-stream-caret[data-active="false"] {
+  animation: lokaiCaretBlink 1s step-end 6;
+}
+
+/* ── Composer working sweep (2026-10-15) ────────────────────────────────────
+   While LokAI works, the composer — the one surface always on screen — says
+   so. A slow gradient travelling along its top edge. This is the ChatGPT /
+   Claude move: the "thinking" state belongs to the element the user is
+   already looking at, not to a capsule further up the scroll. Static-mesh
+   safe: it is one composited layer on a fixed element, never on scrolling
+   content, so it does not trip the mobile GPU-repaint guardrail. */
+@keyframes lokaiComposerSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.lokai-composer-working {
+  position: relative;
+  isolation: isolate;
+}
+.lokai-composer-working::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(226, 122, 36, 0.85) 35%,
+    rgba(226, 122, 36, 1) 50%,
+    rgba(226, 122, 36, 0.85) 65%,
+    transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  z-index: 1;
+}
+.lokai-composer-working::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(226, 122, 36, 0.9), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: lokaiComposerSweep 1.6s var(--ease-out) infinite;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* ── Semantic role layer ──────────────────────────────────────────────────
@@ -199,6 +333,13 @@
   --role-ground:        #0E1A2B;
   --role-raised:        #16263C;
   --role-sunken:        #0A1422;
+
+  /* Vellum material — the same mesh concept, night treatment: a saffron
+     ember and a cool indigo pool, grain tile unchanged. */
+  --role-ground-image: var(--vellum-grain), var(--vellum-mesh-dark);
+  --role-glass: rgba(22, 38, 60, 0.72);
+  --role-inner-highlight: rgba(255, 255, 255, 0.08);
+  --role-bezel-fill: rgba(255, 255, 255, 0.05);
 
   /* Ink — the cream, promoted to figure (16.0:1 on ground) */
   --role-ink:           #F8F5EE;
@@ -331,35 +472,60 @@ button, input, textarea, select {
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 .lokai-sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
+/* ── P6 craft to the 2026 bar (tokens only, gate-safe) ─────────────────────
+   Balance display wrapped lines; smooth antialiased type; scroll-margin so
+   anchored turns never hide under the floating composer; dvh-first sizing
+   with vh fallback for older webviews. */
+button, input, textarea, select {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, .lokai-balance { text-wrap: balance; }
+article[data-emotional-intent] { scroll-margin-top: 84px; }
+
 /* ── Modern Floating Composer (ChatGPT / Claude / Gemini pattern) ────────── */
-/* 2026-09-14 audit: the glass composer is gone. backdrop-filter is paint-
-   heavy, contradicted the paper metaphor, and the border+shadow pair broke
-   the one-separator law. Now: a solid raised surface, shadow only — the
-   same separation ladder as every other lifted object. */
+/* Vellum (2026-09-28): glass is BACK for floating chrome — owner-approved
+   direction (docs/VISUAL-DIRECTION-2026-09.md). The 2026-09-14 de-glassing
+   ruled out backdrop-filter on the old flat-paper ground; Vellum's whole
+   material premise is layered translucency, and the composer is floating
+   chrome (never a scrolling surface), which is where the GPU repaint
+   guardrail allows blur. Grounded in --role-glass so dark re-points it. */
 .lokai-composer-floating {
   position: relative;
-  background: var(--role-raised);
-  box-shadow: var(--elevation-float);
+  background: var(--role-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--elevation-float), inset 0 1px 0 var(--role-inner-highlight);
   transition: box-shadow var(--duration-micro) var(--ease-out);
 }
 .lokai-composer-floating:focus-within {
-  box-shadow: 0 14px 40px rgba(11, 27, 50, 0.11), 0 3px 10px rgba(11, 27, 50, 0.05), 0 0 0 3px var(--role-anchor-tint);
+  box-shadow: 0 14px 40px rgba(11, 27, 50, 0.11), 0 3px 10px rgba(11, 27, 50, 0.05), 0 0 0 3px var(--role-anchor-tint), inset 0 1px 0 var(--role-inner-highlight);
 }
 [data-theme="dark"] .lokai-composer-floating {
-  background: var(--role-raised);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36), 0 3px 10px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.36), 0 3px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 var(--role-inner-highlight);
 }
 [data-theme="dark"] .lokai-composer-floating:focus-within {
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.28), 0 0 0 3px var(--role-anchor-tint);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.28), 0 0 0 3px var(--role-anchor-tint), inset 0 1px 0 var(--role-inner-highlight);
 }
 
-/* User speech bubble — sculpted, high-contrast, confident */
+/* User speech bubble — sculpted, high-contrast, confident.
+   Radius sits on the system ladder (LAYOUT.radius.panel = 16px) rather than
+   the off-scale 18px this shipped with; the asymmetric tail (4px bottom-right)
+   is the chat-medium grammar the premium checklist's radius rule still allows,
+   because a symmetric pill reads as a button, not as someone speaking.
+
+   This is the anatomy the best kit in the component vault (ai-elements
+   `MessageContent`) ships and the one LokAI's own L1 law already implies:
+   the ASSISTANT turn is bare text on the ground; only the USER turn is a
+   filled object. LokAI had it backwards in MobileHome — a bordered card on
+   the answer and a left-striped box on the question. */
 .lokai-chat-bubble-user {
   background: var(--role-anchor);
   color: var(--role-on-anchor);
-  border-radius: 18px 18px 4px 18px;
+  border-radius: var(--radius-panel) var(--radius-pill) var(--radius-xs) var(--radius-panel);
   padding: 10px 16px;
-  max-width: 82%;
+  max-width: 84%;
   box-shadow: var(--elevation-xs);
   word-break: break-word;
 }

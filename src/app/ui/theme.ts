@@ -144,6 +144,9 @@ export const ROLE_TYPE = {
   title:      'title',
   body:       'body',
   bodyStrong: 'bodyStrong',
+  /** Prose the user reads at length — the answer's supporting zones and the
+   *  user's own words in a bubble. 16px / 1.7, the reading floor. */
+  reading:    'reading',
   quiet:      'small',
   caption:    'caption',
   captionStrong: 'captionStrong',

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
 import { C, LAYOUT, SHADOW } from './shared';
 
 /**
@@ -85,6 +85,11 @@ export function Sheet({
   const compact = contain || windowCompact;
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
+  /* Drag-to-dismiss (2026-09-28): the handle owns the drag listener so
+     scrolling content inside the sheet never fights the gesture. Release
+     commits on distance OR velocity — a quick flick dismisses regardless
+     of how far it travelled (momentum beats thresholds). */
+  const dragControls = useDragControls();
 
   /* A right-side drawer on a phone would cover the whole screen, so it
      becomes a bottom sheet with the content still visible above it. */
@@ -174,6 +179,14 @@ export function Sheet({
                 ? { duration: 0.15, ease: 'linear' }
                 : { type: 'spring', bounce: 0.2, duration: 0.3 }
             }
+            drag={effectiveSide === 'bottom' && !reduce ? 'y' : false}
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.55 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 96 || info.velocity.y > 480) onClose();
+            }}
             style={{
               position: 'relative',
               zIndex: 1,
@@ -185,6 +198,24 @@ export function Sheet({
               ...panelBase,
             }}
           >
+            {effectiveSide === 'bottom' && !reduce && (
+              <div
+                onPointerDown={(e) => dragControls.start(e)}
+                style={{
+                  display: 'grid',
+                  placeItems: 'center',
+                  padding: '10px 0 2px',
+                  touchAction: 'none',
+                  cursor: 'grab',
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{ width: 36, height: 4, borderRadius: LAYOUT.radius.pill, background: C.borderStrong }}
+                />
+              </div>
+            )}
             {children}
           </motion.div>
         </div>

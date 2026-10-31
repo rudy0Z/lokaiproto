@@ -92,7 +92,13 @@ export function Screen({
              the stop state reading as an uncanny sandwich — previously the
              status bar, top nav and page ground stayed cream while only an
              inner container went dark. */
-          background: onStop ? T.stopGround : T.ground,
+          backgroundColor: onStop ? T.stopGround : T.ground,
+          /* Vellum material (2026-09-28): grain + mesh token stack, defined
+             once in index.css. The stop tone stays flat — L8's inversion is
+             the loudest surface in the product; it needs no texture. */
+          backgroundImage: onStop ? 'none' : 'var(--role-ground-image)',
+          backgroundRepeat: onStop ? undefined : 'var(--role-ground-repeat)',
+          backgroundSize: onStop ? undefined : 'var(--role-ground-size)',
           color: onStop ? T.stopInk : T.ink,
           ...style,
         }}

@@ -15,7 +15,8 @@ import { DEMO_PROGRESS_STAGES, getTurnById, resolvePreparedTurn } from '../data/
 import { localizeConsumerExplain, clarifyOptionsFor, type ClarifyOption } from '../data/languagePacks';
 import { useLokaiSharedStyles } from '../components/shared';
 import { useMotionStyles } from '../ui/motion';
-import { Stack, Label, T } from '../ui';
+import { Stack, Label, T, WorkingDots } from '../ui';
+import { DecisionSpine } from '../components/ai/Turn';
 import { scriptProps } from '../ui/script';
 import { IconArrowRight } from '../ui/icons';
 import { HumanReviewCard } from '../components/LokAIWorkflow';
@@ -50,17 +51,6 @@ const ANIM = `
   .icon-btn:hover{background:var(--role-sunken);color:${C.navy}}
   .chip-btn{/* prefer lokai-chip from shared — keep class for motion.button mounts */}
   .lokai-chip.chip-btn:hover{background:var(--role-anchor-tint)!important;border-color:${C.navy}!important}
-  .input-bar-wrap{transition:border-color .15s,box-shadow .18s}
-  .input-bar-wrap:focus-within{
-    border-color:${C.navy}!important;
-    box-shadow:0 0 0 3px var(--role-anchor-tint),0 4px 20px rgba(26,25,22,.10)!important;
-  }
-  .input-bar-wrap {
-    background:
-      radial-gradient(ellipse 70% 130% at 12% 0%, rgba(221,231,255,0.38), transparent 58%),
-      radial-gradient(ellipse 55% 100% at 88% 100%, rgba(255,227,184,0.34), transparent 62%),
-      var(--role-raised);
-  }
 `;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,20 +76,17 @@ function UserBubble({ text, time }: { text: string; time: string }) {
   return (
     <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.2}}
       style={{ display:'flex', justifyContent:'flex-end', marginBottom:20 }}>
-      {/* §3.7: was a filled terracotta bubble with white text — the most saturated
-         element on screen, pulling the eye to the question instead of the answer.
-         Quieted to a light surface with ink text so the answer stays the focus. */}
-      <div style={{ maxWidth:'72%', background:C.surface2, border:`1px solid ${C.border}`, borderRadius: `${LAYOUT.radius.turn} ${LAYOUT.radius.turn} ${LAYOUT.radius.xs} ${LAYOUT.radius.turn}`, padding:'13px 17px' }}>
-        <p style={{ fontFamily:SANS, fontSize: TYPE.title.size, color:C.ink, lineHeight:1.55, margin:0 }}>{text}</p>
+      <div className="lokai-chat-bubble-user" style={{ maxWidth:'72%', padding:'12px 18px' }}>
+        <p style={{ fontFamily:SANS, fontSize: TYPE.title.size, color:'var(--role-on-anchor)', lineHeight:1.55, margin:0 }}>{text}</p>
         <div style={{ marginTop:5, textAlign:'right' }}>
-          <span style={{ fontFamily:SANS, fontSize: TYPE.micro.size, color:C.muted }}>{time}</span>
+          <span style={{ fontFamily:SANS, fontSize: TYPE.micro.size, color:'var(--role-on-anchor)', opacity:0.75 }}>{time}</span>
         </div>
       </div>
     </motion.div>
   );
 }
 
-// ─── Thinking bubble — branded shimmer skeleton ───────────────────────────────
+// ─── Thinking bubble — ambient thinking capsule ───────────────────────────────
 function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
   useMotionStyles();
   return (
@@ -109,35 +96,12 @@ function ThinkingBubble({ isFollowUp = false }: { isFollowUp?: boolean }) {
       transition={{ duration: 0.22, ease: 'easeOut' }}
       style={{ marginBottom: 24 }}
     >
-      <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:500, color:C.muted, marginBottom:6 }}>LokAI</div>
-      <div style={{
-        background: C.surface, border: `1px solid ${C.border}`, borderRadius: LAYOUT.radius.control,
-        overflow: 'hidden', position: 'relative',
-        padding: '18px 22px 18px 26px',
-      }}>
-        {/* Pulsing saffron left accent — same as real response card */}
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
-          background: `linear-gradient(180deg, ${C.saffron} 0%, ${C.saffronDark} 100%)`,
-          borderRadius: `${LAYOUT.radius.control} ${LAYOUT.radius.none} ${LAYOUT.radius.none} ${LAYOUT.radius.control}`,
-          animation: 'thinkAccent 1.5s ease-in-out infinite',
-        }}/>
-        {/* Label */}
-        <div style={{
-          fontFamily: SANS, fontSize: TYPE.label.size, fontWeight: 600, color: C.muted,
-          textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14,
-        }}>
-          {isFollowUp ? 'Processing follow-up' : 'Analysing your question'}
-        </div>
-        {/* Shimmer lines mimicking real content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="lokai-shimmer-line" style={{ height: 13, width: '88%' }}/>
-          <div className="lokai-shimmer-line" style={{ height: 13, width: '72%', animationDelay: '0.15s' }}/>
-          <div className="lokai-shimmer-line" style={{ height: 13, width: '80%', animationDelay: '0.3s' }}/>
-          <div style={{ height: 10 }}/>
-          <div className="lokai-shimmer-line" style={{ height: 13, width: '65%', animationDelay: '0.1s' }}/>
-          <div className="lokai-shimmer-line" style={{ height: 13, width: '55%', animationDelay: '0.25s' }}/>
-        </div>
+      <div style={{ fontFamily:SANS, fontSize: TYPE.micro.size, fontWeight:500, color:C.muted, marginBottom:8 }}>LokAI</div>
+      <div className="lokai-thinking-capsule">
+        <WorkingDots />
+        <span style={{ fontFamily: SANS, fontSize: TYPE.caption.size, color: C.text, fontWeight: 500 }}>
+          {isFollowUp ? 'Processing follow-up…' : 'Analysing your question against Consumer Protection Act…'}
+        </span>
       </div>
     </motion.div>
   );
@@ -419,7 +383,7 @@ export default function Chat() {
   const { collapsed }= useSidebar();
   const sidebarW     = collapsed ? 64 : 240;
   const {
-    scenario, runPreparedInput, activeTurn, isProgressing, progressLabel, progressIndex,
+    scenario, runPreparedInput, activeTurn, lastReceipt, receipts, facts, isProgressing, progressLabel, progressIndex,
     skipProgress, replayProgress, language, draftAllowed, selectScenario, resolveClarify,
   } = useDemo();
 
@@ -556,6 +520,7 @@ export default function Chat() {
         <Turn
           key={`t-${turn.id}-${i}`}
           turn={{ ...turn, language }}
+          receipt={lastReceipt && lastReceipt.turnId === turn.id ? lastReceipt : null}
           onCopy={showCopyToast}
           onSpeak={() => toast.message('Prepared read-aloud · demo playback')}
           onOpenSource={(c) => {
@@ -694,6 +659,14 @@ export default function Chat() {
                   <>
                     <LegalTermPanel />
                     <ContextPanel panel={panelData} focusedCitationId={focusedCitationId}/>
+                    {receipts.length > 0 && (
+                      <div style={{ padding: '0 16px 24px' }}>
+                        <DecisionSpine
+                          receipts={receipts}
+                          factsSummary={`${facts.filter((f) => f.confirmedByUser).length} of ${facts.length} facts confirmed`}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -706,10 +679,7 @@ export default function Chat() {
       <div style={{ position:'fixed', bottom:28, left:sidebarW, right:showContextPanel ? railWidth : 0,
         display:'flex', justifyContent:'center', zIndex:100,
         pointerEvents:'none', transition:'left .2s ease' }}>
-        <div className="input-bar-wrap" style={{ maxWidth:740, width:'calc(100% - 56px)',
-          borderRadius: LAYOUT.radius.plane, border: `1px solid ${C.borderStrong}`,
-          boxShadow: SHADOW.float, padding:'14px 18px 12px',
-          pointerEvents:'auto', position:'relative' }}>
+        <div style={{ maxWidth:740, width:'calc(100% - 56px)', pointerEvents:'auto', position:'relative' }}>
           <Composer
             onSubmit={handleSend}
             disabled={loading || isProgressing}

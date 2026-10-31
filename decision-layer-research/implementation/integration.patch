@@ -1,0 +1,96 @@
+﻿diff --git a/package.json b/package.json
+index e41eb42..a0e7a3a 100644
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,7 @@
+     "dev": "vite",
+     "preview": "vite preview",
+     "typecheck": "tsc --noEmit",
+-    "verify:demo": "node scripts/verify-demo.mjs"
++    "verify:demo": "node scripts/verify-demo.mjs && node scripts/verify-decision.mjs"
+   },
+   "dependencies": {
+     "@animateicons/react": "^0.4.3",
+diff --git a/src/app/context/DemoContext.tsx b/src/app/context/DemoContext.tsx
+index 3817b79..ab587f8 100644
+--- a/src/app/context/DemoContext.tsx
++++ b/src/app/context/DemoContext.tsx
+@@ -30,6 +30,8 @@ import {
+ } from '../demo/responseEngine';
+ import type { LokAIResponse } from '../services/api';
+ import type { WorkflowStage } from '../data/caseWorkflow';
++import { decide } from '../decision/engine';
++import type { DecisionReceipt } from '../decision/types';
+ 
+ export type MatterFact = DemoFact & { confirmedByUser?: boolean };
+ 
+@@ -74,6 +76,9 @@ interface DemoContextValue {
+ 
+   /** Active hybrid turn (latest resolved) */
+   activeTurn: ResponseTurn | null;
++
++  /** Decision layer: receipt for the latest routed input (audit surface). */
++  lastReceipt: DecisionReceipt | null;
+   legacyResponse: LokAIResponse | null;
+   progressIndex: number;
+   progressLabel: string | null;
+@@ -121,6 +126,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
+     'No network or device permission requested',
+   ]);
+   const [activeTurn, setActiveTurn] = useState<ResponseTurn | null>(null);
++  const [lastReceipt, setLastReceipt] = useState<DecisionReceipt | null>(null);
+   const [progressIndex, setProgressIndex] = useState(-1);
+   const [progressLabel, setProgressLabel] = useState<string | null>(null);
+   const [isProgressing, setIsProgressing] = useState(false);
+@@ -213,7 +219,24 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
+       return finishTurn(turn);
+     }
+ 
+-    let target = resolvePreparedTurn(input, { scenarioId, language });
++    /* Decision layer: the engine resolves input -> prepared turn through the
++       gate cascade (scene, scope, risk, conflict, source, facts, content).
++       Same turns for every prepared input - but unmatched input now hits a
++       designed stop instead of falling through to the nearest answer. */
++    const outcome = decide({
++      scenarioId,
++      policyTier: scenario.policyTier,
++      userMessage: scenario.userMessage,
++      facts: facts.map((f) => ({ id: f.id, state: f.state, confirmedByUser: f.confirmedByUser ?? false })),
++      sources: scenario.sources.map((s) => ({ id: s.id, support: s.support })),
++      input,
++      inputKind: 'typed',
++      language,
++      turnIndex: auditEvents.length,
++    });
++    setLastReceipt(outcome.receipt);
++    addAuditEvent(`Decision ${outcome.receipt.id}: ${outcome.rationale.rule} -> ${outcome.turnId}`);
++    let target = getTurnById(outcome.turnId) ?? resolvePreparedTurn(input, { scenarioId, language });
+     if (target.id === 'consumer-explain' && language !== 'en') {
+       target = localizeConsumerExplain(language);
+     }
+@@ -228,7 +251,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
+     progressRef.current = controller;
+     const turn = await controller.promise;
+     return finishTurn(turn);
+-  }, [scenarioId, language, finishTurn, addAuditEvent]);
++  }, [scenarioId, language, scenario, facts, auditEvents.length, finishTurn, addAuditEvent]);
+ 
+   /** Thin delegating wrapper. Retained for one release cycle as the chat
+    *  home page migrates off its first-call clarifier. Calls `runPreparedInput`,
+@@ -339,6 +362,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
+     auditEvents,
+     addAuditEvent,
+     activeTurn,
++    lastReceipt,
+     legacyResponse,
+     progressIndex,
+     progressLabel,
+@@ -353,7 +377,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
+   }), [
+     scenarioId, scenario, selectScenario, language, stage, facts,
+     confirmFact, correctFact, draftApproved, setDraftApproved, draftAllowed, selectedTermId,
+-    openTerm, closeTerm, auditEvents, addAuditEvent, activeTurn, legacyResponse,
++    openTerm, closeTerm, auditEvents, addAuditEvent, activeTurn, lastReceipt, legacyResponse,
+     progressIndex, progressLabel, isProgressing, skipProgress, replayProgress,
+     runPreparedInput, runPreparedConversation, resolveClarify, resetConversation, runScenario,
+   ]);

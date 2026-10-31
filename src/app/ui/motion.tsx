@@ -58,7 +58,153 @@ function injectMotionStyles() {
   motionStylesInjected = true;
 }
 
-/** Call from components that render shimmer. Idempotent. */
+/* ───────────────────────────────────────────────────────────────────────────
+ * StreamText — the answer being written, not the answer having arrived
+ *
+ * The single most recognisable motion in the AI-chat medium, and the one
+ * LokAI was entirely missing. `FadeRise` makes a block appear; this makes
+ * text *emerge* — which is what tells the eye the words are being produced
+ * rather than pasted in. Reference: aicss/streaming-text in the component
+ * vault, whose contract is seeded here:
+ *
+ *   - solid caret while the reveal runs, blinking only once it completes
+ *   - reduced motion renders the whole string at once — the reveal is an
+ *     affordance, never a gate on reading the answer
+ *   - while streaming, the visible text is `aria-hidden`, so a screen reader
+ *     is not read a partial sentence on every tick; the full string lands in
+ *     the live region once, when the reveal completes
+ *
+ * Pacing is a function of the text alone (words × wordMs, capped at maxMs),
+ * so the same answer always reveals at the same rate — determinism is a
+ * product claim in this repo, and a wall-clock-driven reveal would quietly
+ * break it. The rate is *paced comprehension*, not simulated latency.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+export interface StreamTextProps {
+  children: string;
+  /** ms per revealed word. 40 reads as fluid without blurring the words. */
+  wordMs?: number;
+  /** Ceiling on the whole reveal, so a long passage never stalls the beat. */
+  maxMs?: number;
+  /** Set false to render whole (confirm mode, tests, non-answer prose). */
+  active?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+/** Split keeping the separators, so the reveal rejoins the exact original
+ *  string — no double spaces, no lost newlines, byte-identical when done. */
+function tokenize(text: string): string[] {
+  return text.split(/(\s+)/).filter((t) => t.length > 0);
+}
+
+export function StreamText({
+  children: text,
+  wordMs = 40,
+  maxMs = 2800,
+  active = true,
+  style,
+  className,
+}: StreamTextProps) {
+  const reduce = useReducedMotion();
+  const tokens = React.useMemo(() => tokenize(text), [text]);
+  const words = React.useMemo(() => tokens.filter((t) => t.trim().length > 0).length, [tokens]);
+  const streaming = active && !reduce && words > 1;
+  const [count, setCount] = React.useState(streaming ? 0 : words);
+
+  React.useEffect(() => {
+    if (!streaming) {
+      setCount(words);
+      return;
+    }
+    setCount(0);
+    /* One interval, period derived from the text: same words → same period. */
+    const period = Math.max(12, Math.min(wordMs, maxMs / words));
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      setCount(i);
+      if (i >= words) window.clearInterval(id);
+    }, period);
+    return () => window.clearInterval(id);
+  }, [streaming, words, wordMs, maxMs]);
+
+  const visible = React.useMemo(() => {
+    if (count >= words) return null;
+    let seen = 0;
+    const out: string[] = [];
+    for (const t of tokens) {
+      if (t.trim().length === 0) {
+        out.push(t);
+        continue;
+      }
+      seen += 1;
+      if (seen > count) break;
+      out.push(t);
+    }
+    return out.join('');
+  }, [tokens, count, words]);
+
+  const done = visible === null;
+  /* The caret stays a beat after completion, then leaves. A caret that never
+     goes away turns every answer into a terminal. */
+  const [caretGone, setCaretGone] = React.useState(done);
+  React.useEffect(() => {
+    if (!done) {
+      setCaretGone(false);
+      return;
+    }
+    const id = window.setTimeout(() => setCaretGone(true), 1400);
+    return () => window.clearTimeout(id);
+  }, [done]);
+
+  const caret = caretGone ? null : (
+    <span className="lokai-stream-caret" data-active={done ? 'false' : 'true'} aria-hidden="true" />
+  );
+
+  if (done) return <span className={className} style={style}>{text}</span>;
+
+  return (
+    <span className={className} style={style}>
+      <span aria-hidden="true">{visible}{caret}</span>
+    </span>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * UserBubble — the other half of the chat medium
+ *
+ * A chat conversation is readable because the two sides are *asymmetric*:
+ * the assistant is bare prose on the ground (L1 — an answer is not an
+ * object you can pick up), and the user is a filled, right-aligned object
+ * that says "this is what she said". One column of identical left-aligned
+ * blocks reads as a document, not as an exchange — which is exactly what
+ * the old matter-log treatment produced on the flagship screen.
+ *
+ * The entrance is a scale-in (opacity + 0.94 scale + 12px rise), the
+ * framecn/MESSAGE anatomy from the vault, rather than the flat 8px `FadeRise`
+ * rise: a message arriving has mass, and a flat fade does not say so.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+export function UserBubble({ children }: { children: React.ReactNode }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={reduce
+        ? { duration: 0.15, ease: 'linear' }
+        : { type: 'spring', bounce: 0, visualDuration: 0.34, stiffness: 460, damping: 30 }}
+      style={{ display: 'flex', justifyContent: 'flex-end' }}
+    >
+      <div className="lokai-chat-bubble-user">
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+/** Call from surfaces that render shimmer. Idempotent. */
 export function useMotionStyles() {
   useEffect(() => { injectMotionStyles(); }, []);
 }

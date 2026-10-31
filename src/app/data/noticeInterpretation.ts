@@ -21,6 +21,7 @@
  */
 
 import type { DemoLanguage } from './responseTurns';
+import { TURN_CHROME_I18N } from './languagePacks';
 
 export type DocKind = 'notice' | 'receipt';
 
@@ -134,11 +135,14 @@ const BMC_INTERPRETATION: Record<DemoLanguage, NoticeInterpretation> = {
   },
 };
 
+/* Derived, not restated. This sentence is the chat turn's acknowledgement for
+   an attached receipt (`receipt-filed`) and the reader's ack here — one fact,
+   one wording. Writing it twice is how the two copies drift apart. */
 const RECEIPT_ACK: Record<DemoLanguage, string> = {
-  en: 'Filed as evidence. This is a payment receipt, so there is no deadline or claim to act on. It is saved to this matter’s documents.',
-  hi: 'साक्ष्य के रूप में दर्ज किया गया। यह एक भुगतान रसीद है — इस पर कार्रवाई के लिए कोई समय-सीमा या दावा नहीं है। यह इस मामले के दस्तावेज़ों में सहेजा गया है।',
-  mr: 'पुरावा म्हणून नोंदवले. ही एक भरणा पावती आहे — यावर कार्यवाहीसाठी कोणतीही मुदत किंवा दावा नाही. हे या प्रकरणाच्या कागदपत्रांत जतन केले आहे.',
-  ta: 'ஆதாரமாகச் சேர்க்கப்பட்டது. இது ஒரு பணம் செலுத்திய ரசீது — செயல்பட வேண்டிய காலக்கெடு அல்லது கோரிக்கை எதுவும் இல்லை. இது இந்த வழக்கின் ஆவணங்களில் சேமிக்கப்பட்டது.',
+  en: TURN_CHROME_I18N.en.receiptFiledAck,
+  hi: TURN_CHROME_I18N.hi.receiptFiledAck,
+  mr: TURN_CHROME_I18N.mr.receiptFiledAck,
+  ta: TURN_CHROME_I18N.ta.receiptFiledAck,
 };
 
 /** The scripted set the attach affordance offers. Ordered: the notice first
@@ -167,6 +171,35 @@ export const PREPARED_DOCUMENTS: PreparedDocument[] = [
 
 export function getPreparedDocument(id: string): PreparedDocument | undefined {
   return PREPARED_DOCUMENTS.find((d) => d.id === id);
+}
+
+/**
+ * The bridge between the two id namespaces — the single place that says which
+ * exhibit the interpreter can actually read.
+ *
+ * `getEvidenceLocker()` names an exhibit by what it proves (`invoice`,
+ * `whatsapp-chat`, `defect-evidence`…). `PREPARED_DOCUMENTS` names the handful
+ * of documents that ship with a written reading (`bmc-property-tax`,
+ * `payment-receipt`). They are not the same set and they never were, but a
+ * call site assumed they were: the exhibit sheet's primary action navigated to
+ * `?doc=<evidence id>`, `getPreparedDocument` returned undefined, and the deep
+ * link resolved to nothing. The reader landed on the empty state — a primary
+ * button in the Documents folder that silently did nothing, on the exact path
+ * ("documents, folders and chats connected") the folder exists to prove.
+ *
+ * A miss here is not a silent fallback: callers must render the honest
+ * alternative, because there is no prepared reading to give.
+ */
+export const PREPARED_DOCUMENT_FOR_EXHIBIT: Record<string, string> = {
+  /* The invoice exhibit and the prepared receipt are the same piece of paper:
+     the receipt's own acknowledgement reads "Filed as evidence… saved to this
+     matter's documents." */
+  invoice: 'payment-receipt',
+};
+
+export function getPreparedDocumentForExhibit(exhibitId: string): PreparedDocument | undefined {
+  const id = PREPARED_DOCUMENT_FOR_EXHIBIT[exhibitId];
+  return id ? getPreparedDocument(id) : undefined;
 }
 
 /** The interpretation in the reader's language, falling back to English if a

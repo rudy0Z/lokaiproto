@@ -1,0 +1,14 @@
+﻿=== desktop-chat.png (1440x900) ===
+=== desktop-dashboard.png (1440x900) ===
+=== desktop-dev.png (1440x900) ===
+=== desktop-documents.png (1440x900) ===
+=== desktop-draft.png (1440x900) ===
+=== desktop-notice.png (1440x900) ===
+=== mobile-case.png (390x844) ===
+=== mobile-files.png (390x844) ===
+=== mobile-home.png (390x844) ===
+=== mobile-notice.png (390x844) ===
+=== mobile-onboarding.png (390x844) ===
+=== mobile-profile.png (390x844) ===
+=== mobile-voice.png (390x844) ===
+

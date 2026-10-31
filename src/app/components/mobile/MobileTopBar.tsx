@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { IconBack, IconMenu, IconNewChat } from '../../ui/icons';
+import { IconBack, IconDots, IconMenu, IconNewChat } from '../../ui/icons';
 import { Row, IconButton, Text, T, S, ICON } from '../../ui';
 import { Wordmark } from '../shared';
 import { useDrawer } from '../../context/DrawerContext';
@@ -23,9 +23,11 @@ import { useDrawer } from '../../context/DrawerContext';
 export function MobileTopBar({
   onBack,
   onNewChat,
+  onMenu,
   tone = 'paper',
   showWordmark = true,
   showNewChat = true,
+  showMenu = false,
 }: {
   /** When set, the leading control is a back arrow (modal flow) instead of the
    *  drawer hamburger. */
@@ -33,6 +35,10 @@ export function MobileTopBar({
   /** When set, "new chat" clears the current conversation in place instead of
    *  navigating (Home holds the chat, so a route change would not reset it). */
   onNewChat?: () => void;
+  /** When set, the trailing control becomes the matter's three-dots menu —
+   *  currently the Quick Recap flashcard deck. Takes precedence over
+   *  new-chat: a conversation with work in it has something to recap. */
+  onMenu?: () => void;
   tone?: 'paper' | 'stop';
   /** Home is itself the chat canvas, so it carries neither the centred wordmark
    *  (identity already lives in onboarding + drawer) nor a "new chat" button
@@ -40,6 +46,7 @@ export function MobileTopBar({
    *  feel like an open invitation to speak. */
   showWordmark?: boolean;
   showNewChat?: boolean;
+  showMenu?: boolean;
 }) {
   const navigate = useNavigate();
   const { openDrawer } = useDrawer();
@@ -59,7 +66,11 @@ export function MobileTopBar({
 
       {showWordmark ? <Wordmark size={19} color={ink} /> : <span aria-hidden style={{ width: 44 }} />}
 
-      {showNewChat ? (
+      {showMenu && onMenu ? (
+        <IconButton label="Quick recap" onClick={onMenu}>
+          <IconDots size={ICON.row} color={ink} />
+        </IconButton>
+      ) : showNewChat ? (
         <IconButton label="New chat" onClick={onNewChat ?? (() => navigate('/mobile/home'))}>
           <IconNewChat size={ICON.row} color={ink} />
         </IconButton>
